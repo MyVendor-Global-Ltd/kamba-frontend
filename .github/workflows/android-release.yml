@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: Existing version tag to build and release (for example v1.0.0)
+        description: Version tag to create for this run (for example v0.1.0)
         required: true
         type: string
 
@@ -25,12 +25,32 @@ jobs:
           INPUT_TAG: ${{ inputs.version_tag }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then TAG="$INPUT_TAG"; else TAG="$GITHUB_REF_NAME"; fi
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then echo "Invalid version tag: $TAG (expected vMAJOR.MINOR.PATCH)"; exit 1; fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout tagged source
+      - name: Checkout selected commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.release.outputs.tag }}
+          # For dispatch, build the commit selected in the Actions UI; for tag pushes, build the tag's commit.
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Create or verify dispatch tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --refs origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            git fetch origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+            if [ "$(git rev-parse "${RELEASE_TAG}^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "Tag ${RELEASE_TAG} already exists on a different commit; choose a new version tag."
+              exit 1
+            fi
+          else
+            git tag "$RELEASE_TAG"
+            git push origin "refs/tags/${RELEASE_TAG}"
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
