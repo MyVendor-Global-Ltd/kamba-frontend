@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Kamba",
+    "slug": "kamba",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "kamba",
+    "android": {
+      "package": "com.myvendorglobal.kamba",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#116B45"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.myvendorglobal.kamba"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "c0c93915-bc7a-498e-8851-e179b13b0e26"
+      }
+    },
+    "owner": "veloratech"
+  }
+}

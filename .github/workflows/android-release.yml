@@ -1,0 +1,106 @@
+name: Android APK Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: Version tag to create for this run (for example v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build Android APK and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ inputs.version_tag }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then TAG="$INPUT_TAG"; else TAG="$GITHUB_REF_NAME"; fi
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then echo "Invalid version tag: $TAG (expected vMAJOR.MINOR.PATCH)"; exit 1; fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout selected commit
+        uses: actions/checkout@v4
+        with:
+          # For dispatch, build the commit selected in the Actions UI; for tag pushes, build the tag's commit.
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Create or verify dispatch tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --refs origin "refs/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            git fetch origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
+            if [ "$(git rev-parse "${RELEASE_TAG}^{commit}")" != "$(git rev-parse HEAD)" ]; then
+              echo "Tag ${RELEASE_TAG} already exists on a different commit; choose a new version tag."
+              exit 1
+            fi
+          else
+            git tag "$RELEASE_TAG"
+            git push origin "refs/tags/${RELEASE_TAG}"
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check EAS project link
+        run: |
+          npx expo config --json > expo-config.json
+          node - <<'NODE'
+          const config = require('./expo-config.json');
+          if (!config.extra?.eas?.projectId) {
+            console.error('EAS project is not linked. Run `npx eas-cli init`, commit extra.eas.projectId in app.json, then rerun this workflow.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Check EAS authentication
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: test -n "$EXPO_TOKEN" || (echo 'Add EXPO_TOKEN as a repository Actions secret.' && exit 1)
+
+      - name: Build APK with Expo Application Services
+        id: build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          npx eas-cli build --platform android --profile production --non-interactive --wait --json > eas-build.json
+          python3 - <<'PY'
+          import json, os
+          data = json.load(open('eas-build.json'))
+          if isinstance(data, list): data = data[0]
+          url = data.get('artifacts', {}).get('buildUrl')
+          if not url: raise SystemExit('EAS completed but returned no APK build URL')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              print(f'url={url}', file=f)
+          PY
+
+      - name: Download APK
+        env:
+          APK_URL: ${{ steps.build.outputs.url }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: curl --fail --location "$APK_URL" --output "Kamba-${RELEASE_TAG}.apk"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: gh release create "$RELEASE_TAG" "Kamba-${RELEASE_TAG}.apk" --title "Kamba ${RELEASE_TAG}" --generate-notes --verify-tag
