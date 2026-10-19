@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Kamba",
+    "slug": "kamba",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "kamba",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.myvendorglobal.kamba",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": { "backgroundColor": "#116B45" }
+    },
+    "ios": { "bundleIdentifier": "com.myvendorglobal.kamba" }
+  }
+}
