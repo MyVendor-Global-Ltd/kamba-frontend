@@ -4,17 +4,22 @@ Private React Native + Expo application for Kamba, a neighbourhood marketplace. 
 
 ## Local development
 
-Requires Node.js 22 and Expo tooling. Run `npm ci`, then `npx expo start`. Open the project in Expo Go or a development build. This is a JavaScript-only app. Product and store samples are illustrative fixtures, not real listings or a production backend.
+Requires Node.js 22. Run `npm ci`, then `npx expo start`. Product and store listings in `src/data/seeds/` are fictional development fixtures and are not a production backend.
 
-## Android APK releases
+## Android APK builds through EAS Workflows
 
-Before the first release, create/link this app to an Expo project (`npx eas-cli init`), commit the generated `extra.eas.projectId` in `app.json`, configure Android signing credentials in EAS, and add an Expo access token as the repository Actions secret `EXPO_TOKEN`. Push a version tag such as `v1.0.0` to invoke `.github/workflows/android-release.yml`. The workflow runs an EAS production Android APK build, downloads the build artifact, and publishes it as a GitHub Release asset. A manual run builds the commit selected in the Actions UI and creates the supplied version tag on that commit (or verifies that an existing tag points to the same commit), so the tag need not exist before dispatch. If a build fails after tag creation, rerun the same workflow on the same commit and tag. EAS manages the Android signing credentials; maintain access/recovery procedures for the Expo account. Validate a release build on supported Android devices before broad distribution.
+The Expo project is linked in `app.json`. The workflow at `.eas/workflows/create-production-builds.yml` builds **Android only** with the `production` profile. `eas.json` sets this profile to an installable APK.
 
-## Project organization
+To build automatically on a release tag, connect the GitHub repository to the Expo project in Expo's **Project settings → GitHub** and install/authorize the Expo GitHub App. Then push a tag such as `v0.2.0`; EAS builds the APK in Expo's cloud and exposes the artifact and logs in the Expo project dashboard. This route does not use the failed GitHub Actions `EXPO_TOKEN` secret or require Android Studio on a laptop. You can also run the workflow manually from an authenticated EAS CLI session with `npx eas-cli login` followed by `npx eas-cli workflow:run .eas/workflows/create-production-builds.yml`.
 
-- `src/theme/`: shared visual tokens.
-- `src/screens/`: app screens.
-- `src/data/seeds/`: development-only deterministic fixtures.
-- `docs/data-platform.md`: proposed production data schema and API-service boundaries.
+Before the first production build, configure Android signing credentials for the `production` profile in EAS. Follow any credential setup prompt, or run `npx eas-cli credentials:configure-build -p android -e production` from an authenticated session. Keep the signing key available to the Expo project for future updates. EAS Workflows store the APK under the Expo build/workflow run; they do not attach it as a GitHub Release asset. If a GitHub Release asset is also required, configure the separate GitHub Actions route and its `EXPO_TOKEN` secret deliberately.
 
-The mobile app must not connect directly to PostgreSQL. Database migrations, access control, and production seed data belong to the backend service.
+## Structure
+
+- `src/theme/`: shared design tokens.
+- `src/components/common/`: reusable native UI pieces.
+- `src/screens/`: navigation and app screens.
+- `src/data/seeds/`: local development-only demo data and image references.
+- `supabase/migrations/` and `docs/data-platform.md`: proposed database schema and production-service boundaries.
+
+The mobile app must not connect directly to PostgreSQL. Database migrations, access control, payments, and production data seeding belong to the backend service.

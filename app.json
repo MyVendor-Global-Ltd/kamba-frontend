@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kamba",
     "slug": "kamba",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "kamba",
@@ -17,7 +17,8 @@
       "bundleIdentifier": "com.myvendorglobal.kamba"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-image"
     ],
     "extra": {
       "eas": {

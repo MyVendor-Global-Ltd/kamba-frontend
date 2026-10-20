@@ -1,30 +1,141 @@
-import React from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS as C, SIZES as S, SHADOWS } from '../theme';
+import BrandMark from '../components/common/BrandMark';
+import ProductCard from '../components/common/ProductCard';
+import SectionHeading from '../components/common/SectionHeading';
+import StoreCard from '../components/common/StoreCard';
+import { seedCategories, seedProducts, seedStores } from '../data/seeds/marketplace';
+import { COLORS as C, FONTS as F, SIZES as S, SHADOWS } from '../theme';
 
-const categories = [{ icon: 'grid-outline', name: 'All' }, { icon: 'fast-food-outline', name: 'Food' }, { icon: 'shirt-outline', name: 'Fashion' }, { icon: 'phone-portrait-outline', name: 'Phones' }, { icon: 'sparkles-outline', name: 'Beauty' }];
-const products = [
-  { title: 'Handwoven everyday tote', shop: 'Adaora’s Craft', price: '₦14,999', icon: 'bag-handle-outline', tone: '#E8F1E7', stamp: 'HANDMADE' },
-  { title: 'Fresh garden tomatoes', shop: 'Umuahia Fresh Mart', price: '₦2,499', icon: 'nutrition-outline', tone: '#F8EDE7', stamp: 'FRESH TODAY' },
-  { title: 'Classic leather sandals', shop: 'Kene Footwear', price: '₦18,999', icon: 'footsteps-outline', tone: '#F1EAE0', stamp: 'MADE LOCAL' },
-  { title: 'Golden glow body oil', shop: 'Nneka Naturals', price: '₦7,500', icon: 'water-outline', tone: '#F8F1DD', stamp: 'CUSTOMER LOVE' },
-];
-function Header() {
-  return <View style={styles.header}><View style={styles.brandRow}><View style={styles.brandMark}><Ionicons name="bag-handle" size={17} color={C.white}/></View><Text style={styles.brand}>kamba</Text><View style={{ flex: 1 }}/><Pressable style={styles.iconButton}><Ionicons name="notifications-outline" size={21} color={C.ink}/><View style={styles.dot}/></Pressable><View style={styles.avatar}><Text style={styles.avatarText}>A</Text></View></View><Pressable style={styles.location}><Ionicons name="location-outline" size={15} color={C.forest}/><Text style={styles.locationText}>Umuahia, Abia State</Text><Ionicons name="chevron-down" size={14} color={C.secondary}/></Pressable></View>;
+const HERO_IMAGE = require('../../assets/products/raffia-tote.jpg');
+
+export default function HomeScreen({ navigation }) {
+  const [saved, setSaved] = useState([]);
+  const [heroMotion] = useState(() => new Animated.Value(0));
+  const products = useMemo(() => seedProducts.map((item) => ({ ...item, storeName: seedStores.find((store) => store.id === item.storeId)?.name || 'Local maker' })), []);
+  const toggleSaved = (id) => setSaved((items) => items.includes(id) ? items.filter((item) => item !== id) : [...items, id]);
+
+  useEffect(() => {
+    Animated.spring(heroMotion, { toValue: 1, useNativeDriver: true, speed: 13, bounciness: 4 }).start();
+    return () => heroMotion.stopAnimation();
+  }, [heroMotion]);
+
+  const openCategory = (category) => navigation.getParent()?.navigate('Category', { categoryId: category.id, title: category.name });
+  const openStore = (store) => navigation.getParent()?.navigate('Store', { storeId: store.id });
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <BrandMark size="compact" />
+          <View style={styles.headerActions}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Notifications" onPress={() => navigation.navigate('Notifications')} style={styles.roundButton}>
+              <Ionicons name="notifications-outline" size={19} color={C.forest} /><View style={styles.notificationDot} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Your profile" onPress={() => navigation.navigate('Profile')} style={styles.profileButton}><Text style={styles.profileInitial}>A</Text></Pressable>
+          </View>
+        </View>
+        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Profile')} style={styles.locationRow}>
+          <Ionicons name="location" size={15} color={C.jade} /><Text style={styles.locationKicker}>SHOPPING AROUND</Text><Text style={styles.locationName}>Umuahia, Abia</Text><Ionicons name="chevron-down" size={14} color={C.secondary} />
+        </Pressable>
+        <Pressable accessibilityRole="search" onPress={() => navigation.navigate('Search')} style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color={C.jade} /><Text style={styles.searchPlaceholder}>Find something lovely…</Text><View style={styles.searchFilter}><Ionicons name="options-outline" size={17} color={C.forest} /></View>
+        </Pressable>
+
+        <Animated.View style={[styles.hero, { opacity: heroMotion, transform: [{ translateY: heroMotion.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }]}>
+          <LinearGradient colors={[C.forestDeep, C.forest, C.forestSoft]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+          <View style={styles.heroCircleOne} /><View style={styles.heroCircleTwo} />
+          <View style={styles.heroCopy}>
+            <View style={styles.eyebrow}><View style={styles.eyebrowDot} /><Text style={styles.eyebrowText}>GOOD THINGS, CLOSE BY</Text></View>
+            <Text style={styles.heroTitle}>Your local edit.</Text>
+            <Text style={styles.heroSub}>Thoughtful finds from the people who make home special.</Text>
+            <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Search')} style={styles.heroCta}><Text style={styles.heroCtaText}>Explore the neighbourhood</Text><Ionicons name="arrow-forward" size={14} color={C.forest} /></Pressable>
+          </View>
+          <View style={styles.heroPhotoFrame}><Image source={HERO_IMAGE} style={styles.heroPhoto} contentFit="cover" transition={450} cachePolicy="memory-disk" /><View style={styles.heroPhotoBorder} /></View>
+          <View style={styles.madeLocal}><Ionicons name="leaf-outline" size={11} color={C.forest} /><Text style={styles.madeLocalText}>MADE LOCAL</Text></View>
+        </Animated.View>
+
+        <View style={styles.sectionBlock}>
+          <SectionHeading eyebrow="CURATED FOR YOUR CORNER" title="Explore by mood" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+            {seedCategories.filter((item) => item.id !== 'all').map((item, index) => (
+              <Pressable accessibilityRole="button" key={item.id} onPress={() => openCategory(item)} style={[styles.categoryCard, { backgroundColor: [C.mint, C.sand, C.rose, '#E7E9EF', '#E8E6F0'][index % 5] }]}>
+                <View style={styles.categoryIcon}><Ionicons name={item.icon} size={19} color={C.forest} /></View><Text style={styles.categoryName}>{item.name}</Text><Ionicons name="arrow-up-right" size={13} color={C.secondary} style={styles.categoryArrow} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.productsBlock}>
+          <SectionHeading eyebrow="A LITTLE OF EVERYTHING" title="Lovely local finds" action="See all" onAction={() => navigation.navigate('Search')} />
+          <View style={styles.productGrid}>{products.map((item, index) => <ProductCard key={item.id} item={item} index={index} saved={saved.includes(item.id)} onToggleSave={() => toggleSaved(item.id)} onPress={() => navigation.getParent()?.navigate('Product', { productId: item.id })} />)}</View>
+        </View>
+
+        <View style={styles.storesBlock}>
+          <SectionHeading eyebrow="PEOPLE BEHIND THE GOOD STUFF" title="Meet your neighbours" action="Browse" onAction={() => navigation.navigate('Search')} style={styles.storeHeading} />
+          {seedStores.filter((store) => store.featured || store.verified).slice(0, 2).map((store) => <StoreCard key={store.id} store={store} onPress={() => openStore(store)} />)}
+        </View>
+
+        <View style={styles.trustCard}>
+          <View style={styles.trustIcon}><Ionicons name="shield-checkmark-outline" size={21} color={C.jade} /></View>
+          <View style={styles.trustCopy}><Text style={styles.trustTitle}>Local feels different.</Text><Text style={styles.trustSub}>Every find connects you with a real neighbour.</Text></View>
+          <Ionicons name="arrow-forward" size={16} color={C.jade} />
+        </View>
+        <Text style={styles.footer}>A little closer to home. Made for Umuahia.</Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
 }
-function SearchBox() { return <Pressable style={styles.search}><Ionicons name="search-outline" size={19} color={C.muted}/><Text style={styles.searchText}>Find something lovely...</Text><View style={styles.filter}><Ionicons name="options-outline" size={18} color={C.forest}/></View></Pressable>; }
-function ProductCard({ item }) {
- return <Pressable style={styles.productCard}><View style={[styles.productArt, { backgroundColor: item.tone }]}><View style={styles.artIcon}><Ionicons name={item.icon} size={38} color={C.forest}/></View><Text style={styles.stamp}>{item.stamp}</Text><Pressable style={styles.heart}><Ionicons name="heart-outline" size={18} color={C.ink}/></Pressable></View><View style={styles.productInfo}><Text style={styles.productTitle} numberOfLines={2}>{item.title}</Text><Text style={styles.shopName}>{item.shop} <Ionicons name="checkmark-circle" size={11} color={C.forest}/></Text><Text style={styles.price}>{item.price}</Text></View></Pressable>;
-}
-export default function HomeScreen() {
- return <SafeAreaView style={styles.safe} edges={['top']}><ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}><Header/><View style={styles.hero}><View style={styles.heroCopy}><View style={styles.eyebrow}><View style={styles.eyebrowDot}/><Text style={styles.eyebrowText}>GOOD THINGS, CLOSE BY</Text></View><Text style={styles.heroTitle}>Your neighbourhood,{ '\n' }<Text style={styles.heroItalic}>beautifully</Text> found.</Text><Text style={styles.heroSub}>Meet the makers and little shops that make home special.</Text><Pressable style={styles.heroButton}><Text style={styles.heroButtonText}>Explore local</Text><Ionicons name="arrow-forward" size={15} color={C.white}/></Pressable></View><View style={styles.heroBadge}><Ionicons name="leaf-outline" size={21} color={C.gold}/><Text style={styles.badgeCopy}>SHOP{ '\n' }<Text style={{ color: C.white }}>YOUR</Text>{ '\n' }<Text style={{ color: C.gold }}>HOOD</Text></Text></View><View style={styles.heroOrb}/></View>
- <View style={styles.sectionHeading}><View><Text style={styles.kicker}>A LITTLE OF EVERYTHING</Text><Text style={styles.sectionTitle}>What are you in the mood for?</Text></View></View>
- <View style={styles.categoryList}>{categories.map((item,index)=><Pressable key={item.name} style={[styles.category, index===0 && styles.categoryActive]}><Ionicons name={item.icon} size={17} color={index===0?C.white:C.forest}/><Text style={[styles.categoryText,index===0&&styles.categoryTextActive]}>{item.name}</Text></Pressable>)}</View>
- <View style={styles.sectionHeadRow}><View><Text style={styles.kicker}>MADE AROUND HERE</Text><Text style={styles.sectionTitle}>Little local finds</Text></View><Pressable style={styles.seeAll}><Text style={styles.seeAllText}>See all</Text><Ionicons name="arrow-forward" size={14} color={C.forest}/></Pressable></View>
- <View style={styles.productGrid}>{products.map((p)=><ProductCard item={p} key={p.title}/>)}</View>
- <View style={styles.trust}><View style={styles.trustIcon}><Ionicons name="shield-checkmark-outline" size={20} color={C.forest}/></View><View style={{flex:1}}><Text style={styles.trustTitle}>Local feels better.</Text><Text style={styles.trustSub}>Every find connects you to a real neighbour.</Text></View><Ionicons name="arrow-forward" size={16} color={C.forest}/></View>
- <Text style={styles.footer}>A little closer to home. Made for Umuahia.</Text></ScrollView></SafeAreaView>;
-}
-const styles=StyleSheet.create({safe:{flex:1,backgroundColor:C.canvas},content:{paddingBottom:24},header:{paddingHorizontal:S.page,paddingTop:8,paddingBottom:17,backgroundColor:C.canvas},brandRow:{flexDirection:'row',alignItems:'center'},brandMark:{width:30,height:30,borderRadius:11,backgroundColor:C.forest,alignItems:'center',justifyContent:'center'},brand:{fontSize:20,fontWeight:'800',letterSpacing:-.8,color:C.forest,marginLeft:8},iconButton:{height:38,width:38,borderRadius:19,backgroundColor:C.white,alignItems:'center',justifyContent:'center',marginRight:11},dot:{position:'absolute',right:9,top:8,width:7,height:7,borderRadius:4,backgroundColor:C.gold,borderWidth:1,borderColor:C.white},avatar:{height:34,width:34,borderRadius:17,backgroundColor:'#E9D8C2',alignItems:'center',justifyContent:'center'},avatarText:{fontSize:13,fontWeight:'700',color:C.forestDark},location:{flexDirection:'row',alignItems:'center',marginTop:13,gap:5},locationText:{fontSize:12,fontWeight:'600',color:C.secondary},hero:{marginHorizontal:S.page,marginTop:3,marginBottom:25,minHeight:202,borderRadius:S.radiusLg,backgroundColor:C.forestDark,padding:20,overflow:'hidden',flexDirection:'row',...SHADOWS.card},heroCopy:{width:'74%',zIndex:2},eyebrow:{flexDirection:'row',alignItems:'center',gap:6,marginBottom:13},eyebrowDot:{width:6,height:6,borderRadius:3,backgroundColor:C.gold},eyebrowText:{fontSize:9,letterSpacing:1.35,fontWeight:'800',color:'#BBD8C4'},heroTitle:{fontSize:24,lineHeight:29,fontWeight:'700',letterSpacing:-.6,color:C.white},heroItalic:{fontStyle:'italic',color:'#D6E7D8'},heroSub:{fontSize:11,lineHeight:16,color:'#C5D8CC',marginTop:8,maxWidth:210},heroButton:{marginTop:13,backgroundColor:C.green,borderRadius:12,alignSelf:'flex-start',paddingVertical:9,paddingHorizontal:13,flexDirection:'row',alignItems:'center',gap:8},heroButtonText:{fontSize:11,fontWeight:'700',color:C.white},heroBadge:{position:'absolute',right:14,top:23,width:63,height:78,backgroundColor:'#FFFFFF12',borderColor:'#FFFFFF24',borderWidth:1,borderRadius:18,alignItems:'center',justifyContent:'center',gap:4,transform:[{rotate:'5deg'}]},badgeCopy:{fontSize:8,fontWeight:'900',lineHeight:11,letterSpacing:1,color:'#D7E6DA',textAlign:'center'},heroOrb:{position:'absolute',width:120,height:120,borderRadius:60,borderWidth:1,borderColor:'#FFFFFF12',right:-57,bottom:-52},sectionHeading:{paddingHorizontal:S.page,marginBottom:12},kicker:{fontSize:9,fontWeight:'800',letterSpacing:1.35,color:C.forest,marginBottom:5},sectionTitle:{fontSize:18,fontWeight:'700',letterSpacing:-.4,color:C.ink},categoryList:{paddingHorizontal:S.page,paddingBottom:24,gap:8,flexDirection:'row',flexWrap:'wrap'},category:{height:38,paddingHorizontal:13,borderRadius:20,backgroundColor:C.white,flexDirection:'row',alignItems:'center',gap:6,borderWidth:1,borderColor:C.line},categoryActive:{backgroundColor:C.forest,borderColor:C.forest},categoryText:{fontSize:11,fontWeight:'600',color:C.secondary},categoryTextActive:{color:C.white},sectionHeadRow:{paddingHorizontal:S.page,flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between',marginBottom:12},seeAll:{flexDirection:'row',alignItems:'center',gap:4,paddingBottom:3},seeAllText:{fontSize:11,fontWeight:'700',color:C.forest},productGrid:{paddingHorizontal:S.page,flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between',rowGap:12},productCard:{width:'48.2%',backgroundColor:C.white,borderRadius:16,overflow:'hidden',borderWidth:1,borderColor:'#EDF0EC',...SHADOWS.card},productArt:{height:130,alignItems:'center',justifyContent:'center',overflow:'hidden'},artIcon:{width:76,height:76,borderRadius:38,backgroundColor:'#FFFFFF90',alignItems:'center',justifyContent:'center'},stamp:{position:'absolute',left:9,bottom:9,fontSize:7,letterSpacing:.8,fontWeight:'800',color:C.forest,backgroundColor:'#FFFFFFCC',paddingHorizontal:7,paddingVertical:4,borderRadius:9},heart:{position:'absolute',right:8,top:8,width:29,height:29,borderRadius:15,alignItems:'center',justifyContent:'center',backgroundColor:'#FFFFFFD9'},productInfo:{paddingHorizontal:10,paddingTop:9,paddingBottom:11},productTitle:{fontSize:12,fontWeight:'700',lineHeight:16,color:C.ink,minHeight:32},shopName:{fontSize:9,color:C.secondary,marginTop:5},price:{fontSize:14,fontWeight:'800',color:C.forest,marginTop:7},trust:{marginHorizontal:S.page,marginTop:19,padding:14,borderRadius:16,backgroundColor:C.surfaceWarm,flexDirection:'row',alignItems:'center',gap:11,borderWidth:1,borderColor:'#F1E8D6'},trustIcon:{width:37,height:37,borderRadius:13,backgroundColor:C.white,alignItems:'center',justifyContent:'center'},trustTitle:{fontSize:12,fontWeight:'700',color:C.ink},trustSub:{fontSize:10,color:C.secondary,marginTop:3},footer:{textAlign:'center',fontSize:10,color:C.muted,marginTop:18}});
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.cream },
+  content: { paddingBottom: S.gapXl },
+  header: { paddingHorizontal: S.page, paddingTop: S.gapSm, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: S.gapSm },
+  roundButton: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: C.line, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' },
+  notificationDot: { position: 'absolute', width: 7, height: 7, borderRadius: 4, top: 8, right: 9, backgroundColor: C.gold, borderWidth: 1, borderColor: C.paper },
+  profileButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.goldPale, borderWidth: 2, borderColor: C.paper, alignItems: 'center', justifyContent: 'center' },
+  profileInitial: { color: C.forest, fontFamily: F.display, fontSize: S.sm },
+  locationRow: { marginHorizontal: S.page, marginTop: S.gapMd, flexDirection: 'row', alignItems: 'center', gap: 5 },
+  locationKicker: { color: C.muted, fontFamily: F.semibold, fontSize: S.xxs, letterSpacing: 0.8, marginLeft: 2 },
+  locationName: { color: C.ink, fontFamily: F.semibold, fontSize: S.xs, marginLeft: 2 },
+  searchBar: { height: 54, marginHorizontal: S.page, marginTop: S.gapMd, marginBottom: S.gapLg, paddingLeft: S.gapMd, paddingRight: 7, flexDirection: 'row', alignItems: 'center', gap: S.gapSm, borderRadius: S.radiusMd, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line },
+  searchPlaceholder: { flex: 1, color: C.muted, fontFamily: F.body, fontSize: S.sm },
+  searchFilter: { width: 40, height: 40, borderRadius: 14, backgroundColor: C.mint, alignItems: 'center', justifyContent: 'center' },
+  hero: { marginHorizontal: S.page, marginBottom: S.gapXl, minHeight: 222, borderRadius: S.radiusLg, overflow: 'hidden', padding: S.gapLg, ...SHADOWS.floating },
+  heroCopy: { width: '68%', zIndex: 2 },
+  eyebrow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: S.gapSm },
+  eyebrowDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.gold },
+  eyebrowText: { color: C.goldPale, fontFamily: F.semibold, fontSize: S.xxs, letterSpacing: 1.15 },
+  heroTitle: { color: C.paper, fontFamily: F.display, fontSize: S.xl, lineHeight: 28, letterSpacing: -0.4 },
+  heroSub: { color: 'rgba(255,254,251,0.78)', fontFamily: F.body, fontSize: S.xs, lineHeight: 18, marginTop: S.gapSm, maxWidth: 188 },
+  heroCta: { minHeight: 38, alignSelf: 'flex-start', backgroundColor: C.goldPale, paddingHorizontal: S.gapSm, borderRadius: S.radiusFull, flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: S.gapMd },
+  heroCtaText: { color: C.forestDeep, fontFamily: F.semibold, fontSize: S.xxs },
+  heroPhotoFrame: { position: 'absolute', width: 144, height: 186, right: 14, top: 17, borderRadius: 76, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,254,251,0.62)', transform: [{ rotate: '4deg' }] },
+  heroPhoto: { width: '100%', height: '100%' },
+  heroPhotoBorder: { ...StyleSheet.absoluteFillObject, borderRadius: 76, borderWidth: 5, borderColor: 'rgba(255,254,251,0.16)' },
+  heroCircleOne: { position: 'absolute', width: 208, height: 208, borderRadius: 104, borderWidth: 1, borderColor: 'rgba(232,216,183,0.16)', top: -132, left: 90 },
+  heroCircleTwo: { position: 'absolute', width: 128, height: 128, borderRadius: 64, borderWidth: 1, borderColor: 'rgba(232,216,183,0.12)', bottom: -80, left: 20 },
+  madeLocal: { position: 'absolute', right: 12, bottom: 12, backgroundColor: C.goldPale, borderRadius: S.radiusFull, paddingHorizontal: S.gapSm, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 4, transform: [{ rotate: '-3deg' }] },
+  madeLocalText: { color: C.forest, fontFamily: F.bold, fontSize: 8, letterSpacing: 0.7 },
+  sectionBlock: { marginBottom: S.gapXl },
+  categoryRow: { paddingHorizontal: S.page, gap: S.gapSm, paddingTop: S.gapMd },
+  categoryCard: { width: 110, height: 110, borderRadius: S.radiusMd, padding: S.gapSm, justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(23,33,29,0.035)' },
+  categoryIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,254,251,0.76)', alignItems: 'center', justifyContent: 'center' },
+  categoryName: { color: C.ink, fontFamily: F.semibold, fontSize: S.xs },
+  categoryArrow: { position: 'absolute', right: 10, bottom: 10 },
+  productsBlock: { paddingHorizontal: S.page, marginBottom: S.gapXl },
+  productGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: S.gapSm, marginTop: S.gapMd },
+  storesBlock: { paddingHorizontal: S.page },
+  storeHeading: { marginBottom: S.gapMd },
+  trustCard: { marginHorizontal: S.page, marginTop: S.gapLg, padding: S.gapMd, borderRadius: S.radiusMd, backgroundColor: C.sand, flexDirection: 'row', alignItems: 'center', gap: S.gapSm, borderWidth: 1, borderColor: C.goldPale },
+  trustIcon: { width: 40, height: 40, borderRadius: 14, backgroundColor: C.paper, alignItems: 'center', justifyContent: 'center' },
+  trustCopy: { flex: 1 },
+  trustTitle: { color: C.ink, fontFamily: F.semibold, fontSize: S.sm },
+  trustSub: { color: C.secondary, fontFamily: F.body, fontSize: S.xxs, marginTop: 3 },
+  footer: { color: C.muted, fontFamily: F.medium, fontSize: S.xxs, textAlign: 'center', marginTop: S.gapLg },
+});
