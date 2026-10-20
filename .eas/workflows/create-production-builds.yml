@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*'
+on:
   workflow_dispatch:
 
 jobs:
