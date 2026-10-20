@@ -1,0 +1,7 @@
+/* Additional state details live here so section styles remain grouped by experience. */
+.hero-content .hero-copy, .hero-content .hero-actions, .hero-content .hero-note { will-change: transform, opacity; }
+
+@media (max-width: 760px) {
+  .site-header, .hero-section, .globe-section, .game-section, .features-section, .waitlist-section { scroll-margin-top: 68px; }
+  .pain-panel { scroll-margin-top: 68px; }
+}

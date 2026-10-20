@@ -23,3 +23,10 @@ Before the first production build, configure Android signing credentials for the
 - `supabase/migrations/` and `docs/data-platform.md`: proposed database schema and production-service boundaries.
 
 The mobile app must not connect directly to PostgreSQL. Database migrations, access control, payments, and production data seeding belong to the backend service.
+
+
+## Pre-launch website
+
+The React + Vite site lives in `kamba-website/`; it is separate from the Expo app and has its own lockfile and scripts. Use Node.js 22.13+ and run `cd kamba-website && npm ci && npm run dev` for local development, or `npm run lint && npm run build` from that folder for checks and a static `dist/` build. See [`kamba-website/README.md`](kamba-website/README.md) for Vercel/Netlify setup and launch requirements.
+
+The waitlist API is not connected yet: the form does not send or save any personal details without an explicitly configured endpoint. Set `VITE_SITE_URL` to the real HTTPS domain before an indexable production build; until then, the build uses noindex/robots safeguards and omits guessed canonical/sitemap URLs. Storefronts, app-store availability, payments and seller counts shown on the site are planned or illustrative, not live service claims.

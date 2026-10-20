@@ -14,3 +14,10 @@ ios/
 .env.*
 !.env.example
 npm-debug.log*
+
+# Kamba website generated output and local QA artifacts
+kamba-website/.vite/
+kamba-website/coverage/
+kamba-website/playwright-report/
+kamba-website/test-results/
+kamba-website/.eslintcache

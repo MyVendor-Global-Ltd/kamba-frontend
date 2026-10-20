@@ -1,0 +1,31 @@
+:root {
+  color-scheme: dark;
+  --bg: #04070a;
+  --bg2: #060c10;
+  --surface: #0a1520;
+  --surface2: #0f1f2e;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(45, 184, 69, 0.2);
+  --green: #2db845;
+  --green-dark: #1a6b2a;
+  --green-glow: rgba(45, 184, 69, 0.15);
+  --gold: #f5a623;
+  --gold-glow: rgba(245, 167, 35, 0.15);
+  --white: #fff;
+  --white-90: rgba(255, 255, 255, 0.9);
+  --white-60: rgba(255, 255, 255, 0.6);
+  --white-30: rgba(255, 255, 255, 0.3);
+  --white-10: rgba(255, 255, 255, 0.1);
+  --font-display: 'Clash Display', 'Arial Black', sans-serif;
+  --font-body: 'Cabinet Grotesk', 'Arial', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --hero-title: clamp(3.5rem, 9vw, 8rem);
+  --section-title: clamp(2.2rem, 5vw, 4rem);
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 48px;
+  --container: min(1240px, calc(100vw - 80px));
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-power: cubic-bezier(0.84, 0, 0.16, 1);
+}
