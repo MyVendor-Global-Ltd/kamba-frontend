@@ -1,4 +1,4 @@
-name: Kamba Production Builds
+name: Kamba Android APK
 
 on:
   push:
