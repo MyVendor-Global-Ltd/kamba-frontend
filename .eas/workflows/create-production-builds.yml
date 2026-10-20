@@ -1,15 +1,13 @@
-name: Kamba Android APK
+name: Kamba Production Builds
 
 on:
   push:
     tags:
       - 'v*'
-on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
-  build_android_apk:
-    name: Build Kamba Android APK
+  build_android:
     type: build
     params:
       platform: android
