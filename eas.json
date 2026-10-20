@@ -6,5 +6,5 @@
   "build": {
     "preview": { 
       "distribution": "internal", 
-      "buildType": "apk", 
+      "buildType": "apk"
     },
