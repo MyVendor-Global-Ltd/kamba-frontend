@@ -13,7 +13,8 @@ import { COLORS as C, FONTS as F, SIZES as S, SHADOWS } from '../theme';
 
 const HERO_IMAGE = require('../../assets/products/raffia-tote.jpg');
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
+  const isGuest = Boolean(route?.params?.isGuest);
   const [saved, setSaved] = useState([]);
   const [heroMotion] = useState(() => new Animated.Value(0));
   const products = useMemo(() => seedProducts.map((item) => ({ ...item, storeName: seedStores.find((store) => store.id === item.storeId)?.name || 'Local maker' })), []);
@@ -36,9 +37,10 @@ export default function HomeScreen({ navigation }) {
             <Pressable accessibilityRole="button" accessibilityLabel="Notifications" onPress={() => navigation.navigate('Notifications')} style={styles.roundButton}>
               <Ionicons name="notifications-outline" size={19} color={C.forest} /><View style={styles.notificationDot} />
             </Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Your profile" onPress={() => navigation.navigate('Profile')} style={styles.profileButton}><Text style={styles.profileInitial}>A</Text></Pressable>
+            {isGuest ? <Pressable accessibilityRole="button" onPress={() => navigation.getParent()?.navigate('Welcome')} style={styles.signInButton}><Text style={styles.signInText}>Sign in</Text></Pressable> : <Pressable accessibilityRole="button" accessibilityLabel="Your profile" onPress={() => navigation.navigate('Profile')} style={styles.profileButton}><Text style={styles.profileInitial}>A</Text></Pressable>}
           </View>
         </View>
+        {isGuest && <Pressable accessibilityRole="button" onPress={() => navigation.getParent()?.navigate('Welcome')} style={styles.guestBanner}><Ionicons name="person-circle-outline" size={18} color={C.forest}/><Text style={styles.guestText}>Browsing as a guest. Sign up to buy or sell.</Text><Ionicons name="arrow-forward" size={14} color={C.forest}/></Pressable>}
         <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Profile')} style={styles.locationRow}>
           <Ionicons name="location" size={15} color={C.jade} /><Text style={styles.locationKicker}>SHOPPING AROUND</Text><Text style={styles.locationName}>Umuahia, Abia</Text><Ionicons name="chevron-down" size={14} color={C.secondary} />
         </Pressable>
@@ -100,6 +102,10 @@ const styles = StyleSheet.create({
   notificationDot: { position: 'absolute', width: 7, height: 7, borderRadius: 4, top: 8, right: 9, backgroundColor: C.gold, borderWidth: 1, borderColor: C.paper },
   profileButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.goldPale, borderWidth: 2, borderColor: C.paper, alignItems: 'center', justifyContent: 'center' },
   profileInitial: { color: C.forest, fontFamily: F.display, fontSize: S.sm },
+  signInButton: { minHeight: 38, paddingHorizontal: S.gapMd, borderRadius: S.radiusFull, backgroundColor: C.forest, alignItems: 'center', justifyContent: 'center' },
+  signInText: { color: C.paper, fontFamily: F.semibold, fontSize: S.xs },
+  guestBanner: { marginHorizontal: S.page, marginTop: S.gapMd, paddingHorizontal: S.gapSm, paddingVertical: S.gapSm, borderRadius: S.radiusSm, backgroundColor: C.sand, flexDirection: 'row', alignItems: 'center', gap: S.gapSm },
+  guestText: { flex: 1, color: C.forest, fontFamily: F.medium, fontSize: S.xxs },
   locationRow: { marginHorizontal: S.page, marginTop: S.gapMd, flexDirection: 'row', alignItems: 'center', gap: 5 },
   locationKicker: { color: C.muted, fontFamily: F.semibold, fontSize: S.xxs, letterSpacing: 0.8, marginLeft: 2 },
   locationName: { color: C.ink, fontFamily: F.semibold, fontSize: S.xs, marginLeft: 2 },

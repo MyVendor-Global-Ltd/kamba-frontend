@@ -9,6 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import SplashScreen from './src/screens/auth/SplashScreen';
 import WelcomeScreen from './src/screens/auth/WelcomeScreen';
 import AuthScreen from './src/screens/auth/AuthScreen';
+import CongratulationsScreen from './src/screens/auth/CongratulationsScreen';
+import UsernameScreen from './src/screens/auth/UsernameScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import SearchScreen from './src/screens/main/SearchScreen';
 import OrdersScreen from './src/screens/main/OrdersScreen';
@@ -34,7 +37,7 @@ const TAB_ICONS = {
   Profile: { active: 'person-circle', idle: 'person-circle-outline' },
 };
 
-function MainTabs() {
+function MainTabs({ route }) {
   return (
     <Tab.Navigator initialRouteName="Home" screenOptions={({ route }) => ({
       headerShown: false,
@@ -44,7 +47,7 @@ function MainTabs() {
       tabBarStyle: { height: 68, paddingTop: 7, paddingBottom: 7, backgroundColor: C.paper, borderTopColor: C.line, borderTopWidth: 1, elevation: 0, shadowColor: C.forestDeep, shadowOpacity: 0.04, shadowRadius: 10, shadowOffset: { width: 0, height: -4 } },
       tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? TAB_ICONS[route.name].active : TAB_ICONS[route.name].idle} size={21} color={color} />,
     })}>
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} initialParams={{ isGuest: Boolean(route?.params?.isGuest) }} />
       <Tab.Screen name="Search" component={SearchScreen} />
       <Tab.Screen name="Orders" component={OrdersScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
@@ -61,6 +64,9 @@ function RootNavigator() {
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={AuthScreen} />
         <Stack.Screen name="Register" component={AuthScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+        <Stack.Screen name="Congratulations" component={CongratulationsScreen} />
+        <Stack.Screen name="Username" component={UsernameScreen} />
         <Stack.Screen name="MainTabs" component={MainTabs} options={{ gestureEnabled: false }} />
         <Stack.Screen name="Category" component={CategoryScreen} />
         <Stack.Screen name="Store" component={StoreScreen} />

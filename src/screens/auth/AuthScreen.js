@@ -11,7 +11,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AuthScreen({ navigation, route }) {
   const isRegister = route.name === 'Register';
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', referral: route.params?.referralCode || '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', referral: route.params?.r || route.params?.referralCode || '' });
   const [errors, setErrors] = useState({});
   const update = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -45,8 +45,8 @@ export default function AuthScreen({ navigation, route }) {
           <FormField label="Email address" icon="mail-outline" placeholder="you@example.com" value={form.email} onChangeText={(v) => update('email', v)} error={errors.email} keyboardType="email-address" autoCapitalize="none" autoFocus={!isRegister} />
           <FormField label="Password" icon="lock-closed-outline" placeholder="At least 8 characters" value={form.password} onChangeText={(v) => update('password', v)} error={errors.password} secure autoCapitalize="none" />
           {isRegister && <FormField label="Confirm password" icon="lock-closed-outline" placeholder="Enter your password again" value={form.confirmPassword} onChangeText={(v) => update('confirmPassword', v)} error={errors.confirmPassword} secure autoCapitalize="none" />}
-          {!isRegister && <Pressable onPress={() => Alert.alert('Password reset', 'Password recovery will be enabled when the secure authentication service is connected.')} style={styles.forgot}><Text style={styles.forgotText}>Forgot password?</Text></Pressable>}
-          {isRegister && <FormField label="Referral code (optional)" icon="ticket-outline" placeholder="If a friend invited you" value={form.referral} onChangeText={(v) => update('referral', v)} autoCapitalize="characters" />}
+          {!isRegister && <Pressable accessibilityRole="button" onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgot}><Text style={styles.forgotText}>Forgot password?</Text></Pressable>}
+          {isRegister && <FormField label="Referral code (optional)" icon="ticket-outline" placeholder="If a friend invited you" value={form.referral} onChangeText={(v) => update('referral', v)} autoCapitalize="characters" hint={form.referral ? 'Referral code applied automatically.' : 'Got an invite link? Code fills in automatically.'} />}
           <View style={styles.notice}><Ionicons name="shield-checkmark-outline" size={17} color={C.jade} /><Text style={styles.noticeText}>Your information is protected. We never display your password.</Text></View>
           <LuxuryButton label={isRegister ? 'Create account' : 'Sign in'} onPress={handleSubmit} icon={isRegister ? 'arrow-forward' : 'log-in-outline'} />
         </View>

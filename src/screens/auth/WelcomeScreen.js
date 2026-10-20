@@ -21,7 +21,7 @@ export default function WelcomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.topRow}><BrandMark size="compact" /><Pressable onPress={() => navigation.navigate('MainTabs')} style={styles.skip}><Text style={styles.skipText}>Explore first</Text><Ionicons name="arrow-forward" size={14} color={C.jade} /></Pressable></View>
+        <View style={styles.topRow}><BrandMark size="compact" /><Pressable accessibilityRole="button" onPress={() => navigation.navigate('MainTabs', { isGuest: true })} style={styles.skip}><Text style={styles.skipText}>Browse as guest</Text><Ionicons name="arrow-forward" size={14} color={C.jade} /></Pressable></View>
         <Animated.View style={[styles.collage, { opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] }]}>
           <View style={styles.sun} />
           <View style={[styles.photo, styles.photoMain, SHADOWS.card]}><Image source={VISUALS[0].source} resizeMode="cover" style={styles.mainPhoto} /></View>
