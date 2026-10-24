@@ -1,0 +1,124 @@
+KAMBA MOBILE APP — PROPRIETARY SOURCE-AVAILABLE LICENSE
+Version 1.0 | Effective Date: 2026-10-24
+
+Copyright (c) 2026 Kamba Technologies Limited. All rights reserved.
+
+================================================================================
+1. DEFINITIONS
+================================================================================
+"Software" means the Kamba Mobile App source code, including all source files,
+configuration, documentation, design system tokens, component library, navigation
+architecture, and associated assets contained in this repository.
+
+"Kamba" means Kamba Technologies Limited, a company registered in Nigeria.
+
+"Licensee" means any individual or entity that accesses, views, or obtains a copy
+of the Software.
+
+"Derivative Work" means any work based on or derived from the Software, including
+but not limited to modifications, adaptations, translations, or new works
+incorporating substantial portions of the Software.
+
+"Competitive Product" means any marketplace, e-commerce, classifieds, or
+hyperlocal buying/selling application targeting African university students
+or Nigerian consumers.
+
+================================================================================
+2. GRANT OF LIMITED RIGHTS
+================================================================================
+Subject to the terms and conditions of this License, Kamba grants Licensee a
+non-exclusive, non-transferable, revocable, limited right to:
+
+(a) VIEW and STUDY the Software source code for educational and evaluation
+    purposes only;
+
+(b) EXECUTE the Software locally via Expo Go or development builds for
+    personal, non-commercial testing and review.
+
+NO OTHER RIGHTS ARE GRANTED. All rights not expressly granted herein are
+reserved by Kamba.
+
+================================================================================
+3. EXPLICIT PROHIBITIONS
+================================================================================
+Licensee SHALL NOT, directly or indirectly:
+
+(a) COPY, REPRODUCE, DISTRIBUTE, PUBLISH, or SUBCLICENSE the Software or any
+    portion thereof in any form or medium;
+
+(c) CREATE DERIVATIVE WORKS based on the Software, including but not limited to:
+    - Forking or cloning this repository for any purpose;
+    - Extracting design tokens, color palettes, typography scales, spacing
+      systems, or animation configurations for use in other projects;
+    - Replicating component APIs, patterns, or architectures (including but
+      not limited to KambaButton, KambaInput, KambaOTPInput, KambaPhoneInput,
+      AnimatedText, GlowCard, UsernameAvailability, ScreenShell);
+    - Reusing navigation structures, authentication flows, or screen
+      architectures;
+    - Adapting the SVG illustrations, logo designs, or icon systems;
+
+(d) USE the Software or any Derivative Work in connection with a COMPETITIVE
+    PRODUCT, whether commercial or non-commercial;
+
+(e) REMOVE, ALTER, or OBSCURE any copyright, trademark, or proprietary notices
+    in the Software;
+
+(f) REVERSE ENGINEER, DECOMPILE, or DISASSEMBLE the Software (except to the
+    extent expressly permitted by applicable law);
+
+(g) TRANSFER, ASSIGN, SUBLICENSE, LEASE, RENT, or otherwise ENCUMBER rights
+    under this License.
+
+================================================================================
+4. NO WARRANTY
+================================================================================
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. KAMBA DOES NOT
+WARRANT THAT THE SOFTWARE IS ERROR-FREE, SECURE, OR UNINTERRUPTED.
+
+IN NO EVENT SHALL KAMBA BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING LOST PROFITS, DATA,
+OR BUSINESS INTERRUPTION) ARISING FROM THE USE OR INABILITY TO USE THE
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+================================================================================
+5. TERM AND TERMINATION
+================================================================================
+This License is effective until terminated. Kamba may terminate this License
+immediately, without notice, if Licensee breaches any term. Upon termination,
+Licensee must immediately destroy all copies of the Software in Licensee's
+possession or control.
+
+Sections 3, 4, 5, 6, and 7 survive termination.
+
+================================================================================
+6. GOVERNING LAW AND JURISDICTION
+================================================================================
+This License is governed by the laws of the Federal Republic of Nigeria.
+Any dispute arising under this License shall be resolved exclusively in the
+courts of Lagos State, Nigeria.
+
+================================================================================
+7. GENERAL
+================================================================================
+This License constitutes the entire agreement between Kamba and Licensee
+regarding the Software. If any provision is held unenforceable, the remaining
+provisions continue in effect. Waiver of any breach does not constitute waiver
+of subsequent breaches.
+
+================================================================================
+8. TRADEMARKS
+================================================================================
+"Kamba", the Kamba bag logo, the coral/navy/gold color scheme as applied to
+marketplace applications, and the "makes it easy..." tagline are trademarks of
+Kamba Technologies Limited. This License does not grant any trademark rights.
+
+================================================================================
+CONTACT
+================================================================================
+For licensing inquiries, partnership discussions, or permission requests:
+legal@kamba.ng
+
+Kamba Technologies Limited
+Lagos, Nigeria
