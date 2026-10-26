@@ -1,3 +1,37 @@
+// App.js - FIRST LINES (replace the polyfill block)
+if (typeof global.EventEmitter === 'undefined') {
+  // Minimal EventEmitter implementation (no native deps)
+  global.EventEmitter = class EventEmitter {
+    constructor() {
+      this._events = {};
+    }
+    addListener(eventName, listener) {
+      if (!this._events[eventName]) this._events[eventName] = [];
+      this._events[eventName].push(listener);
+      return () => this.removeListener(eventName, listener);
+    }
+    on(eventName, listener) { return this.addListener(eventName, listener); }
+    removeListener(eventName, listener) {
+      if (!this._events[eventName]) return;
+      this._events[eventName] = this._events[eventName].filter(l => l !== listener);
+    }
+    off(eventName, listener) { return this.removeListener(eventName, listener); }
+    emit(eventName, ...args) {
+      if (!this._events[eventName]) return false;
+      this._events[eventName].forEach(l => l(...args));
+      return true;
+    }
+    removeAllListeners(eventName) {
+      if (eventName) delete this._events[eventName];
+      else this._events = {};
+    }
+    listenerCount(eventName) {
+      return this._events[eventName]?.length || 0;
+    }
+  };
+}
+
+
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, StatusBar } from 'react-native';
 import * as Font from 'expo-font';
