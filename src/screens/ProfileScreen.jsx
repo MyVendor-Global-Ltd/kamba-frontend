@@ -1,10 +1,86 @@
+const styles = StyleSheet.create({
+  container: { gap: spacing.xl },
+  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border },
+  avatarCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.light.accentSoft, overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%' },
+  userInfo: { flex: 1, gap: spacing.xs },
+  usernameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  username: { fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineMedium.fontSize, lineHeight: typography.scale.headlineMedium.lineHeight, letterSpacing: typography.scale.headlineMedium.letterSpacing, color: colors.light.textPrimary },
+  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.light.successSoft, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.full },
+  verifiedText: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.success },
+  memberSince: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textMuted },
+  menuSection: { gap: spacing.xs },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.light.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border },
+  menuIcon: { width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.light.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  menuLabel: { flex: 1, fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleLarge.fontSize, color: colors.light.textPrimary },
+  menuChevron: { fontFamily: typography.fontFamilies.mono, fontSize: typography.scale.monoLarge.fontSize, color: colors.light.textMuted },
+  logoutSection: { marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.light.border },
+});
+
+export default ProfileScreen;
+return (
+    <ScreenShell scrollable padded bg={colors.light.background}>
+      <View style={styles.container}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarCircle}>
+            <Image
+              source={{ uri: 'https://picsum.photos/seed/user-avatar/200/200' }}
+              style={styles.avatarImage}
+            />
+          </View>
+          <View style={styles.userInfo}>
+            <View style={styles.usernameRow}>
+              <Text style={styles.username}>@{username}</Text>
+              <View style={styles.verifiedBadge}>
+                <ShieldCheck size={14} color={colors.light.success} weight="bold" />
+                <Text style={styles.verifiedText}>Verified</Text>
+              </View>
+            </View>
+            <Text style={styles.memberSince}>Member since 2024</Text>
+          </View>
+        </View>
+
+        <View style={styles.menuSection}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={item.label}
+              style={styles.menuItem}
+              onPress={() => navigation.navigate(item.route)}
+              activeOpacity={0.8}
+              accessibilityLabel={item.label}
+              accessibilityRole="button"
+            >
+              <View style={styles.menuIcon}>
+                <item.icon size={24} color={colors.light.textPrimary} weight="bold" />
+              </View>
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <Text style={styles.menuChevron}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.logoutSection}>
+          <MagneticButton
+            label="Log Out"
+            variant="destructive"
+            size="md"
+            fullWidth
+            onPress={handleLogout}
+          />
+        </View>
+      </View>
+    </ScreenShell>
+  );
+};
+// screens/ProfileScreen.jsx — Marketplace Profile
+
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { User, ShieldCheck, LogOut } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { User, ShieldCheck, LogOut, Settings, Bell, Heart, CreditCard, Package, MapPin } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, typography, spacing, radius } from '../theme';
+import { colors, typography, spacing, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { KambaButton } from '../components/KambaButton';
+import { MagneticButton } from '../components/MagneticButton';
 import { storage } from '../utils/storage';
 
 export const ProfileScreen = ({ navigation }) => {
@@ -27,69 +103,12 @@ export const ProfileScreen = ({ navigation }) => {
     });
   };
 
-  return (
-    <ScreenShell padded bg={colors.ink}>
-      <View style={styles.container}>
-        <View style={styles.avatarCircle}>
-          <User size={44} color={colors.coral} strokeWidth={2} />
-        </View>
-
-        <View style={styles.userInfo}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={styles.username}>@{username}</Text>
-            <ShieldCheck size={16} color={colors.gold} strokeWidth={2.5} />
-          </View>
-          <Text style={styles.badge}>UNILAG Verified Student</Text>
-        </View>
-
-        <View style={styles.actions}>
-          <KambaButton
-            label="Log Out"
-            variant="secondary"
-            fullWidth
-            icon={<LogOut size={16} color={colors.textPrimary} />}
-            onPress={handleLogout}
-          />
-        </View>
-      </View>
-    </ScreenShell>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    paddingTop: 40,
-    gap: spacing.lg,
-  },
-  avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: colors.coralDim,
-    borderWidth: 2,
-    borderColor: colors.coral,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userInfo: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  username: {
-    fontFamily: typography.fontFamilies.displayHeavy,
-    fontSize: 24,
-    color: colors.textPrimary,
-  },
-  badge: {
-    fontFamily: typography.fontFamilies.body,
-    fontSize: 13,
-    color: colors.gold,
-  },
-  actions: {
-    width: '100%',
-    marginTop: spacing.xxl,
-  },
-});
-
-export default ProfileScreen;
+  const menuItems = [
+    { icon: User, label: 'My Profile', route: 'ProfileDetail' },
+    { icon: Bell, label: 'Notifications', route: 'Notifications' },
+    { icon: Heart, label: 'Favorites', route: 'Favorites' },
+    { icon: Package, label: 'My Orders', route: 'Orders' },
+    { icon: CreditCard, label: 'Payment Methods', route: 'Payments' },
+    { icon: MapPin, label: 'Addresses', route: 'Addresses' },
+    { icon: Settings, label: 'Settings', route: 'Settings' },
+  ];

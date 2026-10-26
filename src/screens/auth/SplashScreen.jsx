@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { colors, typography, spacing } from '../../theme';
+import { colors, typography, spacing } from '../../theme/tokens';
 import { KambaLogo } from '../../components/KambaLogo';
 import { storage } from '../../utils/storage';
 
@@ -98,8 +98,6 @@ export const SplashScreen = ({ navigation }) => {
 
         if (token && username) {
           navigation.replace('Main');
-        } else if (token && !username) {
-          navigation.replace('Username');
         } else {
           navigation.replace('Auth');
         }
@@ -112,7 +110,7 @@ export const SplashScreen = ({ navigation }) => {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.ink,
+      backgroundColor: colors.light.background,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -130,9 +128,9 @@ export const SplashScreen = ({ navigation }) => {
     },
     tagline: {
       opacity: taglineOpacity,
-      color: colors.textSecondary,
+      color: colors.light.textSecondary,
       fontFamily: typography.fontFamilies.body,
-      fontSize: typography.sizes.sm,
+      fontSize: typography.scale.bodyMedium.fontSize,
       letterSpacing: 1.5,
       fontStyle: 'italic',
     },
@@ -140,13 +138,13 @@ export const SplashScreen = ({ navigation }) => {
       flexDirection: 'row',
       gap: spacing.sm,
       position: 'absolute',
-      bottom: 80,
+      bottom: 100,
     },
     dot: {
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: colors.coral,
+      backgroundColor: colors.light.accent,
     },
   });
 
@@ -154,12 +152,12 @@ export const SplashScreen = ({ navigation }) => {
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <View style={styles.centerStack}>
         <Animated.View style={styles.logoContainer}>
-          <KambaLogo variant="icon" size={72} color={colors.coral} />
+          <KambaLogo variant="icon" size={72} color={colors.light.accent} />
         </Animated.View>
         <Animated.View style={styles.wordmark}>
-          <KambaLogo variant="wordmark" size={32} color={colors.coral} />
+          <KambaLogo variant="wordmark" size={32} color={colors.light.accent} />
         </Animated.View>
-        <Animated.Text style={styles.tagline}>makes it easy...</Animated.Text>
+        <Animated.Text style={styles.tagline}>Your campus marketplace</Animated.Text>
       </View>
       <View style={styles.loadingDots}>
         <Animated.View style={[styles.dot, { opacity: pulse1 }]} />

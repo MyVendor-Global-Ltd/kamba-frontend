@@ -1,78 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet, Animated, Easing } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme';
-import { storage } from '../utils/storage';
-import { Home, Search, Package, Bell, User } from 'lucide-react-native';
-
-import { SplashScreen } from '../screens/auth/SplashScreen';
-import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
-import { RegisterScreen } from '../screens/auth/RegisterScreen';
-import { UsernameScreen } from '../screens/auth/UsernameScreen';
-import { PhoneVerifyScreen } from '../screens/auth/PhoneVerifyScreen';
-import { OTPScreen } from '../screens/auth/OTPScreen';
-import { LoginScreen } from '../screens/auth/LoginScreen';
-import { HomeScreen } from '../screens/HomeScreen';
-import { SearchScreen } from '../screens/SearchScreen';
-import { OrdersScreen } from '../screens/OrdersScreen';
-import { NotificationsScreen } from '../screens/NotificationsScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
-
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-
-const screenOptions = {
-  headerStyle: { backgroundColor: colors.ink },
-  headerTintColor: colors.textPrimary,
-  headerTitleStyle: {
-    fontFamily: typography.fontFamilies.display,
-    fontSize: typography.sizes.lg,
-    letterSpacing: typography.letterSpacing.tight,
-  },
-  headerShadowVisible: false,
-  cardStyleInterpolator: ({ current }) => ({
-    cardStyle: { opacity: current.progress },
-  }),
-  transitionSpec: {
-    open: {
-      animation: 'spring',
-      config: { damping: 22, stiffness: 200 },
-    },
-    close: {
-      animation: 'spring',
-      config: { damping: 26, stiffness: 200 },
-    },
-  },
-};
-
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.ink },
-        headerTintColor: colors.textPrimary,
+        headerStyle: { backgroundColor: colors.light.background },
+        headerTintColor: colors.light.textPrimary,
         headerTitleStyle: {
-          fontFamily: typography.fontFamilies.display,
-          fontSize: typography.sizes.lg,
-          letterSpacing: typography.letterSpacing.tight,
+          fontFamily: typography.fontFamilies.headline,
+          fontSize: typography.scale.headlineMedium.fontSize,
+          letterSpacing: typography.scale.headlineMedium.letterSpacing,
         },
         headerShadowVisible: false,
-        tabBarActiveTintColor: colors.coral,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarActiveTintColor: colors.light.accent,
+        tabBarInactiveTintColor: colors.light.textMuted,
         tabBarStyle: {
-          backgroundColor: colors.ink,
-          borderTopColor: colors.inkBorder,
+          backgroundColor: colors.light.surface,
+          borderTopColor: colors.light.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: 72,
+          paddingBottom: 12,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontFamily: typography.fontFamilies.bodyMedium,
-          fontSize: typography.sizes.xs,
-          letterSpacing: 0.5,
+          fontFamily: typography.fontFamilies.chip,
+          fontSize: typography.scale.labelSmall.fontSize,
+          letterSpacing: 0.2,
         },
         tabBarIconStyle: { marginTop: 2 },
       }}
@@ -82,31 +33,29 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color, size }) => (
+            <Home size={size} color={color} weight="bold" />
+          ),
         }}
       />
       <Tab.Screen
-        name="Search"
-        component={SearchScreen}
+        name="Discover"
+        component={DiscoverScreen}
         options={{
-          tabBarLabel: 'Search',
-          tabBarIcon: ({ color, size }) => <Search size={size} color={color} strokeWidth={2} />,
+          tabBarLabel: 'Discover',
+          tabBarIcon: ({ color, size }) => (
+            <Grid size={size} color={color} weight="bold" />
+          ),
         }}
       />
       <Tab.Screen
-        name="Orders"
-        component={OrdersScreen}
+        name="Cart"
+        component={CartScreen}
         options={{
-          tabBarLabel: 'Orders',
-          tabBarIcon: ({ color, size }) => <Package size={size} color={color} strokeWidth={2} />,
-        }}
-      />
-      <Tab.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{
-          tabBarLabel: 'Updates',
-          tabBarIcon: ({ color, size }) => <Bell size={size} color={color} strokeWidth={2} />,
+          tabBarLabel: 'Cart',
+          tabBarIcon: ({ color, size }) => (
+            <ShoppingBag size={size} color={color} weight="bold" />
+          ),
         }}
       />
       <Tab.Screen
@@ -114,7 +63,9 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color, size }) => (
+            <User size={size} color={color} weight="bold" />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -129,47 +80,16 @@ function AuthStack() {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{
-          headerShown: true,
-          headerTitle: 'Create account',
-          headerBackTitle: 'Back',
-        }}
-      />
-      <Stack.Screen
-        name="Username"
-        component={UsernameScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PhoneVerify"
-        component={PhoneVerifyScreen}
-        options={{
-          headerShown: true,
-          headerTitle: 'Add your number',
-          headerBackTitle: 'Back',
-        }}
-      />
-      <Stack.Screen
-        name="OTP"
-        component={OTPScreen}
-        options={{
-          headerShown: true,
-          headerTitle: 'Enter the code',
-          headerBackTitle: 'Back',
-        }}
+        options={{ headerShown: true, headerTitle: 'Create account', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{
-          headerShown: true,
-          headerTitle: 'Welcome back',
-          headerBackTitle: 'Onboarding',
-        }}
+        options={{ headerShown: true, headerTitle: 'Welcome back', headerBackTitle: 'Back' }}
       />
     </Stack.Navigator>
   );
@@ -184,8 +104,6 @@ function RootNavigator() {
       const username = await storage.getUsername();
       if (token && username) {
         setInitialRoute('Main');
-      } else if (token && !username) {
-        setInitialRoute('Username');
       } else {
         setInitialRoute('Auth');
       }
@@ -194,7 +112,7 @@ function RootNavigator() {
   }, []);
 
   if (!initialRoute) {
-    return null;
+    return <SplashScreen />;
   }
 
   return (
@@ -219,11 +137,6 @@ function RootNavigator() {
         component={MainTabs}
         options={{ headerShown: false, animationType: 'fade' }}
       />
-      <Stack.Screen
-        name="Username"
-        component={UsernameScreen}
-        options={{ headerShown: false }}
-      />
     </Stack.Navigator>
   );
 }
@@ -235,3 +148,41 @@ export const AppNavigator = () => (
 );
 
 export default AppNavigator;
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { colors, typography, spacing, radius } from '../theme/tokens';
+import { storage } from '../utils/storage';
+import { Home, Search, ShoppingBag, User, Grid } from 'phosphor-react-native';
+
+import { SplashScreen } from '../screens/auth/SplashScreen';
+import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
+import { RegisterScreen } from '../screens/auth/RegisterScreen';
+import { LoginScreen } from '../screens/auth/LoginScreen';
+import { HomeScreen } from '../screens/HomeScreen';
+import { DiscoverScreen } from '../screens/DiscoverScreen';
+import { CartScreen } from '../screens/CartScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const screenOptions = {
+  headerStyle: { backgroundColor: colors.light.background },
+  headerTintColor: colors.light.textPrimary,
+  headerTitleStyle: {
+    fontFamily: typography.fontFamilies.headline,
+    fontSize: typography.scale.headlineMedium.fontSize,
+    letterSpacing: typography.scale.headlineMedium.letterSpacing,
+  },
+  headerShadowVisible: false,
+  cardStyleInterpolator: ({ current }) => ({
+    cardStyle: { opacity: current.progress },
+  }),
+  transitionSpec: {
+    open: { animation: 'spring', config: { damping: 22, stiffness: 200 } },
+    close: { animation: 'spring', config: { damping: 26, stiffness: 200 } },
+  },
+};

@@ -1,350 +1,288 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Keyboard,
-} from 'react-native';
-import { ChevronLeft, Mail, Check } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
-import { colors, typography, spacing, radius } from '../../theme';
-import { ScreenShell } from '../../components/ScreenShell';
-import { KambaButton } from '../../components/KambaButton';
-import { KambaInput } from '../../components/KambaInput';
-import { SocialAuthButton } from '../../components/SocialAuthButton';
-import { AnimatedText } from '../../components/AnimatedText';
-import { storage } from '../../utils/storage';
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.light.background },
+  content: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.xl },
+  backButton: { paddingVertical: spacing.xs, marginBottom: spacing.md },
+  backText: { fontFamily: typography.fontFamilies.bodyMedium, fontSize: typography.scale.bodyMedium.fontSize, color: colors.light.textSecondary },
+  brandSection: { alignItems: 'center', marginBottom: spacing.xl },
+  title: { marginTop: spacing.md, fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineLarge.fontSize, lineHeight: typography.scale.headlineLarge.lineHeight, letterSpacing: typography.scale.headlineLarge.letterSpacing, color: colors.light.textPrimary },
+  subtitle: { marginTop: spacing.xs, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, lineHeight: typography.scale.bodyMedium.lineHeight, color: colors.light.textSecondary, textAlign: 'center' },
+  form: { gap: spacing.md, marginBottom: spacing.xl },
+  passwordStrength: { marginTop: spacing.xs, gap: spacing.xs },
+  strengthBar: { flexDirection: 'row', gap: 4, height: 4 },
+  strengthSegment: { flex: 1, borderRadius: 2, backgroundColor: colors.light.border },
+  strengthFilled: { backgroundColor: colors.light.accent },
+  strengthLabel: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.textMuted },
+  submitSection: { gap: spacing.md, paddingTop: spacing.md },
+  loginLink: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  loginLinkText: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, color: colors.light.textSecondary },
+  loginLinkAction: { fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize, color: colors.light.accent },
+});
 
-export const RegisterScreen = ({ navigation, route }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState('');
-  const [isReferralLocked, setIsReferralLocked] = useState(false);
+export default RegisterScreen;
+return (
+    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <View style={styles.content}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backText}>← Back</Text>
+        </TouchableOpacity>
 
-  // Field errors
-  const [emailError, setEmailError] = useState(null);
-  const [passwordError, setPasswordError] = useState(null);
-  const [confirmError, setConfirmError] = useState(null);
-  const [loading, setLoading] = useState(false);
+        <View style={styles.brandSection}>
+          <KambaLogo variant="full" size={36} />
+          <Text style={styles.title}>Create your account</Text>
+          <Text style={styles.subtitle}>Join Kamba to discover campus stores</Text>
+        </View>
 
-  // Staggered entrance animations for form elements
-  const anim1 = useRef(new Animated.Value(0)).current;
-  const anim2 = useRef(new Animated.Value(0)).current;
-  const anim3 = useRef(new Animated.Value(0)).current;
-  const anim4 = useRef(new Animated.Value(0)).current;
-  const anim5 = useRef(new Animated.Value(0)).current;
+        <View style={styles.form}>
+          <StyledInput
+            label="Username"
+            placeholder="johndoe"
+            value={username}
+            onChangeText={setUsername}
+            error={usernameError}
+            hint={usernameChecking ? 'Checking...' : usernameAvailable === true ? 'Available' : usernameAvailable === false ? 'Taken' : '3+ characters, letters/numbers/_'}
+            hintStyle={usernameChecking ? { color: colors.light.accent } : usernameAvailable === true ? { color: colors.light.success } : usernameAvailable === false ? { color: colors.light.error } : undefined}
+            autoCapitalize="none"
+            autoCompleteType="username"
+            textContentType="username"
+            required
+            testID="username-input"
+          />
 
-  useEffect(() => {
-    // Check invite param ?r=
-    const { r } = route?.params || {};
-    if (r) {
-      setReferralCode(String(r).toUpperCase());
-      setIsReferralLocked(true);
-    }
+          <StyledInput
+            label="Email"
+            placeholder="you@university.edu"
+            value={email}
+            onChangeText={setEmail}
+            error={emailError}
+            hint="We'll only send important updates"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCompleteType="email"
+            textContentType="emailAddress"
+            required
+            testID="email-input"
+          />
 
-    // Stagger form entrance
-    Animated.stagger(70, [
-      Animated.timing(anim1, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(anim2, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(anim3, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(anim4, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.timing(anim5, { toValue: 1, duration: 400, useNativeDriver: true }),
-    ]).start();
-  }, [route?.params]);
+          <StyledInput
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            error={passwordError}
+            hint={password.length > 0 && password.length < 8 ? 'At least 8 characters' : undefined}
+            secureTextEntry
+            required
+            testID="password-input"
+          />
 
-  const validate = () => {
-    let isValid = true;
+          {password.length > 0 && (
+            <View style={styles.passwordStrength}>
+              <View style={styles.strengthBar}>
+                {[1, 2, 3].map((level) => (
+                  <View
+                    key={level}
+                    style={[
+                      styles.strengthSegment,
+                      level <= passwordStrength ? styles.strengthFilled : {},
+                      level === 1 && { backgroundColor: colors.light.error },
+                      level === 2 && { backgroundColor: colors.light.warning },
+                      level === 3 && { backgroundColor: colors.light.success },
+                    ]}
+                  />
+                ))}
+              </View>
+              <Text style={styles.strengthLabel}>
+                {passwordStrength === 1 ? 'Weak' : passwordStrength === 2 ? 'Medium' : 'Strong'}
+              </Text>
+            </View>
+          )}
+
+          <StyledInput
+            label="Confirm Password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            error={confirmError}
+            secureTextEntry
+            required
+            testID="confirm-password-input"
+          />
+
+          <StyledInput
+            label="Referral Code (optional)"
+            placeholder="INVITE123"
+            value={referralCode}
+            onChangeText={(t) => setReferralCode(t.toUpperCase())}
+            hint="Have a referral code? Enter it here"
+            autoCapitalize="characters"
+            testID="referral-input"
+          />
+        </View>
+
+        <View style={styles.submitSection}>
+          <MagneticButton
+            label="Create account"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={loading}
+            onPress={handleRegister}
+            accessibilityLabel="Create your Kamba account"
+          />
+
+          <View style={styles.loginLink}>
+            <Text style={styles.loginLinkText}>Already have an account? </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Login')}
+              accessibilityLabel="Go to login"
+            >
+              <Text style={styles.loginLinkAction}>Sign in</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
+
+// Debounce utility
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+const validate = () => {
+    let valid = true;
+    setUsernameError(null);
     setEmailError(null);
     setPasswordError(null);
     setConfirmError(null);
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email.trim())) {
-      setEmailError('Enter a valid email address');
-      isValid = false;
+    if (!username.trim()) {
+      setUsernameError('Username is required');
+      valid = false;
+    } else if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      valid = false;
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameError('Letters, numbers, and underscore only');
+      valid = false;
+    } else if (usernameAvailable === false) {
+      setUsernameError('Username already taken');
+      valid = false;
     }
 
-    if (!password || password.length < 8) {
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Enter a valid email address');
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      valid = false;
+    } else if (password.length < 8) {
       setPasswordError('Password must be at least 8 characters');
-      isValid = false;
+      valid = false;
     }
 
     if (password !== confirmPassword) {
       setConfirmError('Passwords do not match');
-      isValid = false;
+      valid = false;
     }
 
-    return isValid;
+    return valid;
   };
 
   const handleRegister = async () => {
     Keyboard.dismiss();
-    if (!validate()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
+    if (!validate()) return;
 
     setLoading(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
     try {
-      // Simulate registration & store auth token
+      await new Promise((r) => setTimeout(r, 1500));
       const mockToken = 'kamba_mock_token_' + Date.now();
       await storage.setToken(mockToken);
-      await storage.setUserData({ email: email.trim(), referralCode });
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // Pass email to UsernameScreen for dynamic suggestions
-      navigation.navigate('Username', { email: email.trim() });
-    } catch (err) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setEmailError('Something went wrong. Please try again.');
+      await storage.setUsername(username.trim());
+      navigation.replace('Main');
+    } catch (error) {
+      console.error('Registration failed:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const passwordsMatch = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
-
-  const makeAnimStyle = (anim) => ({
-    opacity: anim,
-    transform: [
-      {
-        translateY: anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [18, 0],
-        }),
-      },
-    ],
-  });
-
-  return (
-    <ScreenShell scrollable padded bg={colors.ink}>
-      {/* Top Header */}
-      <View style={styles.topSection}>
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.goBack();
-          }}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <ChevronLeft size={24} color={colors.textPrimary} strokeWidth={2.5} />
-        </TouchableOpacity>
-
-        <Text style={styles.screenTitle}>Create account</Text>
-      </View>
-
-      <View style={styles.subTitleWrapper}>
-        <AnimatedText
-          text="Join thousands of buyers and sellers."
-          style={styles.subTitleText}
-          stagger={40}
-        />
-      </View>
-
-      {/* Social Auth First */}
-      <View style={styles.socialGroup}>
-        <SocialAuthButton
-          provider="google"
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }}
-        />
-        <SocialAuthButton
-          provider="phone"
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.navigate('PhoneVerify');
-          }}
-        />
-      </View>
-
-      {/* Divider */}
-      <View style={styles.dividerRow}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or with email</Text>
-        <View style={styles.dividerLine} />
-      </View>
-
-      {/* Form Fields - Stagger Animated */}
-      <View style={styles.formGroup}>
-        <Animated.View style={makeAnimStyle(anim1)}>
-          <KambaInput
-            label="Email address"
-            placeholder="you@campus.edu.ng"
-            value={email}
-            onChangeText={(txt) => {
-              setEmail(txt);
-              if (emailError) setEmailError(null);
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            error={emailError}
-            leftElement={<Mail size={18} color={colors.textTertiary} strokeWidth={2} />}
-          />
-        </Animated.View>
-
-        <Animated.View style={makeAnimStyle(anim2)}>
-          <KambaInput
-            label="Password"
-            placeholder="At least 8 characters"
-            value={password}
-            onChangeText={(txt) => {
-              setPassword(txt);
-              if (passwordError) setPasswordError(null);
-            }}
-            secureTextEntry
-            error={passwordError}
-          />
-        </Animated.View>
-
-        <Animated.View style={makeAnimStyle(anim3)}>
-          <KambaInput
-            label="Confirm Password"
-            placeholder="Re-enter password"
-            value={confirmPassword}
-            onChangeText={(txt) => {
-              setConfirmPassword(txt);
-              if (confirmError) setConfirmError(null);
-            }}
-            secureTextEntry
-            error={confirmError}
-            rightElement={
-              passwordsMatch ? (
-                <View style={styles.matchTick}>
-                  <Check size={16} color={colors.success} strokeWidth={2.5} />
-                </View>
-              ) : null
-            }
-          />
-        </Animated.View>
-
-        <Animated.View style={makeAnimStyle(anim4)}>
-          <KambaInput
-            label="Referral Code (optional)"
-            placeholder="INVITE CODE"
-            value={referralCode}
-            onChangeText={(txt) => setReferralCode(txt.toUpperCase())}
-            autoCapitalize="characters"
-            editable={!isReferralLocked}
-            hint={
-              isReferralLocked
-                ? 'Applied from your invite link'
-                : 'Have an invite code? Enter it here.'
-            }
-            hintStyle={isReferralLocked ? { color: colors.success } : null}
-          />
-        </Animated.View>
-
-        <Animated.View style={[makeAnimStyle(anim5), { marginTop: spacing.md }]}>
-          <KambaButton
-            label="Create Account"
-            variant="primary"
-            fullWidth
-            loading={loading}
-            onPress={handleRegister}
-          />
-
-          <View style={styles.termsWrapper}>
-            <Text style={styles.termsText}>
-              By continuing you agree to our{' '}
-              <Text style={styles.termsLink}>Terms</Text> and{' '}
-              <Text style={styles.termsLink}>Privacy Policy</Text>
-            </Text>
-          </View>
-        </Animated.View>
-      </View>
-    </ScreenShell>
+  const passwordStrength = password.length === 0 ? 0 : 
+    password.length < 8 ? 1 : 
+    password.length < 12 ? 2 : 3;
+// Debounced username availability check
+  const checkUsernameAvailability = useCallback(
+    debounce(async (value) => {
+      if (!value || value.length < 3) {
+        setUsernameAvailable(null);
+        return;
+      }
+      setUsernameChecking(true);
+      setUsernameError(null);
+      try {
+        await new Promise((r) => setTimeout(r, 800));
+        const taken = ['admin', 'kamba', 'support', 'test', 'demo'].includes(value.toLowerCase());
+        setUsernameAvailable(!taken);
+        if (taken) setUsernameError('Username already taken');
+      } catch {
+        setUsernameError('Could not check availability');
+      } finally {
+        setUsernameChecking(false);
+      }
+    }, 1500),
+    []
   );
-};
 
-const styles = StyleSheet.create({
-  topSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    backgroundColor: colors.inkRaised,
-    borderWidth: 1,
-    borderColor: colors.inkBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  screenTitle: {
-    fontFamily: typography.fontFamilies.display,
-    fontSize: 22,
-    color: colors.textPrimary,
-    letterSpacing: typography.letterSpacing.tight,
-  },
-  subTitleWrapper: {
-    marginBottom: spacing.lg,
-    paddingLeft: 2,
-  },
-  subTitleText: {
-    fontFamily: typography.fontFamilies.body,
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  socialGroup: {
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.inkBorder,
-  },
-  dividerText: {
-    fontFamily: typography.fontFamilies.body,
-    fontSize: 12,
-    color: colors.textTertiary,
-  },
-  formGroup: {
-    gap: spacing.base,
-  },
-  matchTick: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(34,197,94,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  termsWrapper: {
-    marginTop: spacing.base,
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  termsText: {
-    fontFamily: typography.fontFamilies.body,
-    fontSize: 11,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  termsLink: {
-    color: colors.coral,
-    fontFamily: typography.fontFamilies.bodyMedium,
-  },
-});
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: motion.duration.slower, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: motion.duration.slower, easing: motion.easing.standard, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
-export default RegisterScreen;
+  useEffect(() => {
+    checkUsernameAvailability(username);
+  }, [username, checkUsernameAvailability]);
+// screens/auth/RegisterScreen.jsx — Single-screen registration
+// Username, Email, Password, Confirm Password, Optional Referral Code
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Keyboard } from 'react-native';
+import { KambaLogo } from '../../components/KambaLogo';
+import { MagneticButton } from '../../components/MagneticButton';
+import { StyledInput } from '../../components/StyledInput';
+import { colors, typography, spacing, radius, motion } from '../../theme/tokens';
+import { storage } from '../../utils/storage';
+
+export const RegisterScreen = ({ navigation }) => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+
+  const [usernameError, setUsernameError] = useState(null);
+  const [emailError, setEmailError] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [confirmError, setConfirmError] = useState(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;

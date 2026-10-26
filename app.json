@@ -4,10 +4,10 @@
     "slug": "kamba",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0A0E1A",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFFDFC",
     "splash": {
-      "backgroundColor": "#0A0E1A",
+      "backgroundColor": "#FFFDFC",
       "resizeMode": "contain"
     },
     "ios": {
@@ -15,7 +15,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A0E1A"
+        "backgroundColor": "#FFFDFC"
       }
     },
     "web": {
