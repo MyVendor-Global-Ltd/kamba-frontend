@@ -1,53 +1,51 @@
 # Kamba Frontend Debugging Progress
 
-- Repository: https://github.com/MyVendor-Global-Ltd/kamba-frontend
-- Backend repository: not modified.
-- Initial branch / commit: `main` / `c4c14d370405ca1c3c52dabc21cf3a7d31a0c83e`
-- Working branch: `fix/expo-runtime-stability`
-- Latest verified code commit: `370a65a737fec9909cb91793fba11075bb53f78a`
-- Push status: code commit pushed successfully to `origin/fix/expo-runtime-stability`; progress-log update is being committed separately.
+## Repository and checkpoint
 
-## Environment and commands
+Frontend repository: `https://github.com/MyVendor-Global-Ltd/kamba-frontend`.
+Backend repository, inspected read-only: `https://github.com/MyVendor-Global-Ltd/Kamba` (HEAD at inspection: `e5fb5b86ab1f03ec952994d9ef8be8b677e48915`). Backend files have not been modified.
 
-- Environment: Manus Sandbox, Node/npm, Expo web preview. Native Expo Go, Android, and iOS were not available.
-- Dependencies were restored from the existing lockfile (`npm ci`); no dependency upgrades were made in this checkpoint.
-- Dev preview command: `npx expo start --web --port 8081`.
-- Production web export: `npx expo export --platform web --output-dir /tmp/kamba-web-export-final3` — passed; web bundle exported.
-- Diagnostics: `npx expo-doctor` — 18/20 checks passed. Remaining findings: `app.json` `splash` schema warning and four Expo SDK patch-version mismatches (`expo` 58.0.19 vs ~58.0.21, `expo-font` 58.0.10 vs ~58.0.11, `expo-linking` 58.0.14 vs ~58.0.15, `expo-splash-screen` 58.0.11 vs ~58.0.12). No blind upgrades were made.
-- Preview URL: `https://8081-iuh1ud85bjo21tlnv4sow-9b4d8fb9.us3.manus.computer/` (web only).
-- `npm run` exposes start/android/ios/web scripts; no test or lint script is defined.
+Working branch: `fix/expo-runtime-stability`. The previously tested frontend code is commit `370a65a737fec9909cb91793fba11075bb53f78a`; the branch was fetched and fast-forwarded to new route commit `c3fc45138df7a7def39a6e0685502434723730c1`. That new navigation commit is pushed upstream but has not been run through a fresh preview since arrival. The branch was clean after fast-forward. `origin/main` remains at merge commit `2c850fd` and does not include `c3fc451`.
 
-## Fixes in the pushed stabilization work
+## Previously verified frontend state
 
-The earlier pushed stabilization checkpoints repaired startup blockers involving missing typography/font tokens, splash navigation during bootstrap, Reanimated interpolation/easing usage, web storage, Metro config, and the Reanimated peer dependency. See prior history in commits `d52c955` and `ad84d1d`.
+The pushed `370a65a` checkpoint passed `npx expo export --platform web --output-dir /tmp/kamba-web-export-final3`. In a browser preview, Welcome, guest browsing, Home/Discover/Cart/Profile tabs, Cart quantity increment, Profile logout, registration rendering/input, email Login rendering, and Phone Login rendering/input filtering were tested. No real auth, OTP, Google, checkout, or payment submission was made. Native Android/iOS/Expo Go were not available. The project has no `test` or `lint` script in `npm run`.
 
-Commit `370a65a` adds these newly verified repairs:
+Expo Doctor previously passed 18/20 checks and flagged the `app.json` `splash` schema field plus patch mismatches for `expo` (58.0.19 vs ~58.0.21), `expo-font` (58.0.10 vs ~58.0.11), `expo-linking` (58.0.14 vs ~58.0.15), and `expo-splash-screen` (58.0.11 vs ~58.0.12). No dependency changes were made.
 
-1. Restored `src/screens/DiscoverScreen.jsx` from its existing repository history after the current file was found empty, so the Discover tab has its original screen implementation again.
-2. Corrected unavailable Phosphor icon names in navigation, Home, Discover, and Profile to installed exports.
-3. Fixed `MagneticButton` to use the Phosphor module's named exports and render existing React-element icons; this stopped Cart from crashing and restored its ArrowRight icon path.
-4. Fixed `StyledInput`'s undeclared `editable` variable (defaulting to editable) and its Phosphor icon lookup.
-5. Replaced stale `typography.sizes` and nonexistent `animation` references in `KambaInput`, `KambaPhoneInput`, and `KambaButton` with the currently exported typography-scale and motion tokens. These defects had prevented Login and Phone sign-in from rendering.
+The Expo preview process `job_85jfkUl3` was later terminated by idle timeout (exit 137). A fresh check found no Expo/Metro process, port 8081 closed, and the prior production web export artifact still present. Do not treat the old preview URL as currently live; restart the server only when needed for fresh testing.
 
-## Verification actually performed
+## Fetched remote navigation update: audit result
 
-- Expo development server started and the supported web preview loaded.
-- Welcome screen rendered; `Browse as guest` reached Home.
-- Home, Discover, Cart, and Profile tabs rendered. Cart quantity increment worked and updated totals; Profile logout returned to Welcome.
-- Registration screen rendered after the `StyledInput` repair. A harmless one-character username was entered to confirm input handling; the form was not submitted.
-- Email Login screen rendered. Phone Login tab rendered; a dummy phone entry containing letters was filtered to digits. No login or SMS code was submitted.
-- Browser runtime checks after the fixes showed no captured exception on the tested guest tabs or Phone Login view.
-- JavaScript/JSX parsing and `git diff --check` passed for the changed source. Production web export passed.
-- No auth or checkout submission was attempted; no backend behavior is claimed as verified.
+The fetched `c3fc451` adds route registrations for `Search`, `Onboarding`, `Username`, `PhoneVerify`, `OTP`, `Notifications`, and `Orders`. The referenced files exist, but several are not real end-to-end screens: Search/Notifications/Orders currently show static copy; `UsernameScreen` uses a hardcoded taken-name list; `PhoneVerifyScreen` simulates OTP delivery with a timeout; `OTPScreen` accepts any six-digit code except `000000` and marks the phone verified locally. Do not claim these routes are functionally complete or make mock auth appear successful. Review whether to retain, narrow, or replace these route additions only as real backend-backed functionality is integrated. Preserve the existing four-tab navigation structure unless product requirements explicitly justify a change; the remote commit adds Search as a fifth bottom tab.
 
-## Remaining issues / blockers (not papered over)
+## Backend contract found (read-only source)
 
-- Navigation registers only the four main tabs (`Home`, `Discover`, `Cart`, `Profile`) and auth screens (`Welcome`, `Register`, `Login`). Existing UI/actions reference routes that are not registered: `Search`, `StoreDetail`, `AllStores`, `Checkout`, Profile detail/notifications/favorites/orders/payments/addresses/settings, and auth `Username`/`PhoneVerify`/`OTP` routes.
-- `SearchScreen.jsx` is only static copy, and no Checkout, StoreDetail, or AllStores screen exists in the screen inventory. These were not wired to placeholder screens or replaced with fabricated flows.
-- Existing Login/Register handlers contain mock-token/timed-success logic (`mock_login_token_*`, `kamba_mock_token_*`) rather than a verified backend contract. Phone/OTP and Google auth are also not verified. They were deliberately not submitted or represented as working; backend code was not touched.
-- Expo Go / Android / iOS compatibility remains untested; web rendering does not prove native behavior.
-- `expo-doctor` findings above remain. Existing source hygiene and `npm audit` findings from the earlier checkpoint were not expanded or changed here.
+Sources: backend `README.md`, `src/index.js`, `src/routes/auth.route.js`, `src/controllers/auth.controller.js`, `src/controllers/otp.controller.js`, `src/services/auth.services.js`, `src/services/otp.service.js`, `src/routes/vendors.js`, and public vendor service files at the backend HEAD above.
 
-## Next action
+The backend mounts auth routes beneath `/api/v1/` and vendor routes beneath `/api/v1/vendors`. Its documented/authenticated endpoints include:
 
-Implement the missing marketplace/auth screens and register their routes only against confirmed product behavior and real frontend/backend API contracts. Do not enable mock auth success or invent checkout/search responses. Then test those end-to-end flows and verify on a native device or Expo Go when available. The web preview server was left running in the existing `expo2` session.
+| Endpoint | Contract relevant to frontend |
+|---|---|
+| `POST /api/v1/auth/register` | `email`, `password`, `confirm_password`, `username`; optional `referral_code`. Returns `{success:true,result:{message,id,email,username}}` and sets HttpOnly access/refresh cookies. |
+| `POST /api/v1/auth/login` | `email`, `password`. Returns user `id/email/username` in `result` and sets HttpOnly access/refresh cookies. |
+| `POST /api/v1/auth/logout` | Clears the HttpOnly cookies. |
+| `POST /api/v1/auth/refresh` | Rotates cookies using the refresh cookie. |
+| `GET /api/v1/auth/dashboard` | Cookie-authenticated user information (`id`, `email`, `username`, role, etc.). |
+| `GET /api/v1/auth/username-availability?username=...` | Returns `{success:true,isAvailable:true}` or HTTP 409 when taken. |
+| `POST /api/v1/auth/otp/request` | Requires `userId`, `purpose`, and `endpoint`. |
+| `POST /api/v1/auth/otp/verify` | Requires `userId`, `purpose`, and `inputOtp`; validates but does not itself persist a verified phone field. |
+| `GET /api/v1/vendors/stores` and `/services` | Public, paginated catalog endpoints returning `stores` / `services`. Store and service detail endpoints are keyed by slug. |
+
+The backend does **not** expose a phone-login endpoint, username-claim endpoint, checkout/order/notification endpoint, or JSON bearer-token response in this checked-in contract. Google OAuth is a `GET /api/v1/auth/google` redirect flow, not the frontend's existing POST helper. Its final redirect depends on `FRONTEND_URL`.
+
+The frontend `src/utils/api.js` currently defaults to `https://api.kamba.ng/v1`, whereas the checked-in backend mounts `/api/v1`. It also defines unsupported helpers (`/auth/phone/send`, `/auth/phone/verify`, `/user/username/check`, `/user/username`) and no call sites currently use the auth helpers. Login/Register write mock tokens; auth bootstrap depends on that local token. Backend auth middleware reads the `access_token` cookie. Cookie-backed web auth therefore needs correct base-path configuration and credential handling; verify deployment CORS/SameSite behavior rather than assuming it.
+
+A read-only GET to `https://api.kamba.ng/health` failed in this environment with `Could not resolve host: api.kamba.ng`. The API contract can be implemented from checked-in source, but live API verification is blocked until the host resolves or the user supplies the correct reachable API URL. Backend `src/index.js` contains no CORS middleware; backend changes are out of scope, so web credentialed requests may additionally depend on deployment/proxy CORS configuration.
+
+## Next frontend work
+
+1. Align the frontend API client with the documented `/api/v1` paths, cookie session model, and actual username/OTP helpers. Wire email registration/login to `authAPI` and remove fake success; use response `result` and keep errors visible. Use the dashboard endpoint to check a cookie-backed session. Do not submit accounts during preview testing.
+2. Disable or clearly fail closed for phone-login/Google paths that cannot be completed against the verified contract. Do not register mock OTP screens as a successful auth path. Phone verification needs an authenticated/user ID path and backend persistence semantics before it can be claimed complete.
+3. Implement Search/store browsing only against the verified public catalog endpoints; use backend `slug` for store navigation. Do not route numeric local fixture IDs to a real store detail endpoint. Checkout, buyer orders, notifications, favorites, and payment/address flows still lack matching backend endpoints/screens; do not invent them.
+4. Test the web build and only those interactions whose API behavior is verifiable. The backend hostname/DNS and cross-origin cookie configuration must be resolved before claiming live auth works. Re-run Expo Doctor/export, review the full diff, update this handoff, commit small verified checkpoints, and push normally to `fix/expo-runtime-stability` (never force-push).
