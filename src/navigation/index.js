@@ -5,7 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { storage } from '../utils/storage';
-import { Home, Search, ShoppingBag, User, Grid } from 'phosphor-react-native';
+import { House as Home, MagnifyingGlass as Search, ShoppingBag, User, GridFour as Grid } from 'phosphor-react-native';
 
 import { SplashScreen } from '../screens/auth/SplashScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';

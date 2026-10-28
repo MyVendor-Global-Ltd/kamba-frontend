@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Animated, Easing, TouchableOpacity } from 'react-native';
-import { colors, typography, spacing, radius, shadows, animation } from '../theme';
+import { colors, typography, spacing, radius, shadows, motion } from '../theme';
 import { Eye, EyeOff, CheckCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -76,35 +76,35 @@ export const KambaInput = ({
     if (focused) {
       Animated.timing(borderAnim, {
         toValue: 2,
-        duration: animation.duration.fast,
+        duration: motion.duration.fast,
         useNativeDriver: false,
       }).start();
       Animated.timing(labelAnim, {
         toValue: 1,
-        duration: animation.duration.fast,
+        duration: motion.duration.fast,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }).start();
       Animated.timing(backgroundAnim, {
         toValue: 1,
-        duration: animation.duration.fast,
+        duration: motion.duration.fast,
         useNativeDriver: false,
       }).start();
     } else {
       Animated.timing(borderAnim, {
         toValue: 1.5,
-        duration: animation.duration.fast,
+        duration: motion.duration.fast,
         useNativeDriver: false,
       }).start();
       Animated.timing(labelAnim, {
         toValue: value && value.length > 0 ? 1 : 0,
-        duration: animation.duration.fast,
+        duration: motion.duration.fast,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }).start();
       Animated.timing(backgroundAnim, {
         toValue: 0,
-        duration: animation.duration.fast,
+        duration: motion.duration.fast,
         useNativeDriver: false,
       }).start();
     }
@@ -152,7 +152,7 @@ export const KambaInput = ({
     },
     label: {
       fontFamily: typography.fontFamilies.bodyMedium,
-      fontSize: typography.sizes.sm,
+      fontSize: typography.scale.labelMedium.fontSize,
       letterSpacing: 0.5,
       backgroundColor: colors.inkRaised,
       paddingHorizontal: 4,
@@ -169,7 +169,7 @@ export const KambaInput = ({
     input: {
       flex: 1,
       fontFamily: typography.fontFamilies.body,
-      fontSize: typography.sizes.base,
+      fontSize: typography.scale.bodyMedium.fontSize,
       color: colors.textPrimary,
       paddingVertical: 0,
     },
@@ -182,13 +182,13 @@ export const KambaInput = ({
     },
     errorText: {
       fontFamily: typography.fontFamilies.body,
-      fontSize: typography.sizes.xs,
+      fontSize: typography.scale.labelSmall.fontSize,
       color: colors.error,
       marginLeft: spacing.xs,
     },
     hintText: {
       fontFamily: typography.fontFamilies.body,
-      fontSize: typography.sizes.xs,
+      fontSize: typography.scale.labelSmall.fontSize,
       color: colors.textTertiary,
       marginLeft: spacing.xs,
     },

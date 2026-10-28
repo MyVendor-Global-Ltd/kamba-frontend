@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { User, ShieldCheck, LogOut, Settings, Bell, Heart, CreditCard, Package, MapPin } from 'phosphor-react-native';
+import { User, ShieldCheck, SignOut as LogOut, Gear as Settings, Bell, Heart, CreditCard, Package, MapPin } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';

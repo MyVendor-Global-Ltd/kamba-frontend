@@ -3,7 +3,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Animated, Easing, Dimensions } from 'react-native';
-import { Search, MapPin, ShieldCheck, Flame, ArrowRight, Bell, Storefront, Truck, Heart, Grid } from 'phosphor-react-native';
+import { MagnifyingGlass as Search, MapPin, ShieldCheck, Flame, ArrowRight, Bell, Storefront, Truck, Heart, GridFour as Grid } from 'phosphor-react-native';
 import { colors, typography, spacing, radius, motion, icons } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { KambaLogo } from '../components/KambaLogo';

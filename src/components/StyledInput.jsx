@@ -6,9 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Eas
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, radius, motion, icons } from '../theme/tokens';
 import { formatNaira, parseNaira } from '../utils/formatNaira';
-
-const PhosphorIcons = require('phosphor-react-native').default;
-
+const PhosphorIcons = require('phosphor-react-native');
 const styles = StyleSheet.create({
   container: { gap: spacing.xs },
   labelWrapper: { paddingHorizontal: spacing.xs },
@@ -60,6 +58,7 @@ export const StyledInput = ({
   onFocus,
   error,
   hint,
+  editable = true,
   disabled = false,
   required = false,
   secureTextEntry = false,
@@ -161,7 +160,7 @@ export const StyledInput = ({
   const renderIcon = (iconName, color, style) => {
     if (!iconName) return null;
     if (typeof iconName === 'function') return iconName({ size: icons.sizes.md, color, weight: 'bold', ...style });
-    const IconComponent = PhosphorIcons[iconName];
+    const IconComponent = typeof iconName === 'string' ? PhosphorIcons[iconName] : null;
     if (IconComponent) return <IconComponent size={icons.sizes.md} color={color} weight="bold" style={style} />;
     return null;
   };

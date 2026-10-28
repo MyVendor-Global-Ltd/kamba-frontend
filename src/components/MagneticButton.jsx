@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
 
-const PhosphorIcons = require('phosphor-react-native').default;
+const PhosphorIcons = require('phosphor-react-native');
 
 const Spinner = () => {
   const spin = useSharedValue(0);
@@ -107,7 +107,15 @@ export const MagneticButton = ({
   const renderIcon = (iconName, color, style) => {
     if (!iconName) return null;
     if (typeof iconName === 'function') return iconName({ size: iconSize, color, weight: 'bold', ...style });
-    const IconComponent = PhosphorIcons[iconName];
+    if (React.isValidElement(iconName)) {
+      return React.cloneElement(iconName, {
+        size: iconName.props.size ?? iconSize,
+        color: iconName.props.color ?? color,
+        weight: iconName.props.weight ?? 'bold',
+        style: [iconName.props.style, style],
+      });
+    }
+    const IconComponent = typeof iconName === 'string' ? PhosphorIcons[iconName] : null;
     if (IconComponent) return <IconComponent size={iconSize} color={color} weight="bold" style={style} />;
     return null;
   };
