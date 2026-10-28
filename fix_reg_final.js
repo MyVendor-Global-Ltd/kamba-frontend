@@ -1,1 +1,0 @@
-const fs = require('fs');const p = 'c:/Users/DAVID UZOMAH/Desktop/Kamba/frontend/kamba-mobile/src/screens/auth/RegisterScreen.jsx';const c = fs.readFileSunc(p);console.log(c.substring(760, 850));
