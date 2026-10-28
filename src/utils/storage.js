@@ -1,14 +1,23 @@
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const TOKEN_KEY = 'kamba_token';
 const USERNAME_KEY = 'kamba_username';
 const USER_DATA_KEY = 'kamba_user_data';
 
+const tokenStore = Platform.OS === 'web'
+  ? {
+      getItemAsync: (key) => AsyncStorage.getItem(key),
+      setItemAsync: (key, value) => AsyncStorage.setItem(key, value),
+      deleteItemAsync: (key) => AsyncStorage.removeItem(key),
+    }
+  : SecureStore;
+
 export const storage = {
   async getToken() {
     try {
-      return await SecureStore.getItemAsync(TOKEN_KEY);
+      return await tokenStore.getItemAsync(TOKEN_KEY);
     } catch (e) {
       console.warn('Failed to get token:', e);
       return null;
@@ -17,7 +26,7 @@ export const storage = {
 
   async setToken(token) {
     try {
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
+      await tokenStore.setItemAsync(TOKEN_KEY, token);
       return true;
     } catch (e) {
       console.warn('Failed to set token:', e);
@@ -27,7 +36,7 @@ export const storage = {
 
   async clearToken() {
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await tokenStore.deleteItemAsync(TOKEN_KEY);
       return true;
     } catch (e) {
       console.warn('Failed to clear token:', e);

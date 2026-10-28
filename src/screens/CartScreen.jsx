@@ -24,7 +24,7 @@ export const CartScreen = ({ navigation }) => {
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: motion.duration.slower, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: motion.duration.slower, easing: motion.easing.standard, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: motion.duration.slower, easing: Easing.bezier(...motion.easing.standard), useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   itemName: { fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleMedium.fontSize, color: colors.light.textPrimary },
   itemQuantity: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   qtyButton: { width: 32, height: 32, borderRadius: radius.full, backgroundColor: colors.light.surface, borderWidth: 1, borderColor: colors.light.border, alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontFamily: typography.fontFamilies.monoMedium, fontSize: typography.scale.monoMedium.fontSize, color: colors.light.textPrimary, minWidth: 24, textAlign: 'center' },
+  qtyText: { fontFamily: typography.fontFamilies.monoMedium, fontSize: typography.scale.mono.fontSize, color: colors.light.textPrimary, minWidth: 24, textAlign: 'center' },
   removeButton: { padding: spacing.xs },
   summaryCard: { marginHorizontal: spacing.xl, marginBottom: spacing.lg },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm },

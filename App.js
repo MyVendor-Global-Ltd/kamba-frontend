@@ -32,8 +32,6 @@ import {
   Geist_500Medium,
   Geist_600SemiBold,
   Geist_700Bold,
-  GeistMono_400Regular,
-  GeistMono_500Medium,
 } from '@expo-google-fonts/geist';
 import {
   PlusJakartaSans_400Regular,
@@ -49,8 +47,10 @@ const fontMap = {
   'Geist_500Medium': Geist_500Medium,
   'Geist_600SemiBold': Geist_600SemiBold,
   'Geist_700Bold': Geist_700Bold,
-  'GeistMono_400Regular': GeistMono_400Regular,
-  'GeistMono_500Medium': GeistMono_500Medium,
+  // Geist does not ship a separate mono family; keep the existing token names
+  // backed by the closest available weights so font loading remains complete.
+  'GeistMono_400Regular': Geist_400Regular,
+  'GeistMono_500Medium': Geist_500Medium,
   'PlusJakartaSans_400Regular': PlusJakartaSans_400Regular,
   'PlusJakartaSans_500Medium': PlusJakartaSans_500Medium,
   'PlusJakartaSans_600SemiBold': PlusJakartaSans_600SemiBold,

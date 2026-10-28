@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing, interpolate } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
@@ -18,7 +18,7 @@ const Spinner = () => {
     });
   }, []);
 
-  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const rotate = `${interpolate(spin.value, [0, 1], [0, 360])}deg`;
 
   return (
     <Animated.View style={[styles.spinner, { transform: [{ rotate }] }]} />
@@ -89,7 +89,7 @@ export const MagneticButton = ({
 
   const iconAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: iconSlideAnim.value }],
-    opacity: pressAnim.value.interpolate({ inputRange: [pressScale, 1], outputRange: [0.6, 1] }),
+    opacity: interpolate(pressAnim.value, [pressScale, 1], [0.6, 1]),
   }), []);
 
   const variantStyles = {
