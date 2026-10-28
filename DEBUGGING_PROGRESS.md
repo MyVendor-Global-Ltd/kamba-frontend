@@ -2,50 +2,52 @@
 
 - Repository: https://github.com/MyVendor-Global-Ltd/kamba-frontend
 - Backend repository: not modified.
-- Initial branch: `main`
-- Initial commit SHA: `c4c14d370405ca1c3c52dabc21cf3a7d31a0c83e`
+- Initial branch / commit: `main` / `c4c14d370405ca1c3c52dabc21cf3a7d31a0c83e`
 - Working branch: `fix/expo-runtime-stability`
-- Latest verified commit SHA: `d52c95582e4095e9bbc5135a253ca74c1cbc5f31`
-- Current Git status: clean after commit; branch pushed successfully to `origin/fix/expo-runtime-stability`.
+- Latest verified code commit: `370a65a737fec9909cb91793fba11075bb53f78a`
+- Push status: code commit pushed successfully to `origin/fix/expo-runtime-stability`; progress-log update is being committed separately.
 
 ## Environment and commands
 
-- Environment: Manus Sandbox, Node/npm, Expo web preview.
-- Dependency restore: `npm ci --ignore-scripts`
-- Development preview: `npx expo start --web --clear`
-- Production bundle check: `npx expo export --platform web --output-dir /tmp/kamba-web-export-final2`
-- Dependency diagnostics: `npx expo-doctor`
-- Preview URL used: `https://8081-ixnk31bg6xpaqa0yp36u5-577cc7b4.us3.manus.computer/`
-- Platform actually tested: web preview only. Native Expo Go / Android / iOS were not available in this environment.
+- Environment: Manus Sandbox, Node/npm, Expo web preview. Native Expo Go, Android, and iOS were not available.
+- Dependencies were restored from the existing lockfile (`npm ci`); no dependency upgrades were made in this checkpoint.
+- Dev preview command: `npx expo start --web --port 8081`.
+- Production web export: `npx expo export --platform web --output-dir /tmp/kamba-web-export-final3` — passed; web bundle exported.
+- Diagnostics: `npx expo-doctor` — 18/20 checks passed. Remaining findings: `app.json` `splash` schema warning and four Expo SDK patch-version mismatches (`expo` 58.0.19 vs ~58.0.21, `expo-font` 58.0.10 vs ~58.0.11, `expo-linking` 58.0.14 vs ~58.0.15, `expo-splash-screen` 58.0.11 vs ~58.0.12). No blind upgrades were made.
+- Preview URL: `https://8081-iuh1ud85bjo21tlnv4sow-9b4d8fb9.us3.manus.computer/` (web only).
+- `npm run` exposes start/android/ios/web scripts; no test or lint script is defined.
 
-## Verified fixes
+## Fixes in the pushed stabilization work
 
-1. `src/screens/CartScreen.jsx`: replaced undefined `typography.scale.monoMedium` with the existing `typography.scale.mono` token. This removed the fatal startup error during module evaluation.
-2. `App.js`: removed nonexistent Geist mono font imports and mapped the existing mono token names to available Geist regular/medium font assets. This removed the font-load warning caused by undefined font sources.
-3. `src/screens/auth/SplashScreen.jsx`: guarded the splash transition when the temporary root render has no navigation prop. This allowed the app to transition from splash to auth without a fatal `navigation.replace` error.
-4. `src/components/MagneticButton.jsx`: replaced Reanimated shared-value `.interpolate` calls with the supported `interpolate` helper, including the spinner angle conversion.
-5. `src/components/StyledInput.jsx` and `src/components/TrustBar.jsx`: replaced remaining Reanimated shared-value `.interpolate` calls with the supported helper.
-6. `src/screens/CartScreen.jsx`, `src/screens/HomeScreen.jsx`, `src/screens/auth/RegisterScreen.jsx`, and `src/screens/auth/WelcomeScreen.jsx`: converted the design-system cubic-bezier arrays into callable `Easing.bezier(...)` functions for React Native Animated.
-7. `src/utils/storage.js`: uses AsyncStorage for token operations on web, while retaining SecureStore on native platforms. This removes the web-only SecureStore API mismatch.
-8. `metro.config.js` and package metadata: switched from the direct `@expo/metro-config` package to the supported `expo/metro-config` subpath and removed the redundant direct dependency.
-9. Added the Expo-compatible `react-native-worklets` peer dependency required by the installed Reanimated version.
+The earlier pushed stabilization checkpoints repaired startup blockers involving missing typography/font tokens, splash navigation during bootstrap, Reanimated interpolation/easing usage, web storage, Metro config, and the Reanimated peer dependency. See prior history in commits `d52c955` and `ad84d1d`.
 
-## Verification results
+Commit `370a65a` adds these newly verified repairs:
 
-- `npm ci --ignore-scripts`: passed; dependencies installed from the lockfile.
-- Expo web bundle: passed; `npx expo export --platform web --output-dir /tmp/kamba-web-export-final2` completed successfully.
-- Expo Doctor before fixes: 16/20 checks passed; missing `react-native-worklets`, direct Metro config dependency, config schema warning, and patch-level version mismatches.
-- Expo Doctor after fixes: 18/20 checks passed. Remaining warnings are the existing `app.json` `splash` schema warning and four Expo SDK patch-version mismatches (`expo`, `expo-font`, `expo-linking`, `expo-splash-screen`). These were not blindly upgraded because the task requires preserving the installed Expo SDK/dependency family.
-- Browser preview: splash rendered; welcome/auth screen rendered with `Create account` and `Browse as guest` controls. The original fatal startup/runtime errors listed above were reproduced and fixed.
+1. Restored `src/screens/DiscoverScreen.jsx` from its existing repository history after the current file was found empty, so the Discover tab has its original screen implementation again.
+2. Corrected unavailable Phosphor icon names in navigation, Home, Discover, and Profile to installed exports.
+3. Fixed `MagneticButton` to use the Phosphor module's named exports and render existing React-element icons; this stopped Cart from crashing and restored its ArrowRight icon path.
+4. Fixed `StyledInput`'s undeclared `editable` variable (defaulting to editable) and its Phosphor icon lookup.
+5. Replaced stale `typography.sizes` and nonexistent `animation` references in `KambaInput`, `KambaPhoneInput`, and `KambaButton` with the currently exported typography-scale and motion tokens. These defects had prevented Login and Phone sign-in from rendering.
 
-## Known remaining issues / limitations
+## Verification actually performed
 
-- Native Expo Go / Android / iOS flows are untested because only web preview was available.
-- The browser interaction reached the welcome screen reliably. Registration navigation requires another clean pass; the browser preview sometimes showed a blank route after clicking `Create account` even after Metro stopped reporting the previously fixed animation errors.
-- Existing non-critical source hygiene issues remain in files not used by the verified startup path: `src/components/USSDBanner.jsx` has duplicate `Animated` declarations; `src/components/TrustBar.jsx` uses a dynamic JSX member expression that the standalone parser rejects; `src/utils/pidginCopy.js` contains duplicated/incomplete object fragments. These were not changed in this checkpoint because they are not currently imported by the verified auth startup path.
-- Web preview still reports the expected React Native warning that `useNativeDriver` falls back to JS; this is a platform limitation, not an Expo Go/native failure.
-- `npm audit` reports 9 vulnerabilities (5 low, 4 high); no broad audit upgrade was applied.
+- Expo development server started and the supported web preview loaded.
+- Welcome screen rendered; `Browse as guest` reached Home.
+- Home, Discover, Cart, and Profile tabs rendered. Cart quantity increment worked and updated totals; Profile logout returned to Welcome.
+- Registration screen rendered after the `StyledInput` repair. A harmless one-character username was entered to confirm input handling; the form was not submitted.
+- Email Login screen rendered. Phone Login tab rendered; a dummy phone entry containing letters was filtered to digits. No login or SMS code was submitted.
+- Browser runtime checks after the fixes showed no captured exception on the tested guest tabs or Phone Login view.
+- JavaScript/JSX parsing and `git diff --check` passed for the changed source. Production web export passed.
+- No auth or checkout submission was attempted; no backend behavior is claimed as verified.
+
+## Remaining issues / blockers (not papered over)
+
+- Navigation registers only the four main tabs (`Home`, `Discover`, `Cart`, `Profile`) and auth screens (`Welcome`, `Register`, `Login`). Existing UI/actions reference routes that are not registered: `Search`, `StoreDetail`, `AllStores`, `Checkout`, Profile detail/notifications/favorites/orders/payments/addresses/settings, and auth `Username`/`PhoneVerify`/`OTP` routes.
+- `SearchScreen.jsx` is only static copy, and no Checkout, StoreDetail, or AllStores screen exists in the screen inventory. These were not wired to placeholder screens or replaced with fabricated flows.
+- Existing Login/Register handlers contain mock-token/timed-success logic (`mock_login_token_*`, `kamba_mock_token_*`) rather than a verified backend contract. Phone/OTP and Google auth are also not verified. They were deliberately not submitted or represented as working; backend code was not touched.
+- Expo Go / Android / iOS compatibility remains untested; web rendering does not prove native behavior.
+- `expo-doctor` findings above remain. Existing source hygiene and `npm audit` findings from the earlier checkpoint were not expanded or changed here.
 
 ## Next action
 
-Cleanly retest registration and guest browsing after this checkpoint, then inspect/repair only any newly reproduced route errors. The current checkpoint is committed and pushed; continue from `d52c95582e4095e9bbc5135a253ca74c1cbc5f31`.
+Implement the missing marketplace/auth screens and register their routes only against confirmed product behavior and real frontend/backend API contracts. Do not enable mock auth success or invent checkout/search responses. Then test those end-to-end flows and verify on a native device or Expo Go when available. The web preview server was left running in the existing `expo2` session.
