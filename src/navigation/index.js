@@ -11,10 +11,17 @@ import { SplashScreen } from '../screens/auth/SplashScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
+import { UsernameScreen } from '../screens/auth/UsernameScreen';
+import { PhoneVerifyScreen } from '../screens/auth/PhoneVerifyScreen';
+import { OTPScreen } from '../screens/auth/OTPScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
+import { SearchScreen } from '../screens/SearchScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { OrdersScreen } from '../screens/OrdersScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -88,6 +95,16 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          tabBarLabel: 'Search',
+          tabBarIcon: ({ color, size }) => (
+            <Search size={size} color={color} weight="bold" />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Cart"
         component={CartScreen}
         options={{
@@ -121,6 +138,11 @@ function AuthStack() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen
+        name="Onboarding"
+        component={OnboardingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Register"
         component={RegisterScreen}
         options={{ headerShown: true, headerTitle: 'Create account', headerBackTitle: 'Back' }}
@@ -129,6 +151,21 @@ function AuthStack() {
         name="Login"
         component={LoginScreen}
         options={{ headerShown: true, headerTitle: 'Welcome back', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="Username"
+        component={UsernameScreen}
+        options={{ headerShown: true, headerTitle: 'Choose username', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="PhoneVerify"
+        component={PhoneVerifyScreen}
+        options={{ headerShown: true, headerTitle: 'Verify phone', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="OTP"
+        component={OTPScreen}
+        options={{ headerShown: true, headerTitle: 'Enter code', headerBackTitle: 'Back' }}
       />
     </Stack.Navigator>
   );
@@ -175,6 +212,16 @@ function RootNavigator() {
         name="Main"
         component={MainTabs}
         options={{ headerShown: false, animationType: 'fade' }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ headerShown: true, headerTitle: 'Notifications', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{ headerShown: true, headerTitle: 'My Orders', headerBackTitle: 'Back' }}
       />
     </Stack.Navigator>
   );
