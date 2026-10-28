@@ -5,8 +5,8 @@
 - Initial branch: `main`
 - Initial commit SHA: `c4c14d370405ca1c3c52dabc21cf3a7d31a0c83e`
 - Working branch: `fix/expo-runtime-stability`
-- Latest verified commit SHA: pending commit
-- Current Git status: local changes are present; not pushed yet.
+- Latest verified commit SHA: `d52c95582e4095e9bbc5135a253ca74c1cbc5f31`
+- Current Git status: clean after commit; branch pushed successfully to `origin/fix/expo-runtime-stability`.
 
 ## Environment and commands
 
@@ -48,4 +48,4 @@
 
 ## Next action
 
-Cleanly retest registration and guest browsing after the current checkpoint, then inspect/repair only any newly reproduced route errors. After verification, commit this progress log with the code fixes and push `fix/expo-runtime-stability` if GitHub permissions allow.
+Cleanly retest registration and guest browsing after this checkpoint, then inspect/repair only any newly reproduced route errors. The current checkpoint is committed and pushed; continue from `d52c95582e4095e9bbc5135a253ca74c1cbc5f31`.
