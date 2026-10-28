@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 import { colors, spacing, typography, icons } from '../theme/tokens';
 
 const PhosphorIcons = require('phosphor-react-native').default;
@@ -25,7 +25,7 @@ export const TrustBar = ({
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value,
-    transform: [{ translateY: fadeAnim.value.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+    transform: [{ translateY: interpolate(fadeAnim.value, [0, 1], [10, 0]) }],
   }), []);
 
   return (

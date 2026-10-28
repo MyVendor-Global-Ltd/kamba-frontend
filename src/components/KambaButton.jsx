@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, typography, spacing, radius, shadows, animation } from '../theme';
+import { colors, typography, spacing, radius, shadows, motion } from '../theme';
 import * as Haptics from 'expo-haptics';
 
 const Spinner = ({ size = 20, color = '#fff' }) => {
@@ -68,22 +68,22 @@ export const KambaButton = ({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.spring(pressAnim, {
       toValue: 0.96,
-      ...animation.spring,
+      ...motion.easing.spring,
       useNativeDriver: true,
     }).start();
   };
 
   const handlePressOut = () => {
     if (disabled || loading) return;
-    Animated.spring(pressAnim, {
-      toValue: 1.03,
-      ...animation.springBouncy,
-      useNativeDriver: true,
-    }).start(() => {
       Animated.spring(pressAnim, {
-        toValue: 1,
-        ...animation.spring,
+        toValue: 1.03,
+        ...motion.easing.springBouncy,
         useNativeDriver: true,
+      }).start(() => {
+        Animated.spring(pressAnim, {
+          toValue: 1,
+          ...motion.easing.spring,
+          useNativeDriver: true,
       }).start();
     });
   };
@@ -94,9 +94,9 @@ export const KambaButton = ({
   };
 
   const sizes = {
-    sm: { height: 44, fontSize: typography.sizes.sm, padding: spacing.lg },
-    md: { height: 54, fontSize: typography.sizes.base, padding: spacing.xl },
-    lg: { height: 60, fontSize: typography.sizes.lg, padding: spacing.xxl },
+    sm: { height: 44, fontSize: typography.scale.labelLarge.fontSize, padding: spacing.lg },
+    md: { height: 54, fontSize: typography.scale.bodyMedium.fontSize, padding: spacing.xl },
+    lg: { height: 60, fontSize: typography.scale.bodyLarge.fontSize, padding: spacing.xxl },
   };
 
   const { height, fontSize, padding } = sizes[size];

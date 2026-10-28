@@ -96,10 +96,12 @@ export const SplashScreen = ({ navigation }) => {
         const token = await storage.getToken();
         const username = await storage.getUsername();
 
-        if (token && username) {
-          navigation.replace('Main');
-        } else {
-          navigation.replace('Auth');
+        if (navigation?.replace) {
+          if (token && username) {
+            navigation.replace('Main');
+          } else {
+            navigation.replace('Auth');
+          }
         }
       });
     }, 2400);

@@ -2,13 +2,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing, interpolate } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, radius, motion, icons } from '../theme/tokens';
 import { formatNaira, parseNaira } from '../utils/formatNaira';
-
-const PhosphorIcons = require('phosphor-react-native').default;
-
+const PhosphorIcons = require('phosphor-react-native');
 const styles = StyleSheet.create({
   container: { gap: spacing.xs },
   labelWrapper: { paddingHorizontal: spacing.xs },
@@ -60,6 +58,7 @@ export const StyledInput = ({
   onFocus,
   error,
   hint,
+  editable = true,
   disabled = false,
   required = false,
   secureTextEntry = false,
@@ -127,7 +126,7 @@ export const StyledInput = ({
   }, [focused, localValue]);
 
   const animatedInputStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeAnim.value.interpolate({ inputRange: [0, 1], outputRange: [0, 10] }) }],
+    transform: [{ translateX: interpolate(shakeAnim.value, [0, 1], [0, 10]) }],
     borderWidth: borderAnim.value,
     borderColor: hasError ? colors.light.error : focused ? colors.light.accent : colors.light.border,
     backgroundColor: focused ? colors.light.accentHover : colors.light.surface,
@@ -135,8 +134,8 @@ export const StyledInput = ({
 
   const animatedLabelStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: labelAnim.value.interpolate({ inputRange: [0, 1], outputRange: [0, -20] }) },
-      { scale: labelAnim.value.interpolate({ inputRange: [0, 1], outputRange: [1, 0.85] }) },
+      { translateY: interpolate(labelAnim.value, [0, 1], [0, -20]) },
+      { scale: interpolate(labelAnim.value, [0, 1], [1, 0.85]) },
     ],
     color: hasError ? colors.light.error : focused ? colors.light.accent : colors.light.textMuted,
   }), []);
@@ -161,7 +160,7 @@ export const StyledInput = ({
   const renderIcon = (iconName, color, style) => {
     if (!iconName) return null;
     if (typeof iconName === 'function') return iconName({ size: icons.sizes.md, color, weight: 'bold', ...style });
-    const IconComponent = PhosphorIcons[iconName];
+    const IconComponent = typeof iconName === 'string' ? PhosphorIcons[iconName] : null;
     if (IconComponent) return <IconComponent size={icons.sizes.md} color={color} weight="bold" style={style} />;
     return null;
   };

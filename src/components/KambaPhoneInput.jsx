@@ -50,7 +50,7 @@ export const KambaPhoneInput = ({
     },
     prefixText: {
       fontFamily: typography.fontFamilies.bodySemiBold,
-      fontSize: typography.sizes.base,
+      fontSize: typography.scale.bodyMedium.fontSize,
       color: colors.coral,
     },
     flag: {

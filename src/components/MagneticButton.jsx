@@ -2,12 +2,12 @@
 
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing, interpolate } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
 
-const PhosphorIcons = require('phosphor-react-native').default;
+const PhosphorIcons = require('phosphor-react-native');
 
 const Spinner = () => {
   const spin = useSharedValue(0);
@@ -18,7 +18,7 @@ const Spinner = () => {
     });
   }, []);
 
-  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const rotate = `${interpolate(spin.value, [0, 1], [0, 360])}deg`;
 
   return (
     <Animated.View style={[styles.spinner, { transform: [{ rotate }] }]} />
@@ -89,7 +89,7 @@ export const MagneticButton = ({
 
   const iconAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: iconSlideAnim.value }],
-    opacity: pressAnim.value.interpolate({ inputRange: [pressScale, 1], outputRange: [0.6, 1] }),
+    opacity: interpolate(pressAnim.value, [pressScale, 1], [0.6, 1]),
   }), []);
 
   const variantStyles = {
@@ -107,7 +107,15 @@ export const MagneticButton = ({
   const renderIcon = (iconName, color, style) => {
     if (!iconName) return null;
     if (typeof iconName === 'function') return iconName({ size: iconSize, color, weight: 'bold', ...style });
-    const IconComponent = PhosphorIcons[iconName];
+    if (React.isValidElement(iconName)) {
+      return React.cloneElement(iconName, {
+        size: iconName.props.size ?? iconSize,
+        color: iconName.props.color ?? color,
+        weight: iconName.props.weight ?? 'bold',
+        style: [iconName.props.style, style],
+      });
+    }
+    const IconComponent = typeof iconName === 'string' ? PhosphorIcons[iconName] : null;
     if (IconComponent) return <IconComponent size={iconSize} color={color} weight="bold" style={style} />;
     return null;
   };
