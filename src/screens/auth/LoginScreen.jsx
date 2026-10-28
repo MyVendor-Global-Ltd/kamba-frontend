@@ -16,7 +16,7 @@ import { ScreenShell } from '../../components/ScreenShell';
 import { KambaButton } from '../../components/KambaButton';
 import { KambaInput } from '../../components/KambaInput';
 import { KambaPhoneInput } from '../../components/KambaPhoneInput';
-import { storage } from '../../utils/storage';
+import { authAPI } from '../../utils/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -55,6 +55,7 @@ export const LoginScreen = ({ navigation }) => {
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState('whatsapp');
+  const [authError, setAuthError] = useState(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +65,8 @@ export const LoginScreen = ({ navigation }) => {
 
   const handleTabChange = (tab, index) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setAuthError(null);
+    setPhoneError(null);
     setActiveTab(tab);
     Animated.spring(tabSlideAnim, {
       toValue: index * tabWidth,
@@ -77,6 +80,7 @@ export const LoginScreen = ({ navigation }) => {
     let valid = true;
     setEmailError(null);
     setPasswordError(null);
+    setAuthError(null);
 
     if (!email.trim() || !email.includes('@')) {
       setEmailError('Enter a valid email');
@@ -96,17 +100,27 @@ export const LoginScreen = ({ navigation }) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     try {
-      await storage.setToken('mock_login_token_' + Date.now());
-      const savedUser = await storage.getUsername();
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      // On login success rule: if no username set → Username, if set → Main
-      if (savedUser) {
-        navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
-      } else {
-        navigation.navigate('Username', { email: email.trim() });
+      const response = await authAPI.login({ email: email.trim(), password });
+      const result = response.data?.result;
+      if (!response.data?.success || !result?.id) {
+        throw new Error(response.data?.message || 'Sign in could not be completed.');
       }
+      await storage.setUsername(result.username || '');
+      await storage.setUserData(result);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const rootNavigation = navigation.getParent?.()?.getParent?.();
+      if (rootNavigation?.reset) {
+        rootNavigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      } else {
+        navigation.navigate('Main');
+      }
+    } catch (error) {
+      setAuthError(
+        error.response?.data?.message ||
+        error.response?.data?.result?.message ||
+        'Unable to reach Kamba. Check your connection and API configuration, then try again.'
+      );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }
@@ -114,39 +128,13 @@ export const LoginScreen = ({ navigation }) => {
 
   const handlePhoneSendCode = () => {
     Keyboard.dismiss();
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length !== 10) {
-      setPhoneError('Enter a valid 10-digit number');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
-    setPhoneError(null);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    navigation.navigate('OTP', {
-      phone: cleaned,
-      method: deliveryMethod,
-      intent: 'login',
-    });
+    setPhoneError('Phone login is not available in the connected backend yet. Please use email sign-in.');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   };
 
-  const handleGoogleConnect = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLoading(true);
-
-    setTimeout(async () => {
-      setLoading(false);
-      await storage.setToken('mock_google_token_' + Date.now());
-      const savedUser = await storage.getUsername();
-
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      if (savedUser) {
-        navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
-      } else {
-        navigation.navigate('Username', { email: 'google.student@campus.edu.ng' });
-      }
-    }, 800);
+  const handleGoogleConnect = () => {
+    setAuthError('Google sign-in needs a configured frontend OAuth callback. Use email sign-in for now.');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   };
 
   return (
@@ -257,6 +245,7 @@ export const LoginScreen = ({ navigation }) => {
             loading={loading}
             onPress={handleEmailLogin}
           />
+          {authError ? <Text style={styles.authError} accessibilityRole="alert">{authError}</Text> : null}
         </View>
       )}
 
@@ -336,7 +325,7 @@ export const LoginScreen = ({ navigation }) => {
 
           <Text style={styles.googleHeadline}>Continue with Google</Text>
           <Text style={styles.googleSubtext}>
-            We'll sign you in instantly with your campus Google account.
+            Google sign-in is unavailable until the frontend OAuth callback is configured.
           </Text>
 
           <KambaButton
@@ -347,6 +336,7 @@ export const LoginScreen = ({ navigation }) => {
             onPress={handleGoogleConnect}
             style={{ marginTop: spacing.md }}
           />
+          {authError ? <Text style={styles.authError} accessibilityRole="alert">{authError}</Text> : null}
         </View>
       )}
 
@@ -434,6 +424,13 @@ const styles = StyleSheet.create({
   },
   tabContentGroup: {
     gap: spacing.lg,
+  },
+  authError: {
+    marginTop: spacing.sm,
+    fontFamily: typography.fontFamilies.body,
+    fontSize: 13,
+    color: colors.coral,
+    textAlign: 'center',
   },
   forgotPassword: {
     alignSelf: 'flex-end',

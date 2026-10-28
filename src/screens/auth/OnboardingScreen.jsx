@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontFamily: typography.fontFamilies.bodyMedium,
-    fontSize: typography.sizes.sm,
+    fontSize: typography.scale.bodySmall.fontSize,
     color: colors.textTertiary,
     letterSpacing: 0.5,
   },
@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
   },
   bodyText: {
     fontFamily: typography.fontFamilies.body,
-    fontSize: typography.sizes.base,
+    fontSize: typography.scale.bodyMedium.fontSize,
     lineHeight: 24,
     color: colors.textSecondary,
   },
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
   },
   alreadyAccountText: {
     fontFamily: typography.fontFamilies.bodyMedium,
-    fontSize: typography.sizes.sm,
+    fontSize: typography.scale.bodySmall.fontSize,
     color: colors.coral,
   },
   bottomBar: {

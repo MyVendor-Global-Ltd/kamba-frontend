@@ -1,32 +1,50 @@
 // screens/ProfileScreen.jsx — Marketplace Profile
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { User, ShieldCheck, SignOut as LogOut, Gear as Settings, Bell, Heart, CreditCard, Package, MapPin } from 'phosphor-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { User, SignOut as LogOut, Gear as Settings, Bell, Heart, CreditCard, Package, MapPin } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { MagneticButton } from '../components/MagneticButton';
 import { storage } from '../utils/storage';
+import { authAPI } from '../utils/api';
 
 export const ProfileScreen = ({ navigation }) => {
-  const [username, setUsername] = useState('student');
+  const [user, setUser] = useState(null);
+  const [logoutError, setLogoutError] = useState(null);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
-      const u = await storage.getUsername();
-      if (u) setUsername(u);
+      const savedUser = await storage.getUserData();
+      setUser(savedUser);
     };
     fetchUser();
   }, []);
 
   const handleLogout = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await storage.clearAll();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Auth' }],
-    });
+    setLogoutError(null);
+    if (!user) {
+      await storage.clearAll();
+      navigation.getParent?.()?.reset({ index: 0, routes: [{ name: 'Auth' }] });
+      return;
+    }
+
+    setLogoutLoading(true);
+    try {
+      await authAPI.logout();
+      await storage.clearAll();
+      navigation.getParent?.()?.reset({ index: 0, routes: [{ name: 'Auth' }] });
+    } catch (error) {
+      setLogoutError(
+        error.response?.data?.message ||
+        'Unable to contact Kamba to end this session. Check your connection and try again.'
+      );
+    } finally {
+      setLogoutLoading(false);
+    }
   };
 
   const menuItems = [
@@ -44,20 +62,13 @@ export const ProfileScreen = ({ navigation }) => {
       <View style={styles.container}>
         <View style={styles.profileHeader}>
           <View style={styles.avatarCircle}>
-            <Image
-              source={{ uri: 'https://picsum.photos/seed/user-avatar/200/200' }}
-              style={styles.avatarImage}
-            />
+            <Text style={styles.avatarInitial}>{user?.username?.[0]?.toUpperCase() || 'G'}</Text>
           </View>
           <View style={styles.userInfo}>
             <View style={styles.usernameRow}>
-              <Text style={styles.username}>@{username}</Text>
-              <View style={styles.verifiedBadge}>
-                <ShieldCheck size={14} color={colors.light.success} weight="bold" />
-                <Text style={styles.verifiedText}>Verified</Text>
-              </View>
+              <Text style={styles.username}>{user?.username ? `@${user.username}` : 'Guest mode'}</Text>
             </View>
-            <Text style={styles.memberSince}>Member since 2024</Text>
+            <Text style={styles.memberSince}>{user?.email || 'Sign in to view your account details'}</Text>
           </View>
         </View>
 
@@ -81,11 +92,13 @@ export const ProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.logoutSection}>
+          {logoutError ? <Text style={styles.logoutError} accessibilityRole="alert">{logoutError}</Text> : null}
           <MagneticButton
             label="Log Out"
             variant="destructive"
             size="md"
             fullWidth
+            loading={logoutLoading}
             onPress={handleLogout}
           />
         </View>
@@ -97,13 +110,11 @@ export const ProfileScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { gap: spacing.xl },
   profileHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: spacing.lg, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border },
-  avatarCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.light.accentSoft, overflow: 'hidden' },
-  avatarImage: { width: '100%', height: '100%' },
+  avatarCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.light.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  avatarInitial: { fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineLarge.fontSize, color: colors.light.accent },
   userInfo: { flex: 1, gap: spacing.xs },
   usernameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   username: { fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineMedium.fontSize, lineHeight: typography.scale.headlineMedium.lineHeight, letterSpacing: typography.scale.headlineMedium.letterSpacing, color: colors.light.textPrimary },
-  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.light.successSoft, paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.full },
-  verifiedText: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.success },
   memberSince: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textMuted },
   menuSection: { gap: spacing.xs },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.light.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border },
@@ -111,6 +122,7 @@ const styles = StyleSheet.create({
   menuLabel: { flex: 1, fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleLarge.fontSize, color: colors.light.textPrimary },
   menuChevron: { fontFamily: typography.fontFamilies.mono, fontSize: typography.scale.monoLarge.fontSize, color: colors.light.textMuted },
   logoutSection: { marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.light.border },
+  logoutError: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.error, marginBottom: spacing.sm },
 });
 
 export default ProfileScreen;

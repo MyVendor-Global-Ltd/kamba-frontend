@@ -1,21 +1,14 @@
 // screens/auth/RegisterScreen.jsx — Single-screen registration
 // Username, Email, Password, Confirm Password, Optional Referral Code
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Keyboard } from 'react-native';
 import { KambaLogo } from '../../components/KambaLogo';
 import { MagneticButton } from '../../components/MagneticButton';
 import { StyledInput } from '../../components/StyledInput';
 import { colors, typography, spacing, radius, motion } from '../../theme/tokens';
 import { storage } from '../../utils/storage';
-
-function debounce(fn, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
+import { authAPI, userAPI } from '../../utils/api';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.light.background },
@@ -32,6 +25,7 @@ const styles = StyleSheet.create({
   strengthFilled: { backgroundColor: colors.light.accent },
   strengthLabel: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.textMuted },
   submitSection: { gap: spacing.md, paddingTop: spacing.md },
+  serverError: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.error, textAlign: 'center' },
   loginLink: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   loginLinkText: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, color: colors.light.textSecondary },
   loginLinkAction: { fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize, color: colors.light.accent },
@@ -51,6 +45,7 @@ export const RegisterScreen = ({ navigation }) => {
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -62,31 +57,38 @@ export const RegisterScreen = ({ navigation }) => {
     ]).start();
   }, []);
 
-  const checkUsernameAvailability = useCallback(
-    debounce(async (value) => {
-      if (!value || value.length < 3) {
-        setUsernameAvailable(null);
-        return;
-      }
+  useEffect(() => {
+    const candidate = username.trim();
+    if (candidate.length < 3 || !/^[a-zA-Z0-9_]+$/.test(candidate)) {
+      setUsernameAvailable(null);
+      setUsernameChecking(false);
+      return undefined;
+    }
+
+    let active = true;
+    const timer = setTimeout(async () => {
       setUsernameChecking(true);
       setUsernameError(null);
       try {
-        await new Promise((r) => setTimeout(r, 800));
-        const taken = ['admin', 'kamba', 'support', 'test', 'demo'].includes(value.toLowerCase());
-        setUsernameAvailable(!taken);
-        if (taken) setUsernameError('Username already taken');
+        const result = await userAPI.checkUsername(candidate);
+        if (!active) return;
+        const available = result?.isAvailable === true;
+        setUsernameAvailable(available);
+        if (!available) setUsernameError(result?.message || 'Username already taken');
       } catch {
-        setUsernameError('Could not check availability');
+        if (!active) return;
+        setUsernameAvailable(null);
+        setUsernameError('Could not check availability. Try again.');
       } finally {
-        setUsernameChecking(false);
+        if (active) setUsernameChecking(false);
       }
-    }, 1500),
-    []
-  );
+    }, 450);
 
-  useEffect(() => {
-    checkUsernameAvailability(username);
-  }, [username, checkUsernameAvailability]);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [username]);
 
   const validate = () => {
     let valid = true;
@@ -94,6 +96,7 @@ export const RegisterScreen = ({ navigation }) => {
     setEmailError(null);
     setPasswordError(null);
     setConfirmError(null);
+    setServerError(null);
 
     if (!username.trim()) {
       setUsernameError('Username is required');
@@ -139,13 +142,32 @@ export const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1500));
-      const mockToken = 'kamba_mock_token_' + Date.now();
-      await storage.setToken(mockToken);
-      await storage.setUsername(username.trim());
-      navigation.replace('Main');
+      const response = await authAPI.register({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        confirm_password: confirmPassword,
+        ...(referralCode.trim() ? { referral_code: referralCode.trim() } : {}),
+      });
+      const result = response.data?.result;
+      if (!response.data?.success || !result?.id) {
+        throw new Error(response.data?.message || 'Registration could not be completed.');
+      }
+
+      await storage.setUsername(result.username || username.trim());
+      await storage.setUserData(result);
+      const rootNavigation = navigation.getParent?.()?.getParent?.();
+      if (rootNavigation?.reset) {
+        rootNavigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      } else {
+        navigation.navigate('Main');
+      }
     } catch (error) {
-      console.error('Registration failed:', error);
+      setServerError(
+        error.response?.data?.message ||
+        error.response?.data?.result?.message ||
+        'Unable to reach Kamba. Check your connection and API configuration, then try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -179,7 +201,12 @@ export const RegisterScreen = ({ navigation }) => {
             label="Username"
             placeholder="johndoe"
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(value) => {
+              setUsername(value);
+              setUsernameError(null);
+              setUsernameAvailable(null);
+              setServerError(null);
+            }}
             error={usernameError}
             hint={usernameChecking ? 'Checking...' : usernameAvailable === true ? 'Available' : usernameAvailable === false ? 'Taken' : '3+ characters, letters/numbers/_'}
             hintStyle={usernameChecking ? { color: colors.light.accent } : usernameAvailable === true ? { color: colors.light.success } : usernameAvailable === false ? { color: colors.light.error } : undefined}
@@ -262,6 +289,7 @@ export const RegisterScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.submitSection}>
+          {serverError ? <Text style={styles.serverError} accessibilityRole="alert">{serverError}</Text> : null}
           <MagneticButton
             label="Create account"
             variant="primary"
