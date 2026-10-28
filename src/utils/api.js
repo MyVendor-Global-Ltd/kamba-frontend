@@ -60,4 +60,19 @@ export const userAPI = {
   },
 };
 
+export const vendorAPI = {
+  async listStores(params = {}) {
+    const response = await api.get('/vendors/stores', { params });
+    const stores = response.data?.stores;
+    if (!Array.isArray(stores)) {
+      throw new Error('The store catalog response was not in the expected format.');
+    }
+    return stores;
+  },
+  async getStore(slug) {
+    const response = await api.get(`/vendors/stores/${encodeURIComponent(slug)}`);
+    return response.data?.store || null;
+  },
+};
+
 export default api;

@@ -16,6 +16,7 @@ import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { SearchScreen } from '../screens/SearchScreen';
+import { StoreDetailScreen } from '../screens/StoreDetailScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
@@ -196,6 +197,11 @@ function RootNavigator() {
         name="Search"
         component={SearchScreen}
         options={{ headerShown: true, headerTitle: 'Search', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="StoreDetail"
+        component={StoreDetailScreen}
+        options={{ headerShown: true, headerTitle: 'Store', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="Notifications"

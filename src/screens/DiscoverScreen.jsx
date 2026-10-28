@@ -1,14 +1,9 @@
-// screens/DiscoverScreen.jsx — Category & store discovery
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Animated, Easing, Dimensions } from 'react-native';
-import { MagnifyingGlass as Search, MapPin, Storefront, Truck, Tag, Heart } from 'phosphor-react-native';
-import { colors, typography, spacing, radius, motion, icons } from '../theme/tokens';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { MagnifyingGlass, MapPin, Storefront } from 'phosphor-react-native';
+import { colors, typography, spacing, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { DoubleBezelCard } from '../components/DoubleBezelCard';
-import { MagneticButton } from '../components/MagneticButton';
-import { NairaText } from '../components/NairaText';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { vendorAPI } from '../utils/api';
 
 const CATEGORIES = [
   { id: 'food', name: 'Food', icon: '🍔', color: '#FFF0EB' },
@@ -19,252 +14,182 @@ const CATEGORIES = [
   { id: 'services', name: 'Services', icon: '🛠️', color: '#F0F0F0' },
 ];
 
-const FEATURED_STORES = [
-  { id: 1, name: "Ada's Kitchen", category: 'Food • Jollof & Swallow', rating: 4.9, distance: '0.3 km', deliveryTime: '15-20 min', image: 'https://picsum.photos/seed/adas-kitchen/400/300' },
-  { id: 2, name: 'TechHub UNILAG', category: 'Tech • Phones & Accessories', rating: 4.8, distance: '0.5 km', deliveryTime: '10-15 min', image: 'https://picsum.photos/seed/techhub/400/300' },
-  { id: 3, name: 'Style Avenue', category: 'Fashion • Thrift & New', rating: 4.7, distance: '0.8 km', deliveryTime: '20-25 min', image: 'https://picsum.photos/seed/styleavenue/400/300' },
-  { id: 4, name: 'Campus Bookstore', category: 'Books • Textbooks & Stationery', rating: 4.9, distance: '0.2 km', deliveryTime: '5-10 min', image: 'https://picsum.photos/seed/bookstore/400/300' },
-];
+const getName = (store) => store.store_name || store.name || 'Campus store';
+const CATEGORY_ALIASES = {
+  food: ['food'],
+  fashion: ['fashion'],
+  tech: ['tech', 'technology', 'electronics'],
+  books: ['book', 'books'],
+  beauty: ['beauty'],
+  services: ['service', 'services'],
+};
 
-const NEARBY_STORES = [
-  { id: 5, name: 'Fresh Fruits NG', category: 'Food', rating: 4.6, distance: '0.4 km' },
-  { id: 6, name: 'Sneaker Plug', category: 'Fashion', rating: 4.8, distance: '0.6 km' },
-  { id: 7, name: 'Phone Clinic', category: 'Tech', rating: 4.5, distance: '0.7 km' },
-  { id: 8, name: 'Print & Go', category: 'Services', rating: 4.7, distance: '0.3 km' },
-];
-
-const moreStyles = StyleSheet.create({
-  categoryScroll: { marginHorizontal: -spacing.xl, paddingHorizontal: spacing.xl },
-  categoryScrollContent: { gap: spacing.sm, paddingBottom: spacing.sm },
-  categoryChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.light.border },
-  categoryChipAll: { backgroundColor: colors.light.surface },
-  categoryChipSelected: { borderColor: colors.light.accent, backgroundColor: colors.light.accent },
-  categoryChipText: { fontFamily: typography.fontFamilies.chip, fontSize: typography.scale.labelMedium.fontSize, letterSpacing: typography.scale.labelMedium.letterSpacing, color: colors.light.textSecondary },
-  categoryChipTextSelected: { color: '#FFFFFF' },
-  categoryChipAllText: { color: colors.light.textPrimary },
-  featuredScrollContent: { paddingHorizontal: spacing.xl, gap: spacing.md, paddingBottom: spacing.sm },
-  featuredCard: { width: SCREEN_WIDTH - spacing.xl * 2 },
-  featuredCardInner: { width: '100%' },
-  featuredImageContainer: { position: 'relative', height: 160, borderRadius: radius.lg, overflow: 'hidden', margin: -2, marginBottom: spacing.md },
-  featuredImage: { flex: 1, backgroundColor: colors.light.surfaceElevated },
-  featuredBadge: { position: 'absolute', top: spacing.md, left: spacing.md, backgroundColor: colors.light.accent, borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
-  featuredBadgeText: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: '#FFFFFF' },
-  featuredContent: { gap: spacing.xs },
-  featuredHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  featuredName: { fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleLarge.fontSize, lineHeight: typography.scale.titleLarge.lineHeight, color: colors.light.textPrimary, flex: 1 },
-  featuredRating: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, backgroundColor: colors.light.successSoft, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.full },
-  ratingText: { fontFamily: typography.fontFamilies.mono, fontSize: typography.scale.mono.fontSize, color: colors.light.success },
-  featuredCategory: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textSecondary },
-  featuredMeta: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xs },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  metaText: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.textMuted },
-  nearbyListContent: { paddingTop: spacing.xs },
-  nearbyCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, backgroundColor: colors.light.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border },
-  nearbyIcon: { width: 48, height: 48, borderRadius: radius.lg, backgroundColor: colors.light.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  nearbyEmoji: { fontSize: 24 },
-  nearbyInfo: { flex: 1, gap: 2 },
-  nearbyName: { fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleMedium.fontSize, color: colors.light.textPrimary },
-  nearbyCategory: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textSecondary },
-  nearbyRating: { alignItems: 'flex-end', gap: 2 },
-  nearbyDistance: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.textMuted },
-  separator: { height: 1, backgroundColor: colors.light.border, marginHorizontal: spacing.xl },
-});
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.light.background },
-  content: { flex: 1, paddingBottom: spacing.xxl },
-  searchWrapper: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.md },
-  searchButton: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.light.surface, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, paddingHorizontal: spacing.md, paddingVertical: spacing.md },
-  searchIconWrapper: { width: 40, height: 40, borderRadius: radius.lg, backgroundColor: colors.light.accentSoft, alignItems: 'center', justifyContent: 'center' },
-  searchPlaceholder: { flex: 1, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, color: colors.light.textMuted },
-  section: { paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  sectionTitle: { fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineMedium.fontSize, lineHeight: typography.scale.headlineMedium.lineHeight, letterSpacing: typography.scale.headlineMedium.letterSpacing, color: colors.light.textPrimary },
-  sectionLink: { fontFamily: typography.fontFamilies.chip, fontSize: typography.scale.labelMedium.fontSize, color: colors.light.accent },
-});
-
-export const DiscoverScreen = ({ navigation }) => {
-  const [selectedCategory, setSelectedCategory] = React.useState('all');
-  const [searchText, setSearchText] = React.useState('');
-
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+export const DiscoverScreen = ({ navigation, route }) => {
+  const initialCategory = route?.params?.category || 'all';
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [searchText, setSearchText] = useState('');
+  const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: motion.duration.slower, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: motion.duration.slower, easing: Easing.bezier(...motion.easing.standard), useNativeDriver: true }),
-    ]).start();
-  }, []);
-const renderCategory = ({ item, index }) => {
-    const isSelected = selectedCategory === item.id;
+    setSelectedCategory(route?.params?.category || 'all');
+  }, [route?.params?.category]);
 
-    return (
-      <TouchableOpacity
-        style={[
-          moreStyles.categoryChip,
-          isSelected && moreStyles.categoryChipSelected,
-          { backgroundColor: isSelected ? colors.light.accent : item.color },
-        ]}
-        onPress={() => setSelectedCategory(item.id)}
-        activeOpacity={0.8}
-        accessibilityLabel={`${item.name} category`}
-        accessibilityRole="button"
-        accessibilityState={{ selected: isSelected }}
-        key={item.id}
-      >
-        <Text
-          style={[
-            moreStyles.categoryChipText,
-            isSelected && moreStyles.categoryChipTextSelected,
-          ]}
-        >
-          {item.icon}{' '}{item.name}
-        </Text>
-      </TouchableOpacity>
-    );
+  const loadStores = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setStores(await vendorAPI.listStores({ page: 1, limit: 50 }));
+    } catch (err) {
+      setStores([]);
+      setError(err.response?.data?.error || 'We could not load stores. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [reloadKey]);
+
+  useEffect(() => {
+    loadStores();
+  }, [loadStores]);
+
+  const filteredStores = useMemo(() => {
+    const query = searchText.trim().toLocaleLowerCase();
+    return stores.filter((store) => {
+      const normalizedCategory = String(store.category || '').toLocaleLowerCase();
+      const categoryMatches = selectedCategory === 'all' || (CATEGORY_ALIASES[selectedCategory] || [selectedCategory]).includes(normalizedCategory);
+      const searchMatches = !query || [getName(store), store.category, store.location_text, store.description]
+        .some((value) => String(value || '').toLocaleLowerCase().includes(query));
+      return categoryMatches && searchMatches;
+    });
+  }, [stores, selectedCategory, searchText]);
+
+  const openStore = (store) => {
+    if (store.slug) navigation.navigate('StoreDetail', { slug: store.slug });
   };
 
-  const renderFeaturedStore = ({ item, index }) => {
-    return (
-      <Animated.View style={moreStyles.featuredCard} key={item.id}>
-        <DoubleBezelCard variant="default" style={moreStyles.featuredCardInner}>
-          <View style={moreStyles.featuredImageContainer}>
-            <View style={moreStyles.featuredImage} />
-            <View style={moreStyles.featuredBadge}>
-              <Text style={moreStyles.featuredBadgeText}>Featured</Text>
-            </View>
-          </View>
-          <View style={moreStyles.featuredContent}>
-            <View style={moreStyles.featuredHeader}>
-              <Text style={moreStyles.featuredName}>{item.name}</Text>
-              <View style={moreStyles.featuredRating}>
-                <Text style={moreStyles.ratingText}>★ {item.rating}</Text>
-              </View>
-            </View>
-            <Text style={moreStyles.featuredCategory}>{item.category}</Text>
-            <View style={moreStyles.featuredMeta}>
-              <View style={moreStyles.metaItem}>
-                <MapPin size={icons.sizes.xs} color={colors.light.textMuted} weight="bold" />
-                <Text style={moreStyles.metaText}>{item.distance}</Text>
-              </View>
-              <View style={moreStyles.metaItem}>
-                <Truck size={icons.sizes.xs} color={colors.light.textMuted} weight="bold" />
-                <Text style={moreStyles.metaText}>{item.deliveryTime}</Text>
-              </View>
-            </View>
-            <MagneticButton
-              label="View Store"
-              variant="ghost"
-              size="sm"
-              fullWidth
-              onPress={() => navigation.navigate('StoreDetail', { storeId: item.id })}
-            />
-          </View>
-        </DoubleBezelCard>
-      </Animated.View>
-    );
-  };
+  return (
+    <ScreenShell scrollable padded bg={colors.light.background}>
+      <View style={styles.container}>
+        <View style={styles.searchBox}>
+          <MagnifyingGlass size={20} color={colors.light.textMuted} />
+          <TextInput
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholder="Search stores, categories, locations..."
+            placeholderTextColor={colors.light.textMuted}
+            style={styles.searchInput}
+            returnKeyType="search"
+            accessibilityLabel="Search campus stores"
+          />
+        </View>
 
-  const renderNearbyStore = ({ item }) => (
-    <TouchableOpacity
-      style={moreStyles.nearbyCard}
-      onPress={() => navigation.navigate('StoreDetail', { storeId: item.id })}
-      activeOpacity={0.8}
-      accessibilityLabel={`${item.name}, ${item.category}, ${item.rating} stars, ${item.distance} away`}
-    >
-      <View style={moreStyles.nearbyIcon}>
-        <Text style={moreStyles.nearbyEmoji}>🏪</Text>
-      </View>
-      <View style={moreStyles.nearbyInfo}>
-        <Text style={moreStyles.nearbyName}>{item.name}</Text>
-        <Text style={moreStyles.nearbyCategory}>{item.category}</Text>
-      </View>
-      <View style={moreStyles.nearbyRating}>
-        <Text style={moreStyles.ratingText}>★ {item.rating}</Text>
-        <Text style={moreStyles.nearbyDistance}>{item.distance}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <ScreenShell scrollable={false} padded={false} bg={colors.light.background}>
-        <View style={styles.content}>
-          <View style={styles.searchWrapper}>
-            <TouchableOpacity
-              style={styles.searchButton}
-              onPress={() => navigation.navigate('Search')}
-              activeOpacity={0.8}
-              accessibilityLabel="Search stores and products"
-              accessibilityRole="search"
-            >
-              <View style={styles.searchIconWrapper}>
-                <Search size={icons.sizes.md} color={colors.light.textMuted} weight="bold" />
-              </View>
-              <Text style={styles.searchPlaceholder}>Search stores, products...</Text>
+        <Text style={styles.heading}>Browse stores</Text>
+        <View style={styles.categories}>
+          <TouchableOpacity
+            style={[styles.categoryChip, selectedCategory === 'all' && styles.categorySelected]}
+            onPress={() => setSelectedCategory('all')}
+            accessibilityRole="button"
+            accessibilityState={{ selected: selectedCategory === 'all' }}
+          >
+            <Text style={[styles.categoryText, selectedCategory === 'all' && styles.categoryTextSelected]}>All</Text>
+          </TouchableOpacity>
+          {CATEGORIES.map((category) => {
+            const selected = selectedCategory === category.id;
+            return (
+              <TouchableOpacity
+                key={category.id}
+                style={[styles.categoryChip, { backgroundColor: selected ? colors.light.accent : category.color }, selected && styles.categorySelected]}
+                onPress={() => setSelectedCategory(category.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`${category.name} category`}
+                accessibilityState={{ selected }}
+              >
+                <Text style={[styles.categoryText, selected && styles.categoryTextSelected]}>{category.icon} {category.name}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {loading ? (
+          <View style={styles.stateBox} accessibilityRole="progressbar">
+            <ActivityIndicator color={colors.light.accent} />
+            <Text style={styles.stateText}>Loading campus stores…</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.stateBox}>
+            <Text style={styles.stateText}>{error}</Text>
+            <TouchableOpacity onPress={() => setReloadKey((key) => key + 1)} accessibilityRole="button">
+              <Text style={styles.retry}>Try again</Text>
             </TouchableOpacity>
           </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Categories</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={moreStyles.categoryScrollContent}
-              style={moreStyles.categoryScroll}
-            >
+        ) : filteredStores.length === 0 ? (
+          <View style={styles.stateBox}>
+            <Text style={styles.stateTitle}>{stores.length ? 'No matching stores' : 'No stores to show yet'}</Text>
+            <Text style={styles.stateText}>{stores.length ? 'Try another category or search term.' : 'New campus stores will appear here when available.'}</Text>
+          </View>
+        ) : (
+          <View style={styles.storeList}>
+            {filteredStores.map((store) => (
               <TouchableOpacity
-                style={[moreStyles.categoryChip, moreStyles.categoryChipAll, selectedCategory === 'all' && moreStyles.categoryChipSelected]}
-                onPress={() => setSelectedCategory('all')}
-                activeOpacity={0.8}
-                accessibilityLabel="All categories"
+                key={store.id || store.slug}
+                style={styles.storeCard}
+                onPress={() => openStore(store)}
+                disabled={!store.slug}
+                activeOpacity={0.82}
                 accessibilityRole="button"
-                accessibilityState={{ selected: selectedCategory === 'all' }}
+                accessibilityLabel={`View ${getName(store)}`}
               >
-                <Text style={[moreStyles.categoryChipText, moreStyles.categoryChipAllText, selectedCategory === 'all' && moreStyles.categoryChipTextSelected]}>All</Text>
+                <View style={styles.storeIcon}><Storefront size={24} color={colors.light.accent} weight="bold" /></View>
+                <View style={styles.storeInfo}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.storeName} numberOfLines={1}>{getName(store)}</Text>
+                    {store.vendor_profiles?.is_verified ? <Text style={styles.verified}>Verified</Text> : null}
+                  </View>
+                  <Text style={styles.categoryLabel}>{store.category || 'Campus store'}</Text>
+                  {store.location_text ? (
+                    <View style={styles.locationRow}>
+                      <MapPin size={14} color={colors.light.textMuted} />
+                      <Text style={styles.location} numberOfLines={1}>{store.location_text}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                {store.slug ? <Text style={styles.chevron}>›</Text> : null}
               </TouchableOpacity>
-              {CATEGORIES.map((cat, i) => renderCategory({ item: cat, index: i + 1 }))}
-            </ScrollView>
+            ))}
           </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Featured Stores</Text>
-            </View>
-            <FlatList
-              data={FEATURED_STORES}
-              renderItem={renderFeaturedStore}
-              keyExtractor={(item) => String(item.id)}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={moreStyles.featuredScrollContent}
-              snapToAlignment="start"
-              decelerationRate="fast"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Nearby</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('AllStores')}
-                accessibilityLabel="View all nearby stores"
-              >
-                <Text style={styles.sectionLink}>View all</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={NEARBY_STORES}
-              renderItem={renderNearbyStore}
-              keyExtractor={(item) => String(item.id)}
-              contentContainerStyle={moreStyles.nearbyListContent}
-              ItemSeparatorComponent={() => <View style={moreStyles.separator} />}
-            />
-          </View>
-        </View>
-      </ScreenShell>
-    </Animated.View>
+        )}
+      </View>
+    </ScreenShell>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1, gap: spacing.lg },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface, paddingHorizontal: spacing.md, minHeight: 52 },
+  searchInput: { flex: 1, paddingVertical: spacing.md, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, color: colors.light.textPrimary, outlineStyle: 'none' },
+  heading: { fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineMedium.fontSize, color: colors.light.textPrimary },
+  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, alignItems: 'flex-start' },
+  categoryChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.light.border },
+  categorySelected: { borderColor: colors.light.accent },
+  categoryText: { fontFamily: typography.fontFamilies.chip, fontSize: typography.scale.labelMedium.fontSize, color: colors.light.textSecondary },
+  categoryTextSelected: { color: '#FFFFFF' },
+  storeList: { gap: spacing.sm },
+  storeCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, backgroundColor: colors.light.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border },
+  storeIcon: { width: 48, height: 48, borderRadius: radius.lg, backgroundColor: colors.light.accentSoft, alignItems: 'center', justifyContent: 'center' },
+  storeInfo: { flex: 1, gap: 3 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  storeName: { flexShrink: 1, fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleLarge.fontSize, color: colors.light.textPrimary },
+  verified: { fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.success },
+  categoryLabel: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textSecondary, textTransform: 'capitalize' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  location: { flex: 1, fontFamily: typography.fontFamilies.caption, fontSize: typography.scale.labelSmall.fontSize, color: colors.light.textMuted },
+  chevron: { fontFamily: typography.fontFamilies.mono, fontSize: typography.scale.monoLarge.fontSize, color: colors.light.textMuted },
+  stateBox: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl, backgroundColor: colors.light.surface, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg },
+  stateTitle: { fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleLarge.fontSize, color: colors.light.textPrimary, textAlign: 'center' },
+  stateText: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textSecondary, textAlign: 'center' },
+  retry: { fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize, color: colors.light.accent },
+});
 
 export default DiscoverScreen;

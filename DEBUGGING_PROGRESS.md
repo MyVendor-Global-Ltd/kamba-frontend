@@ -48,3 +48,18 @@ A read-only request to `https://api.kamba.ng/health` failed with DNS `Could not 
 3. Catalog Home/Discover/Search still show fake local fixtures/static copy. If continuing, replace only with verified public store/service catalog endpoints and handle offline/empty/error states; never pass numeric fixture IDs into slug routes.
 4. Search, Notifications, Orders, checkout, payment/address, favorites, password recovery, Google callback, and phone verification remain incomplete or unsupported as detailed above.
 5. Expo Doctor warnings listed above remain. Native Android/iOS/Expo Go were not tested.
+
+
+## Catalog/search checkpoint (2026-10-29)
+
+Frontend-only work now in progress after `bf2f242`:
+
+- Added `vendorAPI.listStores` and `vendorAPI.getStore` for the documented public endpoints `/api/v1/vendors/stores` and `/api/v1/vendors/stores/:slug`.
+- Replaced static fake Home/Discover vendors, ratings, distance and delivery-time claims with public store API data. Both screens have explicit loading, error+retry, and empty states. Category/name/location filtering is local over the loaded public records; category aliases cover technology/electronics and singular/plural labels.
+- Replaced the static Search placeholder with text search over public store names, category, location and description. This does not search products because the backend contract has no public product search endpoint.
+- Added a public StoreDetail screen keyed only by the backend slug route. It renders actual store fields/verification and does not claim ordering/contact support is implemented.
+- Registered StoreDetail in the root navigator and fixed Discover's web category-chip layout by replacing the tall horizontal scroller with a wrapping row.
+
+Validation for this checkpoint: Babel parser checks and `git diff --check` passed; `npx expo export --platform web --output-dir /tmp/kamba-catalog-export-final` passed. Browser preview showed Home/Discover/Search working and handling the unresolved API host with visible retry messages (no fixture fallback). The category chips now occupy a compact row; browser console contained no JavaScript errors. Live catalog success and StoreDetail populated data were not testable because `api.kamba.ng` still fails DNS resolution. Expo preview cannot validate the success path without reachable API records.
+
+Next: push this checkpoint, then coordinate the correct reachable API hostname/CORS/cookie settings with backend/deployment owner. Re-test real catalog success and the slug detail route once available. Service profiles, product search/details, ordering, contact, checkout, and payment remain outside the endpoints/screens implemented here.
