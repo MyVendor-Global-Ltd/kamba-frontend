@@ -5,16 +5,21 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { storage } from '../utils/storage';
-import { House as Home, MagnifyingGlass as Search, ShoppingBag, User, GridFour as Grid } from 'phosphor-react-native';
+import { authAPI } from '../utils/api';
+import { House as Home, ShoppingBag, User, GridFour as Grid } from 'phosphor-react-native';
 
 import { SplashScreen } from '../screens/auth/SplashScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
+import { SearchScreen } from '../screens/SearchScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { OrdersScreen } from '../screens/OrdersScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -121,6 +126,11 @@ function AuthStack() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen
+        name="Onboarding"
+        component={OnboardingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Register"
         component={RegisterScreen}
         options={{ headerShown: true, headerTitle: 'Create account', headerBackTitle: 'Back' }}
@@ -138,16 +148,26 @@ function RootNavigator() {
   const [initialRoute, setInitialRoute] = useState(null);
 
   useEffect(() => {
+    let active = true;
     const checkAuth = async () => {
-      const token = await storage.getToken();
-      const username = await storage.getUsername();
-      if (token && username) {
-        setInitialRoute('Main');
-      } else {
-        setInitialRoute('Auth');
+      try {
+        const response = await authAPI.getDashboard();
+        const user = response.data?.result;
+        if (!response.data?.success || !user?.id) {
+          throw new Error('No authenticated session');
+        }
+        await storage.setUsername(user.username || '');
+        await storage.setUserData(user);
+        if (active) setInitialRoute('Main');
+      } catch {
+        await storage.clearAll();
+        if (active) setInitialRoute('Auth');
       }
     };
     checkAuth();
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (!initialRoute) {
@@ -156,16 +176,12 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator
+      initialRouteName={initialRoute}
       screenOptions={{
         ...screenOptions,
         headerShown: false,
       }}
     >
-      <Stack.Screen
-        name="Splash"
-        component={SplashScreen}
-        options={{ headerShown: false }}
-      />
       <Stack.Screen
         name="Auth"
         component={AuthStack}
@@ -175,6 +191,21 @@ function RootNavigator() {
         name="Main"
         component={MainTabs}
         options={{ headerShown: false, animationType: 'fade' }}
+      />
+      <Stack.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{ headerShown: true, headerTitle: 'Search', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{ headerShown: true, headerTitle: 'Notifications', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="Orders"
+        component={OrdersScreen}
+        options={{ headerShown: true, headerTitle: 'My Orders', headerBackTitle: 'Back' }}
       />
     </Stack.Navigator>
   );
