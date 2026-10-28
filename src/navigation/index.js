@@ -1,3 +1,42 @@
+import React, { useState, useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { colors, typography, spacing, radius } from '../theme/tokens';
+import { storage } from '../utils/storage';
+import { Home, Search, ShoppingBag, User, Grid } from 'phosphor-react-native';
+
+import { SplashScreen } from '../screens/auth/SplashScreen';
+import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
+import { RegisterScreen } from '../screens/auth/RegisterScreen';
+import { LoginScreen } from '../screens/auth/LoginScreen';
+import { HomeScreen } from '../screens/HomeScreen';
+import { DiscoverScreen } from '../screens/DiscoverScreen';
+import { CartScreen } from '../screens/CartScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const screenOptions = {
+  headerStyle: { backgroundColor: colors.light.background },
+  headerTintColor: colors.light.textPrimary,
+  headerTitleStyle: {
+    fontFamily: typography.fontFamilies.headline,
+    fontSize: typography.scale.headlineMedium.fontSize,
+    letterSpacing: typography.scale.headlineMedium.letterSpacing,
+  },
+  headerShadowVisible: false,
+  cardStyleInterpolator: ({ current }) => ({
+    cardStyle: { opacity: current.progress },
+  }),
+  transitionSpec: {
+    open: { animation: 'spring', config: { damping: 22, stiffness: 200 } },
+    close: { animation: 'spring', config: { damping: 26, stiffness: 200 } },
+  },
+};
+
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -148,41 +187,3 @@ export const AppNavigator = () => (
 );
 
 export default AppNavigator;
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, StyleSheet, Animated, Easing } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/tokens';
-import { storage } from '../utils/storage';
-import { Home, Search, ShoppingBag, User, Grid } from 'phosphor-react-native';
-
-import { SplashScreen } from '../screens/auth/SplashScreen';
-import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
-import { RegisterScreen } from '../screens/auth/RegisterScreen';
-import { LoginScreen } from '../screens/auth/LoginScreen';
-import { HomeScreen } from '../screens/HomeScreen';
-import { DiscoverScreen } from '../screens/DiscoverScreen';
-import { CartScreen } from '../screens/CartScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
-
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-
-const screenOptions = {
-  headerStyle: { backgroundColor: colors.light.background },
-  headerTintColor: colors.light.textPrimary,
-  headerTitleStyle: {
-    fontFamily: typography.fontFamilies.headline,
-    fontSize: typography.scale.headlineMedium.fontSize,
-    letterSpacing: typography.scale.headlineMedium.letterSpacing,
-  },
-  headerShadowVisible: false,
-  cardStyleInterpolator: ({ current }) => ({
-    cardStyle: { opacity: current.progress },
-  }),
-  transitionSpec: {
-    open: { animation: 'spring', config: { damping: 22, stiffness: 200 } },
-    close: { animation: 'spring', config: { damping: 26, stiffness: 200 } },
-  },
-};

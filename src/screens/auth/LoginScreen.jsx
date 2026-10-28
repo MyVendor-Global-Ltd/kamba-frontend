@@ -11,7 +11,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { ChevronLeft, Mail, Phone } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { colors, typography, spacing, radius, shadows, animation } from '../../theme';
+import { colors, typography, spacing, radius, shadows, motion } from '../../theme';
 import { ScreenShell } from '../../components/ScreenShell';
 import { KambaButton } from '../../components/KambaButton';
 import { KambaInput } from '../../components/KambaInput';
@@ -67,7 +67,7 @@ export const LoginScreen = ({ navigation }) => {
     setActiveTab(tab);
     Animated.spring(tabSlideAnim, {
       toValue: index * tabWidth,
-      ...animation.spring,
+      ...motion.easing.spring,
       useNativeDriver: true,
     }).start();
   };

@@ -1,3 +1,22 @@
+// screens/auth/RegisterScreen.jsx — Single-screen registration
+// Username, Email, Password, Confirm Password, Optional Referral Code
+
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Keyboard } from 'react-native';
+import { KambaLogo } from '../../components/KambaLogo';
+import { MagneticButton } from '../../components/MagneticButton';
+import { StyledInput } from '../../components/StyledInput';
+import { colors, typography, spacing, radius, motion } from '../../theme/tokens';
+import { storage } from '../../utils/storage';
+
+function debounce(fn, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.light.background },
   content: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.xl },
@@ -18,8 +37,125 @@ const styles = StyleSheet.create({
   loginLinkAction: { fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize, color: colors.light.accent },
 });
 
-export default RegisterScreen;
-return (
+export const RegisterScreen = ({ navigation }) => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+
+  const [usernameError, setUsernameError] = useState(null);
+  const [emailError, setEmailError] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
+  const [confirmError, setConfirmError] = useState(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: motion.duration.slower, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: motion.duration.slower, easing: motion.easing.standard, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const checkUsernameAvailability = useCallback(
+    debounce(async (value) => {
+      if (!value || value.length < 3) {
+        setUsernameAvailable(null);
+        return;
+      }
+      setUsernameChecking(true);
+      setUsernameError(null);
+      try {
+        await new Promise((r) => setTimeout(r, 800));
+        const taken = ['admin', 'kamba', 'support', 'test', 'demo'].includes(value.toLowerCase());
+        setUsernameAvailable(!taken);
+        if (taken) setUsernameError('Username already taken');
+      } catch {
+        setUsernameError('Could not check availability');
+      } finally {
+        setUsernameChecking(false);
+      }
+    }, 1500),
+    []
+  );
+
+  useEffect(() => {
+    checkUsernameAvailability(username);
+  }, [username, checkUsernameAvailability]);
+
+  const validate = () => {
+    let valid = true;
+    setUsernameError(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setConfirmError(null);
+
+    if (!username.trim()) {
+      setUsernameError('Username is required');
+      valid = false;
+    } else if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      valid = false;
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setUsernameError('Letters, numbers, and underscore only');
+      valid = false;
+    } else if (usernameAvailable === false) {
+      setUsernameError('Username already taken');
+      valid = false;
+    }
+
+    if (!email.trim()) {
+      setEmailError('Email is required');
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Enter a valid email address');
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      valid = false;
+    } else if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      valid = false;
+    }
+
+    if (password !== confirmPassword) {
+      setConfirmError('Passwords do not match');
+      valid = false;
+    }
+
+    return valid;
+  };
+
+  const handleRegister = async () => {
+    Keyboard.dismiss();
+    if (!validate()) return;
+
+    setLoading(true);
+    try {
+      await new Promise((r) => setTimeout(r, 1500));
+      const mockToken = 'kamba_mock_token_' + Date.now();
+      await storage.setToken(mockToken);
+      await storage.setUsername(username.trim());
+      navigation.replace('Main');
+    } catch (error) {
+      console.error('Registration failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const passwordStrength = password.length === 0 ? 0 : 
+    password.length < 8 ? 1 : 
+    password.length < 12 ? 2 : 3;
+
+  return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
       <View style={styles.content}>
         <TouchableOpacity
@@ -151,138 +287,4 @@ return (
   );
 };
 
-// Debounce utility
-function debounce(fn, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
-const validate = () => {
-    let valid = true;
-    setUsernameError(null);
-    setEmailError(null);
-    setPasswordError(null);
-    setConfirmError(null);
-
-    if (!username.trim()) {
-      setUsernameError('Username is required');
-      valid = false;
-    } else if (username.length < 3) {
-      setUsernameError('Username must be at least 3 characters');
-      valid = false;
-    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setUsernameError('Letters, numbers, and underscore only');
-      valid = false;
-    } else if (usernameAvailable === false) {
-      setUsernameError('Username already taken');
-      valid = false;
-    }
-
-    if (!email.trim()) {
-      setEmailError('Email is required');
-      valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError('Enter a valid email address');
-      valid = false;
-    }
-
-    if (!password) {
-      setPasswordError('Password is required');
-      valid = false;
-    } else if (password.length < 8) {
-      setPasswordError('Password must be at least 8 characters');
-      valid = false;
-    }
-
-    if (password !== confirmPassword) {
-      setConfirmError('Passwords do not match');
-      valid = false;
-    }
-
-    return valid;
-  };
-
-  const handleRegister = async () => {
-    Keyboard.dismiss();
-    if (!validate()) return;
-
-    setLoading(true);
-    try {
-      await new Promise((r) => setTimeout(r, 1500));
-      const mockToken = 'kamba_mock_token_' + Date.now();
-      await storage.setToken(mockToken);
-      await storage.setUsername(username.trim());
-      navigation.replace('Main');
-    } catch (error) {
-      console.error('Registration failed:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const passwordStrength = password.length === 0 ? 0 : 
-    password.length < 8 ? 1 : 
-    password.length < 12 ? 2 : 3;
-// Debounced username availability check
-  const checkUsernameAvailability = useCallback(
-    debounce(async (value) => {
-      if (!value || value.length < 3) {
-        setUsernameAvailable(null);
-        return;
-      }
-      setUsernameChecking(true);
-      setUsernameError(null);
-      try {
-        await new Promise((r) => setTimeout(r, 800));
-        const taken = ['admin', 'kamba', 'support', 'test', 'demo'].includes(value.toLowerCase());
-        setUsernameAvailable(!taken);
-        if (taken) setUsernameError('Username already taken');
-      } catch {
-        setUsernameError('Could not check availability');
-      } finally {
-        setUsernameChecking(false);
-      }
-    }, 1500),
-    []
-  );
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: motion.duration.slower, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: motion.duration.slower, easing: motion.easing.standard, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  useEffect(() => {
-    checkUsernameAvailability(username);
-  }, [username, checkUsernameAvailability]);
-// screens/auth/RegisterScreen.jsx — Single-screen registration
-// Username, Email, Password, Confirm Password, Optional Referral Code
-
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Keyboard } from 'react-native';
-import { KambaLogo } from '../../components/KambaLogo';
-import { MagneticButton } from '../../components/MagneticButton';
-import { StyledInput } from '../../components/StyledInput';
-import { colors, typography, spacing, radius, motion } from '../../theme/tokens';
-import { storage } from '../../utils/storage';
-
-export const RegisterScreen = ({ navigation }) => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [referralCode, setReferralCode] = useState('');
-
-  const [usernameError, setUsernameError] = useState(null);
-  const [emailError, setEmailError] = useState(null);
-  const [passwordError, setPasswordError] = useState(null);
-  const [confirmError, setConfirmError] = useState(null);
-  const [usernameChecking, setUsernameChecking] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+export default RegisterScreen;

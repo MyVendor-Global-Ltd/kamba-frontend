@@ -38,11 +38,6 @@ export const zIndex = { base: 0, dropdown: 100, sticky: 200, modal: 300, toast: 
 export const icons = { family: 'PhosphorIcons', weight: 'bold', strokeWidth: 2.0, sizes: { xs: 16, sm: 20, md: 24, lg: 28, xl: 32, xxl: 40, hero: 64 } };
 export const haptics = { light: 'impactLight', medium: 'impactMedium', heavy: 'impactHeavy', success: 'notificationSuccess', warning: 'notificationWarning', error: 'notificationError', selection: 'selectionStart' };
 
-// ============================================================================
-// DEFAULT THEME OBJECT
-// ============================================================================
-export const theme = { colors: colors.light, darkColors: colors.dark, typography, spacing, radius, shadows, motion, breakpoints, zIndex, icons, haptics };
-export default theme;
 // tokens.js — Kamba Design System (Marketplace Light Mode)
 // Nigerian campus marketplace — Light-mode default, discovery-first, warm utilitarian
 
@@ -85,6 +80,13 @@ export const typography = {
     chip: 'PlusJakartaSans_500Medium', caption: 'PlusJakartaSans_400Regular',
     mono: 'GeistMono_400Regular', monoMedium: 'GeistMono_500Medium',
   },
+  letterSpacing: {
+    tight: -0.5,
+    normal: 0,
+    wide: 0.5,
+    wider: 1,
+    tightest: -1,
+  },
   scale: {
     displayLarge: { fontSize: 40, lineHeight: 44, letterSpacing: -0.8 },
     displayMedium: { fontSize: 32, lineHeight: 38, letterSpacing: -0.6 },
@@ -119,3 +121,9 @@ export const spacing = {
 // SHAPE CONSISTENCY — Cards=16, Buttons=12, Inputs=10, Badges=9999
 // ============================================================================
 export const radius = { none: 0, xs: 4, sm: 8, md: 10, lg: 12, xl: 16, xxl: 20, full: 9999 };
+
+// ============================================================================
+// DEFAULT THEME OBJECT
+// ============================================================================
+export const theme = { colors: colors.light, darkColors: colors.dark, typography, spacing, radius, shadows, motion, breakpoints, zIndex, icons, haptics };
+export default theme;

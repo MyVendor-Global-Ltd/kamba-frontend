@@ -1,0 +1,1 @@
+const fs = require('fs');const c = fs.readFileSync('C:\\\Users\\\DAVID UZOMAH\\\Desktop\\\Kamba\\\frontend\\\kamba-mobile\\\src\\\screens\\\auth\\\RegisterScreen.jsx');console.log(c.substring(2715, 2850));

@@ -1,3 +1,14 @@
+// screens/auth/WelcomeScreen.jsx — Kamba Marketplace Welcome
+// Splash → Welcome → (Create Account OR Browse as Guest)
+
+import React, { useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Dimensions } from 'react-native';
+import { KambaLogo } from '../../components/KambaLogo';
+import { MagneticButton } from '../../components/MagneticButton';
+import { colors, typography, spacing, radius, motion } from '../../theme/tokens';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.light.background },
   content: { flex: 1, paddingHorizontal: spacing.xl, paddingTop: spacing.xxl, paddingBottom: spacing.xxl, justifyContent: 'space-between' },
@@ -21,7 +32,6 @@ const styles = StyleSheet.create({
   linkText: { color: colors.light.accent, fontFamily: typography.fontFamilies.chip },
 });
 
-export default WelcomeScreen;
 export const WelcomeScreen = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
@@ -99,13 +109,5 @@ export const WelcomeScreen = ({ navigation }) => {
     </Animated.View>
   );
 };
-// screens/auth/WelcomeScreen.jsx — Kamba Marketplace Welcome
-// Splash → Welcome → (Create Account OR Browse as Guest)
 
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Dimensions } from 'react-native';
-import { KambaLogo } from '../../components/KambaLogo';
-import { MagneticButton } from '../../components/MagneticButton';
-import { colors, typography, spacing, radius, motion } from '../../theme/tokens';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+export default WelcomeScreen;

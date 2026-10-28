@@ -1,67 +1,13 @@
-return (
-    <View style={[styles.container, containerStyle, style]}>
-      {(label || required) && (
-        <Animated.View style={styles.labelWrapper}>
-          <Animated.Text style={[styles.label, animatedLabelStyle, labelStyle]}>
-            {label}
-            {required && <Text style={styles.requiredStar}> *</Text>}
-          </Animated.Text>
-        </Animated.View>
-      )}
-      <Animated.View style={[styles.inputWrapper, animatedInputStyle, inputStyle]}>
-        {leftElement && <View style={styles.leftElement}>{leftElement}</View>}
-        <TextInput
-          testID={testID}
-          placeholder={placeholder}
-          placeholderTextColor={colors.light.textMuted}
-          value={displayValue}
-          onChangeText={handleChangeText}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          secureTextEntry={isSecure}
-          keyboardType={formatNairaProp ? 'numeric' : keyboardType}
-          editable={editable && !disabled}
-          autoFocus={autoFocus}
-          maxLength={maxLength}
-          autoCapitalize={autoCapitalize}
-          autoCorrect={autoCorrect}
-          returnKeyType={returnKeyType}
-          onSubmitEditing={onSubmitEditing}
-          textContentType={textContentType}
-          style={[
-            styles.input,
-            {
-              fontFamily: formatNairaProp ? typography.fontFamilies.mono : isSecure ? typography.fontFamilies.mono : typography.fontFamilies.body,
-              color: colors.light.textPrimary,
-            },
-          ]}
-          caretColor={colors.light.accent}
-          selectionColor={colors.light.accentSoft}
-          disabled={disabled}
-          {...props}
-        />
-        {secureTextEntry && (
-          <TouchableOpacity
-            style={styles.rightElement}
-            onPress={togglePassword}
-            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {showPassword ? renderIcon('EyeOff', colors.light.textMuted) : renderIcon('Eye', colors.light.textMuted)}
-          </TouchableOpacity>
-        )}
-        {rightElement && !secureTextEntry && <View style={styles.rightElement}>{rightElement}</View>}
-      </Animated.View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
-      {hint && !error && <Text style={styles.hintText}>{hint}</Text>}
-      {showCounterText && (
-        <Text style={[styles.counterText, localValue.length > counterMax ? { color: colors.light.error } : { color: colors.light.textMuted }]}>
-          {localValue.length}/{counterMax}
-        </Text>
-      )}
-    </View>
-  );
-};
+// components/StyledInput.jsx - Animated input with label, error, hint
+
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { colors, typography, spacing, radius, motion, icons } from '../theme/tokens';
+import { formatNaira, parseNaira } from '../utils/formatNaira';
+
+const PhosphorIcons = require('phosphor-react-native').default;
 
 const styles = StyleSheet.create({
   container: { gap: spacing.xs },
@@ -91,70 +37,50 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: typography.fontFamilies.caption,
     fontSize: typography.scale.labelSmall.fontSize,
-    lineHeight: typography.scale.labelSmall.lineHeight,
     color: colors.light.error,
-    marginLeft: spacing.xs,
   },
   hintText: {
     fontFamily: typography.fontFamilies.caption,
     fontSize: typography.scale.labelSmall.fontSize,
-    lineHeight: typography.scale.labelSmall.lineHeight,
     color: colors.light.textMuted,
-    marginLeft: spacing.xs,
   },
   counterText: {
     fontFamily: typography.fontFamilies.caption,
     fontSize: typography.scale.labelSmall.fontSize,
-    lineHeight: typography.scale.labelSmall.lineHeight,
     textAlign: 'right',
-    marginTop: spacing.xs,
   },
 });
-
-export default StyledInput;
-// components/StyledInput.jsx — Label above, helper text, error state, formatNaira prop
-// Replaces KambaInput — double-bezel wrapper, secureTextEntry toggle, Geist Mono for numbers
-
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Animated, TouchableOpacity } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
-import { formatNaira, parseNaira } from '../utils/formatNaira';
-
-const PhosphorIcons = require('phosphor-react-native').default;
 
 export const StyledInput = ({
   label,
   placeholder,
   value,
   onChangeText,
-  error,
-  hint,
-  secureTextEntry = false,
-  keyboardType = 'default',
-  rightElement,
-  leftElement,
-  editable = true,
-  autoFocus = false,
-  maxLength,
-  style,
-  inputStyle,
-  containerStyle,
-  labelStyle,
   onBlur,
   onFocus,
-  testID,
-  autoCapitalize = 'sentences',
-  autoCorrect = true,
+  error,
+  hint,
+  disabled = false,
+  required = false,
+  secureTextEntry = false,
+  keyboardType = 'default',
+  formatNairaProp = false,
+  autoFocus = false,
+  maxLength,
+  autoCapitalize = 'none',
+  autoCorrect = false,
   returnKeyType = 'done',
   onSubmitEditing,
   textContentType,
-  formatNaira: formatNairaProp = false,
+  testID,
+  style,
+  containerStyle,
+  inputStyle,
+  labelStyle,
+  leftElement,
+  rightElement,
   showCounter = false,
-  counterMax,
-  disabled = false,
-  required = false,
+  counterMax = 100,
   ...props
 }) => {
   const [focused, setFocused] = useState(false);
@@ -241,3 +167,70 @@ export const StyledInput = ({
   };
 
   const showCounterText = showCounter && counterMax && localValue.length > 0;
+
+  return (
+    <View style={[styles.container, containerStyle, style]}>
+      {(label || required) && (
+        <Animated.View style={styles.labelWrapper}>
+          <Animated.Text style={[styles.label, animatedLabelStyle, labelStyle]}>
+            {label}
+            {required && <Text style={styles.requiredStar}> *</Text>}
+          </Animated.Text>
+        </Animated.View>
+      )}
+      <Animated.View style={[styles.inputWrapper, animatedInputStyle, inputStyle]}>
+        {leftElement && <View style={styles.leftElement}>{leftElement}</View>}
+        <TextInput
+          testID={testID}
+          placeholder={placeholder}
+          placeholderTextColor={colors.light.textMuted}
+          value={displayValue}
+          onChangeText={handleChangeText}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          secureTextEntry={isSecure}
+          keyboardType={formatNairaProp ? 'numeric' : keyboardType}
+          editable={editable && !disabled}
+          autoFocus={autoFocus}
+          maxLength={maxLength}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          textContentType={textContentType}
+          style={[
+            styles.input,
+            {
+              fontFamily: formatNairaProp ? typography.fontFamilies.mono : isSecure ? typography.fontFamilies.mono : typography.fontFamilies.body,
+              color: colors.light.textPrimary,
+            },
+          ]}
+          caretColor={colors.light.accent}
+          selectionColor={colors.light.accentSoft}
+          disabled={disabled}
+          {...props}
+        />
+        {secureTextEntry && (
+          <TouchableOpacity
+            style={styles.rightElement}
+            onPress={togglePassword}
+            accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            {showPassword ? renderIcon('EyeOff', colors.light.textMuted) : renderIcon('Eye', colors.light.textMuted)}
+          </TouchableOpacity>
+        )}
+        {rightElement && !secureTextEntry && <View style={styles.rightElement}>{rightElement}</View>}
+      </Animated.View>
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      {hint && !error && <Text style={styles.hintText}>{hint}</Text>}
+      {showCounterText && (
+        <Text style={[styles.counterText, localValue.length > counterMax ? { color: colors.light.error } : { color: colors.light.textMuted }]}>
+          {localValue.length}/{counterMax}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+export default StyledInput;

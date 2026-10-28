@@ -1,65 +1,17 @@
-// Skeleton loader
-  const Skeleton = () => (
-    <View style={[styles.skeleton, { height, borderRadius: radius.lg, width: fullWidth ? '100%' : undefined }]} />
-  );
+// components/MagneticButton.jsx - Magnetic press animation button
 
-  const content = (
-    <View style={[styles.content, { gap }, iconPosition === 'right' && styles.contentReverse]}>
-      {iconPosition === 'left' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
-      {(loading || skeleton) ? (
-        <View style={styles.loader}>
-          {skeleton ? (
-            <View style={[styles.skeletonBar, { width: fontSize * (label?.length || 8) }]} />
-          ) : (
-            <Spinner />
-          )}
-        </View>
-      ) : (
-        <Text style={[
-          styles.text,
-          { fontSize, fontFamily: v.fontFamily || typography.fontFamilies.label, color: v.textColor },
-          disabled && styles.disabledText,
-        ]}>
-          {label}
-        </Text>
-      )}
-      {iconPosition === 'right' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
-    </View>
-  );
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
 
-  const buttonContent = isGradient ? (
-    <LinearGradient colors={v.gradient} style={[{ height, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: padding, width: fullWidth ? '100%' : 'auto' }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-      {content}
-    </LinearGradient>
-  ) : (
-    <View style={[{ height, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: padding, width: fullWidth ? '100%' : 'auto' }, { backgroundColor: v.bg, borderWidth: v.borderWidth, borderColor: v.borderColor }]}>
-      {content}
-    </View>
-  );
-
-  return (
-    <Animated.View style={[animatedStyle, style]} testID={testID}>
-      <Pressable
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={handlePress}
-        disabled={disabled || loading}
-        android_ripple={!isGradient ? { color: colors.light.accentSoft, borderless: false } : undefined}
-        accessibilityLabel={accessibilityLabel || label}
-        accessibilityRole={accessibilityRole}
-        accessibilityState={{ disabled: disabled || loading, busy: loading }}
-        style={({ pressed }) => pressed && !disabled && !loading ? { opacity: 0.8 } : {}}
-        {...props}
-      >
-        {skeleton || loading ? <Skeleton /> : buttonContent}
-      </Pressable>
-    </Animated.View>
-  );
-};
+const PhosphorIcons = require('phosphor-react-native').default;
 
 const Spinner = () => {
   const spin = useSharedValue(0);
-  React.useEffect(() => {
+  useEffect(() => {
     spin.value = withTiming(1, { duration: 800, easing: Easing.linear }, () => {
       spin.value = 0;
       spin.value = withTiming(1, { duration: 800, easing: Easing.linear, loop: true });
@@ -83,21 +35,6 @@ const styles = StyleSheet.create({
   skeleton: { backgroundColor: colors.light.border, overflow: 'hidden' },
   skeletonBar: { height: '100%', backgroundColor: colors.light.borderStrong },
 });
-
-export default MagneticButton;
-// components/MagneticButton.jsx — Magnetic press physics button
-// Replaces KambaButton — scale(0.96-0.98), icon slide, double-bezel variant
-// Variants: primary, secondary, ghost, ussd (monospace), whatsapp (green), destructive
-// Loading: skeleton not spinner
-
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
-
-const PhosphorIcons = require('phosphor-react-native').default;
 
 export const MagneticButton = ({
   label,
@@ -174,3 +111,64 @@ export const MagneticButton = ({
     if (IconComponent) return <IconComponent size={iconSize} color={color} weight="bold" style={style} />;
     return null;
   };
+
+  // Skeleton loader
+  const Skeleton = () => (
+    <View style={[styles.skeleton, { height, borderRadius: radius.lg, width: fullWidth ? '100%' : undefined }]} />
+  );
+
+  const content = (
+    <View style={[styles.content, { gap }, iconPosition === 'right' && styles.contentReverse]}>
+      {iconPosition === 'left' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
+      {(loading || skeleton) ? (
+        <View style={styles.loader}>
+          {skeleton ? (
+            <View style={[styles.skeletonBar, { width: fontSize * (label?.length || 8) }]} />
+          ) : (
+            <Spinner />
+          )}
+        </View>
+      ) : (
+        <Text style={[
+          styles.text,
+          { fontSize, fontFamily: v.fontFamily || typography.fontFamilies.label, color: v.textColor },
+          disabled && styles.disabledText,
+        ]}>
+          {label}
+        </Text>
+      )}
+      {iconPosition === 'right' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
+    </View>
+  );
+
+  const buttonContent = isGradient ? (
+    <LinearGradient colors={v.gradient} style={[{ height, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: padding, width: fullWidth ? '100%' : 'auto' }]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+      {content}
+    </LinearGradient>
+  ) : (
+    <View style={[{ height, borderRadius: radius.lg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: padding, width: fullWidth ? '100%' : 'auto' }, { backgroundColor: v.bg, borderWidth: v.borderWidth, borderColor: v.borderColor }]}>
+      {content}
+    </View>
+  );
+
+  return (
+    <Animated.View style={[animatedStyle, style]} testID={testID}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        disabled={disabled || loading}
+        android_ripple={!isGradient ? { color: colors.light.accentSoft, borderless: false } : undefined}
+        accessibilityLabel={accessibilityLabel || label}
+        accessibilityRole={accessibilityRole}
+        accessibilityState={{ disabled: disabled || loading, busy: loading }}
+        style={({ pressed }) => pressed && !disabled && !loading ? { opacity: 0.8 } : {}}
+        {...props}
+      >
+        {skeleton || loading ? <Skeleton /> : buttonContent}
+      </Pressable>
+    </Animated.View>
+  );
+};
+
+export default MagneticButton;
