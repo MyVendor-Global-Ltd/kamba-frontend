@@ -10,6 +10,8 @@ export const shadows = {
   card: makeShadow(0.03, 2, 8, 1),
   cardElevated: makeShadow(0.04, 4, 16, 2),
   cardHigh: makeShadow(0.05, 8, 24, 4),
+  accent: makeShadow(0.12, 3, 10, 2),
+  coral: makeShadow(0.12, 3, 10, 2),
   press: makeShadow(0.05, 2, 8, 1),
   modal: makeShadow(0.08, 16, 48, 8),
   fab: makeShadow(0.06, 4, 16, 3),
@@ -38,47 +40,105 @@ export const zIndex = { base: 0, dropdown: 100, sticky: 200, modal: 300, toast: 
 export const icons = { family: 'PhosphorIcons', weight: 'bold', strokeWidth: 2.0, sizes: { xs: 16, sm: 20, md: 24, lg: 28, xl: 32, xxl: 40, hero: 64 } };
 export const haptics = { light: 'impactLight', medium: 'impactMedium', heavy: 'impactHeavy', success: 'notificationSuccess', warning: 'notificationWarning', error: 'notificationError', selection: 'selectionStart' };
 
-// tokens.js — Kamba Design System (Marketplace Light Mode)
-// Nigerian campus marketplace — Light-mode default, discovery-first, warm utilitarian
+// tokens.js — Kamba Design System
 
 // ============================================================================
-// COLOR SYSTEM — Warm Monochrome + Single Accent (Kamba Coral #FF6B47)
-// Light-mode DEFAULT. No dark mode for MVP.
+// COLOR SYSTEM — Forest green, warm paper, and restrained brass
 // ============================================================================
+const lightColors = {
+  background: '#F6F5EF',
+  surface: '#FFFDF8',
+  surfaceElevated: '#FFFFFF',
+  border: '#E7E5DA',
+  borderStrong: '#D5D2C5',
+  textPrimary: '#1C2A21',
+  textSecondary: '#56645A',
+  textTertiary: '#6E7C72',
+  textMuted: '#7D897F',
+  accent: '#24543B',
+  accentStrong: '#173D2A',
+  accentSoft: '#E8F0E9',
+  accentHover: '#35684B',
+  onAccent: '#FFFFFF',
+  textOnAccent: '#FFFFFF',
+  accentGlow: 'rgba(36, 84, 59, 0.14)',
+  gold: '#B68B3B',
+  goldSoft: '#F3EBD9',
+  goldDim: '#EAE1CC',
+  success: '#347354',
+  successSoft: '#E7F1E9',
+  info: '#456650',
+  infoSoft: '#E9F0EA',
+  warning: '#956A1D',
+  warningSoft: '#F5EEDC',
+  error: '#A94338',
+  errorSoft: '#F6E9E6',
+  danger: '#A94338',
+  dangerSoft: '#F6E9E6',
+  overlay: 'rgba(23, 35, 27, 0.38)',
+  overlayStrong: 'rgba(23, 35, 27, 0.62)',
+};
+
+const darkColors = {
+  background: '#152019',
+  surface: '#1D2B22',
+  surfaceElevated: '#26372C',
+  border: '#35473A',
+  borderStrong: '#4B5D4F',
+  textPrimary: '#F3F4EC',
+  textSecondary: '#C4CEC5',
+  textTertiary: '#B0BBB2',
+  textMuted: '#9AA99D',
+  accent: '#A6C8A8',
+  accentStrong: '#C1D9BD',
+  accentSoft: '#2A4032',
+  accentHover: '#B5D2B2',
+  onAccent: '#17271C',
+  textOnAccent: '#17271C',
+  accentGlow: 'rgba(166, 200, 168, 0.18)',
+  gold: '#D6B66C',
+  goldSoft: '#403923',
+  goldDim: '#383622',
+  success: '#8FC59B',
+  successSoft: '#233A2B',
+  info: '#A6C8A8',
+  infoSoft: '#2A4032',
+  warning: '#E0C27A',
+  warningSoft: '#403923',
+  error: '#E9A096',
+  errorSoft: '#482D2A',
+  danger: '#E9A096',
+  dangerSoft: '#482D2A',
+  overlay: 'rgba(0, 0, 0, 0.42)',
+  overlayStrong: 'rgba(0, 0, 0, 0.68)',
+};
+
 export const colors = {
-  light: {
-    background: '#FFFDFC', surface: '#FFFFFF', surfaceElevated: '#FAFAF9',
-    border: '#ECE8E5', borderStrong: '#E0DDD8',
-    textPrimary: '#202124', textSecondary: '#6B6B70', textMuted: '#9E9E9E',
-    accent: '#FF6B47', accentSoft: '#FFF0EB', accentHover: '#FF5A35',
-    success: '#237A52', successSoft: '#EDF3EC',
-    warning: '#9A6100', warningSoft: '#FBF3DB',
-    error: '#C0392B', errorSoft: '#FDEBEC',
-    overlay: 'rgba(32,33,36,0.4)', overlayStrong: 'rgba(32,33,36,0.6)',
-  },
-  dark: {
-    background: '#1C1917', surface: '#292524', surfaceElevated: '#3F3F46',
-    border: '#44403C', borderStrong: '#57534E',
-    textPrimary: '#FAFAF9', textSecondary: '#D6D3D1', textMuted: '#A8A29E',
-    accent: '#FF6B47', accentSoft: '#7C2D12', accentHover: '#FF5A35',
-    success: '#10B981', successSoft: '#064E3B',
-    warning: '#F59E0B', warningSoft: '#78350F',
-    error: '#EF4444', errorSoft: '#7F1D1D',
-    overlay: 'rgba(250,250,249,0.4)', overlayStrong: 'rgba(250,250,249,0.6)',
-  },
+  light: lightColors,
+  dark: darkColors,
+  ...lightColors,
+  ink: lightColors.background,
+  inkRaised: lightColors.surface,
+  inkBorder: lightColors.border,
+  coral: lightColors.accent,
+  coralDim: lightColors.accentSoft,
+  coralGlow: lightColors.accentGlow,
 };
 
 // ============================================================================
-// TYPOGRAPHY — Geist Sans (Display/Headlines) + Plus Jakarta Sans (UI/Body)
+// TYPOGRAPHY — Space Grotesk display + Plus Jakarta Sans UI
 // ============================================================================
 export const typography = {
   fontFamilies: {
-    display: 'Geist_700Bold', displayMedium: 'Geist_600SemiBold',
-    headline: 'Geist_600SemiBold', headlineMedium: 'Geist_500Medium',
+    display: 'SpaceGrotesk_700Bold', displayHeavy: 'SpaceGrotesk_700Bold',
+    displayMedium: 'SpaceGrotesk_600SemiBold',
+    headline: 'SpaceGrotesk_600SemiBold', headlineMedium: 'SpaceGrotesk_500Medium',
     title: 'PlusJakartaSans_600SemiBold', body: 'PlusJakartaSans_400Regular',
     bodyMedium: 'PlusJakartaSans_500Medium', label: 'PlusJakartaSans_600SemiBold',
     chip: 'PlusJakartaSans_500Medium', caption: 'PlusJakartaSans_400Regular',
     mono: 'GeistMono_400Regular', monoMedium: 'GeistMono_500Medium',
+    bodyRegular: 'PlusJakartaSans_400Regular',
+    bodySemiBold: 'PlusJakartaSans_600SemiBold',
   },
   letterSpacing: {
     tight: -0.5,

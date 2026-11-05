@@ -27,26 +27,29 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, StatusBar } from 'react-native';
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   Geist_400Regular,
   Geist_500Medium,
-  Geist_600SemiBold,
-  Geist_700Bold,
 } from '@expo-google-fonts/geist';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
   PlusJakartaSans_600SemiBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import {
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
 import { AppNavigator } from './src/navigation';
+import { colors } from './src/theme/tokens';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const fontMap = {
   'Geist_400Regular': Geist_400Regular,
   'Geist_500Medium': Geist_500Medium,
-  'Geist_600SemiBold': Geist_600SemiBold,
-  'Geist_700Bold': Geist_700Bold,
   // Geist does not ship a separate mono family; keep the existing token names
   // backed by the closest available weights so font loading remains complete.
   'GeistMono_400Regular': Geist_400Regular,
@@ -54,6 +57,9 @@ const fontMap = {
   'PlusJakartaSans_400Regular': PlusJakartaSans_400Regular,
   'PlusJakartaSans_500Medium': PlusJakartaSans_500Medium,
   'PlusJakartaSans_600SemiBold': PlusJakartaSans_600SemiBold,
+  'SpaceGrotesk_500Medium': SpaceGrotesk_500Medium,
+  'SpaceGrotesk_600SemiBold': SpaceGrotesk_600SemiBold,
+  'SpaceGrotesk_700Bold': SpaceGrotesk_700Bold,
 };
 
 export default function App() {
@@ -78,13 +84,15 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFDFC" translucent={false} />
-      <AppNavigator />
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.light.background} translucent={false} />
+        <AppNavigator />
+      </View>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFDFC' },
+  container: { flex: 1, backgroundColor: colors.light.background },
 });

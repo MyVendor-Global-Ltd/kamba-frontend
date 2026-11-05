@@ -6,7 +6,7 @@ import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { storage } from '../utils/storage';
 import { authAPI } from '../utils/api';
-import { House as Home, ShoppingBag, User, GridFour as Grid } from 'phosphor-react-native';
+import { House as Home, ShoppingBag, User, GridFour as Grid } from '../utils/phosphorIcons';
 
 import { SplashScreen } from '../screens/auth/SplashScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
@@ -21,6 +21,15 @@ import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
+import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { AboutScreen } from '../screens/AboutScreen';
+import { HelpScreen } from '../screens/HelpScreen';
+import { PaymentMethodsScreen } from '../screens/PaymentMethodsScreen';
+import { ProfileDetailScreen } from '../screens/ProfileDetailScreen';
+import { SecurityScreen } from '../screens/SecurityScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { VendorHubScreen } from '../screens/VendorHubScreen';
+import { UnavailableFeatureScreen } from '../screens/UnavailableFeatureScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -204,6 +213,11 @@ function RootNavigator() {
         options={{ headerShown: true, headerTitle: 'Store', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
+        name="VendorHub"
+        component={VendorHubScreen}
+        options={{ headerShown: true, headerTitle: 'Sell on Kamba', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
         options={{ headerShown: true, headerTitle: 'Notifications', headerBackTitle: 'Back' }}
@@ -213,6 +227,33 @@ function RootNavigator() {
         component={OrdersScreen}
         options={{ headerShown: true, headerTitle: 'My Orders', headerBackTitle: 'Back' }}
       />
+      <Stack.Screen name="Favorites" component={FavoritesScreen} />
+      <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
+      <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
+      <Stack.Screen name="Payments" component={PaymentMethodsScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="Security" component={SecurityScreen} />
+      <Stack.Screen name="Help" component={HelpScreen} />
+      <Stack.Screen name="About" component={AboutScreen} />
+      {[
+        'Checkout',
+        'Addresses',
+        'OrderDetail',
+        'ProductDetail',
+        'AddCard',
+        'EditProfile',
+        'Language',
+        'ClearCache',
+        'ContactSupport',
+        'EmailSupport',
+        'CallSupport',
+        'DataPrivacy',
+        'BlockedUsers',
+        'SecurityLog',
+        'ActiveSessions',
+      ].map((name) => (
+        <Stack.Screen key={name} name={name} component={UnavailableFeatureScreen} />
+      ))}
     </Stack.Navigator>
   );
 }

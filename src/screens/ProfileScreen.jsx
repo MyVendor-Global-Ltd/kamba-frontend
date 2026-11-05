@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { User, SignOut as LogOut, Gear as Settings, Bell, Heart, CreditCard, Package, MapPin } from 'phosphor-react-native';
+import { User, SignOut as LogOut, Gear as Settings, Bell, Heart, CreditCard, Package, MapPin, Storefront, ArrowRight } from '../utils/phosphorIcons';
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
@@ -52,7 +52,7 @@ export const ProfileScreen = ({ navigation }) => {
     { icon: Bell, label: 'Notifications', route: 'Notifications' },
     { icon: Heart, label: 'Favorites', route: 'Favorites' },
     { icon: Package, label: 'My Orders', route: 'Orders' },
-    { icon: CreditCard, label: 'Payment Methods', route: 'Payments' },
+    { icon: CreditCard, label: 'Payment Methods', route: 'PaymentMethods' },
     { icon: MapPin, label: 'Addresses', route: 'Addresses' },
     { icon: Settings, label: 'Settings', route: 'Settings' },
   ];
@@ -71,6 +71,24 @@ export const ProfileScreen = ({ navigation }) => {
             <Text style={styles.memberSince}>{user?.email || 'Sign in to view your account details'}</Text>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.vendorCard}
+          onPress={() => navigation.navigate('VendorHub')}
+          activeOpacity={0.85}
+          accessibilityLabel="Sell on Kamba. Open seller preview."
+          accessibilityRole="button"
+        >
+          <View style={styles.vendorIcon}>
+            <Storefront size={23} color={colors.light.onAccent} weight="regular" />
+          </View>
+          <View style={styles.vendorCopy}>
+            <Text style={styles.vendorEyebrow}>FOR LOCAL SELLERS</Text>
+            <Text style={styles.vendorTitle}>Sell on Kamba</Text>
+            <Text style={styles.vendorDescription}>Explore the seller preview</Text>
+          </View>
+          <ArrowRight size={20} color={colors.light.onAccent} weight="bold" />
+        </TouchableOpacity>
 
         <View style={styles.menuSection}>
           {menuItems.map((item, index) => (
@@ -116,6 +134,12 @@ const styles = StyleSheet.create({
   usernameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   username: { fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineMedium.fontSize, lineHeight: typography.scale.headlineMedium.lineHeight, letterSpacing: typography.scale.headlineMedium.letterSpacing, color: colors.light.textPrimary },
   memberSince: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.textMuted },
+  vendorCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.xl, backgroundColor: colors.light.accentStrong },
+  vendorIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.light.accent, alignItems: 'center', justifyContent: 'center' },
+  vendorCopy: { flex: 1, gap: spacing.xs },
+  vendorEyebrow: { fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, letterSpacing: 0.8, color: colors.light.gold },
+  vendorTitle: { fontFamily: typography.fontFamilies.title, fontSize: typography.scale.titleLarge.fontSize, color: colors.light.onAccent },
+  vendorDescription: { fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, color: colors.light.accentSoft },
   menuSection: { gap: spacing.xs },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.light.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border },
   menuIcon: { width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.light.accentSoft, alignItems: 'center', justifyContent: 'center' },

@@ -1,39 +1,19 @@
 // components/MagneticButton.jsx - Magnetic press animation button
 
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing, interpolate } from 'react-native-reanimated';
+import React from 'react';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { colors, radius, spacing, typography, motion, icons } from '../theme/tokens';
-
-const PhosphorIcons = require('phosphor-react-native');
-
-const Spinner = () => {
-  const spin = useSharedValue(0);
-  useEffect(() => {
-    spin.value = withTiming(1, { duration: 800, easing: Easing.linear }, () => {
-      spin.value = 0;
-      spin.value = withTiming(1, { duration: 800, easing: Easing.linear, loop: true });
-    });
-  }, []);
-
-  const rotate = `${interpolate(spin.value, [0, 1], [0, 360])}deg`;
-
-  return (
-    <Animated.View style={[styles.spinner, { transform: [{ rotate }] }]} />
-  );
-};
+import { phosphorIcons } from '../utils/phosphorIcons';
 
 const styles = StyleSheet.create({
   content: { flexDirection: 'row', alignItems: 'center' },
   contentReverse: { flexDirection: 'row-reverse' },
   text: { fontWeight: '600' },
   disabledText: { opacity: 0.5 },
-  loader: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
-  spinner: { width: 20, height: 20, borderRadius: 10, borderWidth: 2.5, borderColor: 'currentColor', borderRightColor: 'transparent', borderTopColor: 'transparent' },
   skeleton: { backgroundColor: colors.light.border, overflow: 'hidden' },
-  skeletonBar: { height: '100%', backgroundColor: colors.light.borderStrong },
 });
 
 export const MagneticButton = ({
@@ -85,15 +65,15 @@ export const MagneticButton = ({
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressAnim.value }],
-  }), []);
+  }));
 
   const iconAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: iconSlideAnim.value }],
     opacity: interpolate(pressAnim.value, [pressScale, 1], [0.6, 1]),
-  }), []);
+  }));
 
   const variantStyles = {
-    primary: { gradient: ['#E85D2D', '#D64E25'], textColor: '#FFFFFF', iconColor: '#FFFFFF' },
+    primary: { gradient: [colors.light.accent, colors.light.accentStrong], textColor: colors.light.onAccent, iconColor: colors.light.onAccent },
     secondary: { bg: colors.light.surfaceElevated, borderColor: colors.light.border, textColor: colors.light.textPrimary, iconColor: colors.light.textSecondary },
     ghost: { bg: 'transparent', textColor: colors.light.accent, iconColor: colors.light.accent },
     ussd: { bg: colors.light.surfaceElevated, borderColor: colors.light.borderStrong, borderWidth: 1.5, textColor: colors.light.textPrimary, iconColor: colors.light.textSecondary, fontFamily: typography.fontFamilies.mono },
@@ -115,7 +95,7 @@ export const MagneticButton = ({
         style: [iconName.props.style, style],
       });
     }
-    const IconComponent = typeof iconName === 'string' ? PhosphorIcons[iconName] : null;
+    const IconComponent = typeof iconName === 'string' ? phosphorIcons[iconName] : null;
     if (IconComponent) return <IconComponent size={iconSize} color={color} weight="bold" style={style} />;
     return null;
   };
@@ -127,15 +107,9 @@ export const MagneticButton = ({
 
   const content = (
     <View style={[styles.content, { gap }, iconPosition === 'right' && styles.contentReverse]}>
-      {iconPosition === 'left' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
-      {(loading || skeleton) ? (
-        <View style={styles.loader}>
-          {skeleton ? (
-            <View style={[styles.skeletonBar, { width: fontSize * (label?.length || 8) }]} />
-          ) : (
-            <Spinner />
-          )}
-        </View>
+      {!loading && iconPosition === 'left' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
+      {loading ? (
+        <ActivityIndicator size="small" color={v.iconColor} />
       ) : (
         <Text style={[
           styles.text,
@@ -145,7 +119,7 @@ export const MagneticButton = ({
           {label}
         </Text>
       )}
-      {iconPosition === 'right' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
+      {!loading && iconPosition === 'right' && renderIcon(icon, v.iconColor, iconAnimatedStyle)}
     </View>
   );
 
@@ -173,7 +147,7 @@ export const MagneticButton = ({
         style={({ pressed }) => pressed && !disabled && !loading ? { opacity: 0.8 } : {}}
         {...props}
       >
-        {skeleton || loading ? <Skeleton /> : buttonContent}
+        {skeleton ? <Skeleton /> : buttonContent}
       </Pressable>
     </Animated.View>
   );

@@ -2,13 +2,12 @@
 // "Offline? Dial *901#" — maps to real USSD codes per action
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { colors, spacing, typography, radius, icons, motion } from '../theme/tokens';
 import { getUssdCode } from '../utils/ussdMap';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-
-const PhosphorIcons = require('phosphor-react-native').default;
+import { WifiOff, X } from '../utils/phosphorIcons';
 
 export const USSDBanner = ({
   action, // 'airtime' | 'sendMoney' | 'balance' | 'agent' | 'bills' | 'help'
@@ -59,7 +58,7 @@ export const USSDBanner = ({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
-  }), []);
+  }));
 
   const handleDial = () => {
     onDial?.(ussdCode);
@@ -77,7 +76,7 @@ export const USSDBanner = ({
   return (
     <Animated.View style={[styles.container, animatedStyle, style]} testID={testID}>
       <View style={styles.content}>
-        <PhosphorIcons.WifiOff size={icons.sizes.sm} color={colors.light.warning} weight="bold" />
+        <WifiOff size={icons.sizes.sm} color={colors.light.warning} weight="bold" />
         <View style={styles.textContainer}>
           <Text style={styles.title}>You're offline</Text>
           <Text style={styles.code}>{ussdCode}</Text>
@@ -97,7 +96,7 @@ export const USSDBanner = ({
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <PhosphorIcons.X size={icons.sizes.sm} color={colors.light.textMuted} weight="bold" />
+          <X size={icons.sizes.sm} color={colors.light.textMuted} weight="bold" />
         </TouchableOpacity>
       </View>
     </Animated.View>
