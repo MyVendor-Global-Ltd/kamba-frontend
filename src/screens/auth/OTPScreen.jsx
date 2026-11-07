@@ -14,6 +14,7 @@ import { colors, typography, spacing, radius, animation } from '../../theme';
 import { ScreenShell } from '../../components/ScreenShell';
 import { KambaOTPInput } from '../../components/KambaOTPInput';
 import { storage } from '../../utils/storage';
+import { authAPI } from '../../utils/api';
 
 const WhatsAppIcon = ({ size = 32, color = '#25D366' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -29,16 +30,21 @@ const MessageIcon = ({ size = 32, color = colors.coral }) => (
 );
 
 export const OTPScreen = ({ navigation, route }) => {
-  const phone = route?.params?.phone || '8012345678';
+  const phone = route?.params?.phone || '';
   const method = route?.params?.method || 'whatsapp';
+  const flow = route?.params?.flow || 'login';
+  const userId = route?.params?.userId;
+  const suggestedUsername = route?.params?.username || '';
 
   const [otpCode, setOtpCode] = useState('');
   const [countdown, setCountdown] = useState(59);
   const [canResend, setCanResend] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const checkmarkScale = useRef(new Animated.Value(0)).current;
+  const verificationInProgress = useRef(false);
 
   // 60-second countdown timer
   useEffect(() => {
@@ -62,49 +68,80 @@ export const OTPScreen = ({ navigation, route }) => {
   }, [countdown]);
 
   const handleOTPComplete = async (code) => {
+    if (verificationInProgress.current || !userId) return;
     Keyboard.dismiss();
     setErrorMessage(null);
+    verificationInProgress.current = true;
+    try {
+      const response = flow === 'register'
+        ? await authAPI.verifyPhone({ userId, otp_code: code })
+        : await authAPI.verifyPhoneLogin({ userId, otp_code: code });
+      const result = response.data?.result;
+      if (!response.data?.success || !result) {
+        throw new Error(response.data?.message || 'The verification code could not be confirmed.');
+      }
+      if (flow !== 'register' && !result.id) {
+        throw new Error('Phone verification succeeded but the server did not return a user profile.');
+      }
 
-    // Mock validation: any 6-digit except "000000" passes; "000000" triggers error shake
-    if (code === '000000') {
+      setIsSuccess(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Animated.spring(checkmarkScale, {
+        toValue: 1,
+        ...animation.springBouncy,
+        useNativeDriver: true,
+      }).start();
+
+      if (flow === 'register') {
+        setTimeout(() => {
+          navigation.replace('PhoneUsername', { username: suggestedUsername, phone });
+        }, 600);
+      } else {
+        await storage.setUsername(result.username || '');
+        await storage.setUserData(result);
+        setTimeout(() => {
+          const rootNavigation = navigation.getParent?.()?.getParent?.();
+          if (rootNavigation?.reset) {
+            rootNavigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+          } else {
+            navigation.navigate('Main');
+          }
+        }, 600);
+      }
+    } catch (error) {
+      verificationInProgress.current = false;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setErrorMessage("That code didn't match. Try again.");
-      setTimeout(() => {
-        setOtpCode('');
-      }, 800);
-      return;
+      setErrorMessage(
+        error.response?.data?.message ||
+        error.message ||
+        'The code could not be verified. Please try again.'
+      );
+      setTimeout(() => setOtpCode(''), 800);
     }
-
-    // Success flow
-    setIsSuccess(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    // Animate checkmark in
-    Animated.spring(checkmarkScale, {
-      toValue: 1,
-      ...animation.springBouncy,
-      useNativeDriver: true,
-    }).start();
-
-    // Persist verified state
-    await storage.setUserData({ verifiedPhone: `+234${phone}`, isVerified: true });
-
-    // Navigate to Home after 600ms per spec
-    setTimeout(() => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
-    }, 600);
   };
 
-  const handleResend = () => {
-    if (!canResend) return;
+  const handleResend = async () => {
+    if (!canResend || resendLoading || !userId) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCountdown(59);
-    setCanResend(false);
-    setOtpCode('');
     setErrorMessage(null);
+    setResendLoading(true);
+    try {
+      await authAPI.resendOTP({
+        userId,
+        purpose: 'PHONE_VERIFICATION',
+        endpoint: `234${phone}`,
+      });
+      setCountdown(59);
+      setCanResend(false);
+      setOtpCode('');
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ||
+        'Could not resend the code. Please try again.'
+      );
+    } finally {
+      setResendLoading(false);
+    }
   };
 
   const formattedPhone = `+234 ${phone.slice(0, 3)} ${phone.slice(3, 6)} ${phone.slice(6)}`;
@@ -143,7 +180,7 @@ export const OTPScreen = ({ navigation, route }) => {
 
       {/* Headline & Sub */}
       <View style={styles.headerTextContainer}>
-        <Text style={styles.headline}>Enter the code</Text>
+        <Text style={styles.headline}>{flow === 'register' ? 'Verify your number' : 'Enter the code'}</Text>
         <Text style={styles.subtext}>
           We sent 6 digits to{' '}
           <Text style={styles.phoneHighlight}>{formattedPhone}</Text>{' '}
@@ -174,8 +211,8 @@ export const OTPScreen = ({ navigation, route }) => {
       {/* Countdown & Resend Section */}
       <View style={styles.countdownContainer}>
         {canResend ? (
-          <TouchableOpacity onPress={handleResend} activeOpacity={0.7}>
-            <Text style={styles.resendActive}>Resend code</Text>
+          <TouchableOpacity onPress={handleResend} activeOpacity={0.7} disabled={resendLoading}>
+            <Text style={styles.resendActive}>{resendLoading ? 'Sending…' : 'Resend code'}</Text>
           </TouchableOpacity>
         ) : (
           <Text style={styles.countdownText}>

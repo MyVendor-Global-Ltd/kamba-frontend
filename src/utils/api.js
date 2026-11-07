@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import { storage } from './storage';
 
 const configuredBaseUrl = (process.env.EXPO_PUBLIC_API_URL || 'https://api.kamba.ng').replace(/\/+$/, '');
@@ -20,19 +21,83 @@ export const api = axios.create({
   },
 });
 
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      await storage.clearAll();
+api.interceptors.request.use(async (config) => {
+  if (Platform.OS !== 'web') {
+    const cookies = await storage.getAuthCookies();
+    const cookieHeader = Object.entries(cookies)
+      .map(([name, value]) => `${name}=${value}`)
+      .join('; ');
+    if (cookieHeader) {
+      config.headers = config.headers || {};
+      config.headers.Cookie = cookieHeader;
     }
-    return Promise.reject(error);
+  }
+  return config;
+});
+
+let refreshPromise = null;
+
+api.interceptors.response.use(
+  async (response) => {
+    if (Platform.OS !== 'web') {
+      const setCookieHeader = response.headers?.['set-cookie'];
+      const setCookieHeaders = Array.isArray(setCookieHeader)
+        ? setCookieHeader
+        : typeof setCookieHeader === 'string'
+          ? [setCookieHeader]
+          : [];
+      const cookieUpdates = {};
+
+      setCookieHeaders.forEach((header) => {
+        const cookiePattern = /(?:^|,\s*)(access_token|refresh_token)=([^;,\s]*)/g;
+        let match;
+        while ((match = cookiePattern.exec(header)) !== null) {
+          cookieUpdates[match[1]] = /(?:^|;)\s*Max-Age=0(?:;|$)/i.test(header) ? null : match[2];
+        }
+      });
+
+      if (Object.keys(cookieUpdates).length > 0) {
+        await storage.setAuthCookies(cookieUpdates);
+      }
+    }
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+    const isAuthEndpoint = /\/auth\/(login(?:\/phone(?:\/verify)?)?|register(?:\/phone)?|verify\/phone|refresh|logout|otp\/|forgot-password|reset-password)/.test(
+      originalRequest?.url || ''
+    );
+
+    if (error.response?.status !== 401 || !originalRequest || isAuthEndpoint || originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+    try {
+      if (!refreshPromise) {
+        refreshPromise = api.post('/auth/refresh').finally(() => {
+          refreshPromise = null;
+        });
+      }
+      await refreshPromise;
+      return api(originalRequest);
+    } catch (refreshError) {
+      if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+        await storage.clearAll();
+      }
+      return Promise.reject(refreshError);
+    }
   }
 );
 
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
+  registerPhone: (data) => api.post('/auth/register/phone', data),
   login: (data) => api.post('/auth/login', data),
+  loginPhone: (data) => api.post('/auth/login/phone', data),
+  verifyPhone: (data) => api.post('/auth/verify/phone', data),
+  verifyPhoneLogin: (data) => api.post('/auth/login/phone/verify', data),
+  setUsername: (data) => api.post('/auth/username/set', data),
   logout: () => api.post('/auth/logout'),
   refresh: () => api.post('/auth/refresh'),
   getDashboard: () => api.get('/auth/dashboard'),

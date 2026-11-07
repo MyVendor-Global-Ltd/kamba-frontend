@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   Animated,
   Keyboard,
   Dimensions,
+  AppState,
+  Linking,
+  Platform,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { ChevronLeft, Mail, Phone } from 'lucide-react-native';
@@ -17,6 +20,7 @@ import { KambaButton } from '../../components/KambaButton';
 import { KambaInput } from '../../components/KambaInput';
 import { KambaPhoneInput } from '../../components/KambaPhoneInput';
 import { authAPI } from '../../utils/api';
+import { storage } from '../../utils/storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -58,10 +62,49 @@ export const LoginScreen = ({ navigation }) => {
   const [authError, setAuthError] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const googlePending = useRef(false);
 
   // Animated sliding pill tab indicator
   const tabSlideAnim = useRef(new Animated.Value(0)).current;
   const tabWidth = (SCREEN_WIDTH - 32 - 8) / 3;
+
+  const finishGoogleSignIn = async () => {
+    try {
+      const response = await authAPI.getDashboard();
+      const result = response.data?.result;
+      if (!response.data?.success || !result?.id) {
+        throw new Error('Google sign-in did not return an authenticated Kamba session.');
+      }
+      await storage.setUsername(result.username || '');
+      await storage.setUserData(result);
+      const rootNavigation = navigation.getParent?.()?.getParent?.();
+      if (rootNavigation?.reset) {
+        rootNavigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+      } else {
+        navigation.navigate('Main');
+      }
+    } catch (error) {
+      setAuthError(
+        error.response?.data?.message ||
+        'Google sign-in could not return a session to this app. The backend must redirect to the Kamba app after OAuth.'
+      );
+    }
+  };
+
+  useEffect(() => {
+    let leftApp = false;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        leftApp = true;
+      } else if (leftApp && googlePending.current) {
+        leftApp = false;
+        googlePending.current = false;
+        finishGoogleSignIn();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const handleTabChange = (tab, index) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -126,15 +169,64 @@ export const LoginScreen = ({ navigation }) => {
     }
   };
 
-  const handlePhoneSendCode = () => {
+  const handlePhoneSendCode = async () => {
     Keyboard.dismiss();
-    setPhoneError('Phone login is not available in the connected backend yet. Please use email sign-in.');
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    setPhoneError(null);
+    setAuthError(null);
+    const phoneDigits = phone.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      setPhoneError('Enter a valid 10-digit Nigerian phone number');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authAPI.loginPhone({
+        phone: `+234${phoneDigits}`,
+        method: deliveryMethod,
+      });
+      const result = response.data?.result;
+      if (!response.data?.success || !result?.userId) {
+        throw new Error(response.data?.message || 'Could not start phone sign-in.');
+      }
+      navigation.navigate('OTP', {
+        flow: 'login',
+        userId: result.userId,
+        phone: phoneDigits,
+        method: deliveryMethod,
+      });
+    } catch (error) {
+      setPhoneError(
+        error.response?.data?.message ||
+        error.message ||
+        'Could not send a sign-in code. Check your connection and try again.'
+      );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleConnect = () => {
-    setAuthError('Google sign-in needs a configured frontend OAuth callback. Use email sign-in for now.');
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  const handleGoogleConnect = async () => {
+    setAuthError(null);
+    setLoading(true);
+    try {
+      const googleAuthUrl = authAPI.getGoogleAuthUrl();
+      if (Platform.OS === 'web') {
+        window.location.assign(googleAuthUrl);
+        return;
+      }
+      googlePending.current = true;
+      await Linking.openURL(googleAuthUrl);
+      setAuthError('Finish Google sign-in in your browser, then return to Kamba. If it does not complete, the backend needs a mobile-app callback.');
+    } catch (error) {
+      googlePending.current = false;
+      setAuthError(error.message || 'Could not open Google sign-in.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -231,6 +323,7 @@ export const LoginScreen = ({ navigation }) => {
               style={styles.forgotPassword}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate('ForgotPassword');
               }}
               activeOpacity={0.7}
             >
@@ -311,8 +404,10 @@ export const LoginScreen = ({ navigation }) => {
             label="Send Code"
             variant="primary"
             fullWidth
+            loading={loading}
             onPress={handlePhoneSendCode}
           />
+          {authError ? <Text style={styles.authError} accessibilityRole="alert">{authError}</Text> : null}
         </View>
       )}
 
@@ -325,11 +420,11 @@ export const LoginScreen = ({ navigation }) => {
 
           <Text style={styles.googleHeadline}>Continue with Google</Text>
           <Text style={styles.googleSubtext}>
-            Google sign-in is unavailable until the frontend OAuth callback is configured.
+            Use your Google account to create a Kamba account or sign in. The backend completes the account setup.
           </Text>
 
           <KambaButton
-            label="Connect Google Account"
+            label="Continue with Google"
             variant="primary"
             fullWidth
             loading={loading}

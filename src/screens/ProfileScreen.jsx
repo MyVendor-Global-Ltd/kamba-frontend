@@ -76,7 +76,7 @@ export const ProfileScreen = ({ navigation }) => {
           style={styles.vendorCard}
           onPress={() => navigation.navigate('VendorHub')}
           activeOpacity={0.85}
-          accessibilityLabel="Sell on Kamba. Open seller preview."
+          accessibilityLabel="Become a vendor. Open vendor setup preview."
           accessibilityRole="button"
         >
           <View style={styles.vendorIcon}>
@@ -84,8 +84,8 @@ export const ProfileScreen = ({ navigation }) => {
           </View>
           <View style={styles.vendorCopy}>
             <Text style={styles.vendorEyebrow}>FOR LOCAL SELLERS</Text>
-            <Text style={styles.vendorTitle}>Sell on Kamba</Text>
-            <Text style={styles.vendorDescription}>Explore the seller preview</Text>
+            <Text style={styles.vendorTitle}>Become a vendor</Text>
+            <Text style={styles.vendorDescription}>Vendor setup preview</Text>
           </View>
           <ArrowRight size={20} color={colors.light.onAccent} weight="bold" />
         </TouchableOpacity>

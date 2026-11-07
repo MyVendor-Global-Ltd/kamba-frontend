@@ -12,6 +12,9 @@ import { SplashScreen } from '../screens/auth/SplashScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
+import { OTPScreen } from '../screens/auth/OTPScreen';
+import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
+import { PhoneUsernameScreen } from '../screens/auth/PhoneUsernameScreen';
 import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
@@ -150,6 +153,21 @@ function AuthStack() {
         component={LoginScreen}
         options={{ headerShown: true, headerTitle: 'Welcome back', headerBackTitle: 'Back' }}
       />
+      <Stack.Screen
+        name="OTP"
+        component={OTPScreen}
+        options={{ headerShown: true, headerTitle: 'Verify phone number', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="PhoneUsername"
+        component={PhoneUsernameScreen}
+        options={{ headerShown: true, headerTitle: 'Complete account', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
+        options={{ headerShown: true, headerTitle: 'Reset password', headerBackTitle: 'Back' }}
+      />
     </Stack.Navigator>
   );
 }
@@ -169,9 +187,15 @@ function RootNavigator() {
         await storage.setUsername(user.username || '');
         await storage.setUserData(user);
         if (active) setInitialRoute('Main');
-      } catch {
-        await storage.clearAll();
-        if (active) setInitialRoute('Auth');
+      } catch (error) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          await storage.clearAll();
+          if (active) setInitialRoute('Auth');
+          return;
+        }
+
+        const savedUser = await storage.getUserData();
+        if (active) setInitialRoute(savedUser?.id ? 'Main' : 'Auth');
       }
     };
     checkAuth();

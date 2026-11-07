@@ -3,22 +3,18 @@ export const validateUsername = (str) => {
     return { valid: false, error: 'Username is required' };
   }
 
-  const cleaned = str.toLowerCase().replace(/[^a-z0-9\-!_*#]/g, '');
+  const cleaned = str.trim().replace(/^@/, '').toLowerCase();
 
-  if (cleaned !== str) {
-    return { valid: false, error: 'Only letters, numbers, hyphen, exclamation, underscore, asterisk, and hashtag allowed' };
+  if (cleaned.includes('@') || /[\u0000-\u001F\u007F\s]/u.test(cleaned)) {
+    return { valid: false, error: 'Usernames cannot contain @ or spaces' };
   }
 
   if (cleaned.length < 3) {
     return { valid: false, error: 'Must be at least 3 characters' };
   }
 
-  if (cleaned.length > 24) {
-    return { valid: false, error: 'Must be at most 24 characters' };
-  }
-
-  if (cleaned.startsWith('-') || cleaned.endsWith('-') || cleaned.startsWith('!') || cleaned.endsWith('!')) {
-    return { valid: false, error: 'Cannot start or end with special characters' };
+  if (cleaned.length > 16) {
+    return { valid: false, error: 'Must be at most 16 characters' };
   }
 
   return { valid: true, error: null, cleaned };
@@ -36,7 +32,7 @@ export const suggestFromEmail = (email) => {
 };
 
 export const formatUsername = (str) => {
-  return str.toLowerCase().replace(/[^a-z0-9\-!_*#]/g, '');
+  return str.trim().replace(/^@/, '').slice(0, 16).toLowerCase();
 };
 
 export default { validateUsername, suggestFromEmail, formatUsername };
