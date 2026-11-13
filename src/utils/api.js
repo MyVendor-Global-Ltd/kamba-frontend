@@ -127,6 +127,10 @@ export const userAPI = {
     const response = await api.post('/auth/upgrade-to-vendor');
     return response.data;
   },
+  async updateProfile(data) {
+    const response = await api.patch('/auth/profile', data);
+    return response.data;
+  },
 };
 
 export const vendorAPI = {

@@ -22,6 +22,7 @@ import { SearchScreen } from '../screens/SearchScreen';
 import { StoreDetailScreen } from '../screens/StoreDetailScreen';
 import { ProductListScreen } from '../screens/ProductListScreen';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen';
+import { OrderDetailScreen } from '../screens/OrderDetailScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
@@ -31,6 +32,7 @@ import { AboutScreen } from '../screens/AboutScreen';
 import { HelpScreen } from '../screens/HelpScreen';
 import { PaymentMethodsScreen } from '../screens/PaymentMethodsScreen';
 import { ProfileDetailScreen } from '../screens/ProfileDetailScreen';
+import { EditProfileScreen } from '../screens/EditProfileScreen';
 import { SecurityScreen } from '../screens/SecurityScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { VendorHubScreen } from '../screens/VendorHubScreen';
@@ -270,10 +272,14 @@ function RootNavigator() {
         component={VendorOnboardingScreen}
         options={{ headerShown: true, headerTitle: 'Become a Vendor', headerBackTitle: 'Back' }}
       />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ headerShown: true, headerTitle: 'Edit Profile', headerBackTitle: 'Back' }}
+      />
       {[
         'Addresses',
         'AddCard',
-        'EditProfile',
         'Language',
         'ClearCache',
         'ContactSupport',
