@@ -16,7 +16,7 @@ export const AboutScreen = ({ navigation }) => (
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+          <ArrowLeft size={24} color={colors.light.textPrimary}  />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>About Kamba</Text>
       </View>
@@ -30,7 +30,7 @@ export const AboutScreen = ({ navigation }) => (
           style={styles.heroPattern}
         />
         <View style={styles.heroIcon}>
-          <Storefront size={28} color={colors.light.onAccent} weight="regular" />
+          <Storefront size={28} color={colors.light.onAccent}  />
         </View>
         <Text style={styles.eyebrow}>A LOCAL MARKETPLACE</Text>
         <Text style={styles.heroTitle}>Kamba brings nearby buyers and sellers closer.</Text>

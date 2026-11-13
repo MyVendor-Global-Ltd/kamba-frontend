@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   RefreshControl,
   StyleSheet,
@@ -8,14 +8,16 @@ import {
   View,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from 'react-native';
-import { MagnifyingGlass, X } from '../utils/phosphorIcons';
+import { MagnifyingGlass, Storefront, X } from '../utils/phosphorIcons';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { StoreCard } from '../components/StoreCard';
 import { productAPI } from '../utils/api';
 import { vendorAPI } from '../utils/api';
+import marketplaceCategories from '../data/marketplaceCategories';
 
 const getStoreName = (store) => store.store_name || store.name || 'Local shop';
 
@@ -186,7 +188,12 @@ export const ProductListScreen = ({ navigation, route }) => {
                       }}
                     >
                       {product.image_url
-                        ? {product.image_url}
+                        ? (
+                          <Image
+                            source={{ uri: product.image_url }}
+                            style={{ width: '100%', height: '100%' }}
+                          />
+                        )
                         : (
                           <Text style={styles.placeholderText}>
                             No image

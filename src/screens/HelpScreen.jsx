@@ -33,14 +33,14 @@ export const HelpScreen = ({ navigation }) => {
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+            <ArrowLeft size={24} color={colors.light.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Help & support</Text>
         </View>
 
         <View style={styles.intro}>
           <View style={styles.introIcon}>
-            <QuestionCircle size={24} color={colors.light.accent} weight="regular" />
+            <QuestionCircle size={24} color={colors.light.accent}  />
           </View>
           <Text style={styles.title}>A few things to know</Text>
           <Text style={styles.description}>
@@ -63,7 +63,7 @@ export const HelpScreen = ({ navigation }) => {
                   accessibilityState={{ expanded }}
                 >
                   <Text style={styles.questionText}>{item.question}</Text>
-                  <Chevron size={20} color={colors.light.textMuted} weight="bold" />
+                  <Chevron size={20} color={colors.light.textMuted} />
                 </TouchableOpacity>
                 {expanded ? (
                   <Text style={styles.answerText}>{item.answer}</Text>

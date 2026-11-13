@@ -86,7 +86,7 @@ export const HomeScreen = ({ navigation }) => {
           <View style={styles.topBar}>
             <View style={styles.brand}>
               <View style={styles.brandMark}>
-                <Storefront size={22} color={colors.light.onAccent} weight="bold" />
+                <Storefront size={22} color={colors.light.onAccent}  />
               </View>
               <View>
                 <Text style={styles.brandName}>Kamba</Text>
@@ -99,7 +99,7 @@ export const HomeScreen = ({ navigation }) => {
               accessibilityRole="button"
               accessibilityLabel="Notifications"
             >
-              <Bell size={20} color={colors.light.textPrimary} weight="regular" />
+              <Bell size={20} color={colors.light.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -125,7 +125,7 @@ export const HomeScreen = ({ navigation }) => {
             accessibilityRole="button"
             accessibilityLabel="Search local shops"
           >
-            <MagnifyingGlass size={20} color={colors.light.textMuted} weight="regular" />
+            <MagnifyingGlass size={20} color={colors.light.textMuted} />
             <Text style={styles.searchLabel}>Search local shops</Text>
             <Text style={styles.searchHint}>Search</Text>
           </TouchableOpacity>

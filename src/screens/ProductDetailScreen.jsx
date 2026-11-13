@@ -1,9 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Image,
+} from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { Storefront, ShoppingBag, ChevronRight } from '../utils/phosphorIcons';
-import { productAPI } from '../utils/api';
+import { productAPI, cartAPI } from '../utils/api';
 import { vendorAPI } from '../utils/api';
 
 export const ProductDetailScreen = ({ navigation, route }) => {
@@ -81,7 +89,10 @@ export const ProductDetailScreen = ({ navigation, route }) => {
           <View style={styles.productCard}>
             <View style={styles.productImage}>
               {product.image_url ? (
-                <View style={{ width: '100%', height: 200, borderRadius: radius.lg, backgroundColor: colors.light.surface }} />
+                <Image
+                  source={{ uri: product.image_url }}
+                  style={{ width: '100%', height: 200 }}
+                />
               ) : (
                 <View
                   style={{

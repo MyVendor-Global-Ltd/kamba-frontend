@@ -132,7 +132,7 @@ export const EditProfileScreen = ({ navigation }) => {
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+            <ArrowLeft size={24} color={colors.light.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit profile</Text>
           <View style={styles.backButton} />
@@ -143,7 +143,7 @@ export const EditProfileScreen = ({ navigation }) => {
             {user?.avatar_url ? (
               <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
             ) : (
-              <User size={34} color={colors.light.accent} weight="regular" />
+              <User size={34} color={colors.light.accent} />
             )}
           </View>
           <Text style={styles.avatarLabel}>Profile photo</Text>

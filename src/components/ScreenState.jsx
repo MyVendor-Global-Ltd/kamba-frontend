@@ -49,7 +49,7 @@ export const ScreenState = ({
         {isLoading ? (
           <ActivityIndicator size="large" color={colors.light.accent} />
         ) : Icon ? (
-          <Icon size={28} color={colors.light.accent} weight="regular" />
+          <Icon size={28} color={colors.light.accent}  />
         ) : null}
       </View>
       <Text accessibilityRole="header" style={styles.title}>

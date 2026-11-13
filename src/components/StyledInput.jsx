@@ -161,7 +161,7 @@ export const StyledInput = ({
     if (!iconName) return null;
     if (typeof iconName === 'function') return iconName({ size: icons.sizes.md, color, weight: 'bold', ...style });
     const IconComponent = typeof iconName === 'string' ? phosphorIcons[iconName] : null;
-    if (IconComponent) return <IconComponent size={icons.sizes.md} color={color} weight="bold" style={style} />;
+    if (IconComponent) return <IconComponent size={icons.sizes.md} color={color}  style={style} />;
     return null;
   };
 

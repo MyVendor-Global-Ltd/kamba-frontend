@@ -90,12 +90,12 @@ export const VendorPaymentScreen = ({ navigation }) => {
           <View style={styles.paymentsList}>
             {payments.map((payment) => (
               <View
-                key={payment.id || payment.transactionId || payment.occurredAt}
+                key={payment.id || payment.transaction_id || payment.occurred_at}
                 style={styles.paymentItem}
               >
                 <View style={styles.paymentHeader}>
-                  <Text style={styles.paymentTitle}>#{payment.id || payment.transactionId}</Text>
-                  <Text style={styles.paymentStatus}>
+                  <Text style={styles.paymentTitle}>#{payment.id || payment.transaction_id}</Text>
+                  <Text style={[styles.paymentStatus, { color: paymentStatusColor(payment.status) }]}>
                     {paymentStatusText(payment.status)}
                   </Text>
                 </View>
@@ -103,7 +103,7 @@ export const VendorPaymentScreen = ({ navigation }) => {
                 <View style={styles.paymentDetails}>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Amount</Text>
-                    <Text style={styles.detailValue}>₦{payment.amount / 100}</Text>
+                    <Text style={styles.detailValue}>₦{(payment.amount || 0) / 100}</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Currency</Text>
@@ -112,22 +112,22 @@ export const VendorPaymentScreen = ({ navigation }) => {
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Payment Date</Text>
                     <Text style={styles.detailValue}>
-                      {payment.occurredAt ? new Date(payment.occurredAt).toLocaleDateString() : 'N/A'}
+                      {payment.occurred_at ? new Date(payment.occurred_at).toLocaleDateString() : 'N/A'}
                     </Text>
                   </View>
-                  {payment.releasedAt && (
+                  {payment.released_at && (
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Released</Text>
                       <Text style={styles.detailValue}>
-                        {payment.releasedAt ? new Date(payment.releasedAt).toLocaleDateString() : 'N/A'}
+                        {payment.released_at ? new Date(payment.released_at).toLocaleDateString() : 'N/A'}
                       </Text>
                     </View>
                   )}
-                  {payment.disputeId && (
+                  {payment.dispute_id && (
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Dispute</Text>
                       <Text style={[styles.detailValue, { color: colors.light.error }]}>
-                        Dispute #{payment.disputeId} active
+                        Dispute #{payment.dispute_id} active
                       </Text>
                     </View>
                   )}
@@ -147,30 +147,30 @@ export const VendorPaymentScreen = ({ navigation }) => {
 
                 {payment.status === 'disputed' && (
                   <View style={styles.disputedBadge}>
-                    <AlertCircle size={16} color={colors.light.error} /> 
-                                    Dispute active - Admin resolution required
+                    <AlertCircle size={16} color={colors.light.error} />
+                    <Text>Dispute active - Admin resolution required</Text>
                   </View>
                 )}
 
                 {payment.status === 'released' && (
                   <View style={styles.releasedBadge}>
-                    <CheckCircle size={16} color={colors.light.success} /> 
-                                    Released to vendor
+                    <CheckCircle size={16} color={colors.light.success} />
+                    <Text>Released to vendor</Text>
                   </View>
                 )}
 
                 {payment.status === 'refunded' && (
                   <View style={styles.refundedBadge}>
-                    <XCircle size={16} color={colors.light.muted} /> 
-                                    Refunded to buyer
+                    <XCircle size={16} color={colors.light.muted} />
+                    <Text>Refunded to buyer</Text>
                   </View>
                 )}
 
-                {payment.status !== 'released' && payment.occurredAt && (
+                {payment.status !== 'released' && payment.occurred_at && (
                   <View style={styles.timerSection}>
                     <Text style={styles.timerLabel}>Auto-release timer</Text>
                     <Text style={styles.timerValue}>
-                      {(new Date(payment.occurredAt).getTime() / 1000 + 86400 - Date.now() / 1000) / 3600 | 0} hours remaining
+                      {Math.max(0, Math.floor((new Date(payment.occurred_at).getTime() / 1000 + 86400 - Date.now() / 1000) / 3600))} hours remaining
                     </Text>
                   </View>
                 )}
@@ -232,7 +232,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
-    borderLeft: `4px solid ${colors.light.accent}`,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.light.accent,
   },
   paymentHeader: {
     flexDirection: 'row',
@@ -257,7 +258,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xs,
     paddingBottom: spacing.xs,
-    borderBottom: `1px solid ${colors.light.divider}`,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.divider,
   },
   detailLabel: {
     color: colors.light.textMuted,
@@ -273,6 +275,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: spacing.xs,
     marginTop: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heldText: {
     fontSize: typography.scale.caption.fontSize,
     color: colors.light.warning,
   },
@@ -281,6 +287,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: spacing.xs,
     marginTop: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pendingText: {
     fontSize: typography.scale.caption.fontSize,
     color: colors.light.warning,
   },
@@ -289,40 +299,44 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     padding: spacing.xs,
     marginTop: spacing.xs,
-    fontSize: typography.scale.caption.fontSize,
-    color: colors.light.error,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   releasedBadge: {
     backgroundColor: 'rgba(34, 197, 94, 0.15)',
     borderRadius: radius.sm,
     padding: spacing.xs,
     marginTop: spacing.xs,
-    fontSize: typography.scale.caption.fontSize,
-    color: colors.light.success,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   refundedBadge: {
     backgroundColor: 'rgba(107, 114, 128, 0.15)',
     borderRadius: radius.sm,
     padding: spacing.xs,
     marginTop: spacing.xs,
-    fontSize: typography.scale.caption.fontSize,
-    color: colors.light.muted,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   timerSection: {
     marginTop: spacing.sm,
     paddingTop: spacing.sm,
-    borderTop: `1px solid ${colors.light.divider}`,
-    fontSize: typography.scale.caption.fontSize,
-    color: colors.light.textMuted,
+    borderTopWidth: 1,
+    borderTopColor: colors.light.divider,
   },
   timerLabel: {
     marginBottom: spacing.xxs,
+    fontSize: typography.scale.caption.fontSize,
+    color: colors.light.textMuted,
   },
-  timerValue: {},
+  timerValue: {
+    fontSize: typography.scale.caption.fontSize,
+    color: colors.light.textMuted,
+  },
   divider: {
     height: 1,
     width: '100%',
     backgroundColor: colors.light.divider,
-    margin: spacing.md 0,
+    marginVertical: spacing.md,
   },
 });

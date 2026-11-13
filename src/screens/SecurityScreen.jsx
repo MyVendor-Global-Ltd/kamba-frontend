@@ -16,7 +16,7 @@ export const SecurityScreen = ({ navigation }) => (
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+          <ArrowLeft size={24} color={colors.light.textPrimary}  />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Security & privacy</Text>
       </View>

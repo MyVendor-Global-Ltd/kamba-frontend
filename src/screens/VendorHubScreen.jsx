@@ -23,7 +23,7 @@ export const VendorHubScreen = ({ navigation }) => (
           style={styles.heroPattern}
         />
         <View style={styles.heroIcon}>
-          <Storefront size={26} color={colors.light.onAccent} weight="regular" />
+          <Storefront size={26} color={colors.light.onAccent}  />
         </View>
         <Text style={styles.eyebrow}>FOR LOCAL SELLERS</Text>
         <Text style={styles.heroTitle}>A marketplace built around your community.</Text>
@@ -31,7 +31,7 @@ export const VendorHubScreen = ({ navigation }) => (
 
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Storefront size={24} color={colors.light.accent} weight="bold" />
+          <Storefront size={24} color={colors.light.accent} />
           <Text style={styles.cardTitle}>Become a Vendor</Text>
         </View>
         <Text style={styles.cardDesc}>
@@ -45,7 +45,7 @@ export const VendorHubScreen = ({ navigation }) => (
           accessibilityLabel="Upgrade to vendor"
         >
           <Text style={styles.upgradeButtonText}>Upgrade to Vendor</Text>
-          <ArrowRight size={16} color={colors.light.onAccent} weight="bold" />
+          <ArrowRight size={16} color={colors.light.onAccent} />
         </TouchableOpacity>
       </View>
 

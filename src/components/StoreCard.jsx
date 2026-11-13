@@ -27,7 +27,7 @@ export const StoreCard = ({ store, onPress }) => {
       accessibilityState={{ disabled: !canOpen }}
     >
       <View style={styles.iconFrame}>
-        <Storefront size={22} color={colors.light.accent} weight="regular" />
+        <Storefront size={22} color={colors.light.accent}  />
       </View>
       <View style={styles.details}>
         <View style={styles.nameRow}>

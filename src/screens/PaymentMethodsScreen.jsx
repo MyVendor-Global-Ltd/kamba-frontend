@@ -16,7 +16,7 @@ export const PaymentMethodsScreen = ({ navigation }) => (
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+          <ArrowLeft size={24} color={colors.light.textPrimary}  />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment methods</Text>
       </View>

@@ -102,7 +102,7 @@ export const StoreDetailScreen = ({ route }) => {
               style={styles.heroPattern}
             />
             <View style={styles.heroIcon}>
-              <Storefront size={30} color={colors.light.onAccent} weight="regular" />
+              <Storefront size={30} color={colors.light.onAccent}  />
             </View>
             <Text style={styles.heroEyebrow}>LOCAL SHOP</Text>
             <Text style={styles.heroTitle}>{storeName}</Text>

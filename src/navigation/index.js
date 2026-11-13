@@ -96,7 +96,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} weight="bold" />,
+          tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -104,7 +104,7 @@ function MainTabs() {
         component={DiscoverScreen}
         options={{
           tabBarLabel: 'Discover',
-          tabBarIcon: ({ color, size }) => <Grid size={size} color={color} weight="bold" />,
+          tabBarIcon: ({ color, size }) => <Grid size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -112,7 +112,7 @@ function MainTabs() {
         component={CartScreen}
         options={{
           tabBarLabel: 'Cart',
-          tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} weight="bold" />,
+          tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} />,
         }}
       />
       <Tab.Screen
@@ -120,7 +120,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} weight="bold" />,
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
     </Tab.Navigator>

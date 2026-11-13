@@ -76,7 +76,7 @@ export const USSDBanner = ({
   return (
     <Animated.View style={[styles.container, animatedStyle, style]} testID={testID}>
       <View style={styles.content}>
-        <WifiOff size={icons.sizes.sm} color={colors.light.warning} weight="bold" />
+        <WifiOff size={icons.sizes.sm} color={colors.light.warning} />
         <View style={styles.textContainer}>
           <Text style={styles.title}>You're offline</Text>
           <Text style={styles.code}>{ussdCode}</Text>
@@ -96,7 +96,7 @@ export const USSDBanner = ({
           accessibilityRole="button"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <X size={icons.sizes.sm} color={colors.light.textMuted} weight="bold" />
+          <X size={icons.sizes.sm} color={colors.light.textMuted} />
         </TouchableOpacity>
       </View>
     </Animated.View>

@@ -44,7 +44,7 @@ const ProfileMenuItem = ({ icon: Icon, label, onPress }) => (
     accessibilityRole="button"
   >
     <View style={styles.menuIcon}>
-      <Icon size={22} color={colors.light.accent} weight="bold" />
+      <Icon size={22} color={colors.light.accent} />
     </View>
     <Text style={styles.menuLabel}>{label}</Text>
     <Text style={styles.menuChevron}>›</Text>
@@ -105,7 +105,7 @@ export const ProfileDetailScreen = ({ navigation }) => {
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+            <ArrowLeft size={24} color={colors.light.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My profile</Text>
           <TouchableOpacity
@@ -115,7 +115,7 @@ export const ProfileDetailScreen = ({ navigation }) => {
             accessibilityLabel="Edit profile"
             accessibilityRole="button"
           >
-            <Edit size={20} color={colors.light.accent} weight="bold" />
+            <Edit size={20} color={colors.light.accent} />
           </TouchableOpacity>
         </View>
 
@@ -136,11 +136,11 @@ export const ProfileDetailScreen = ({ navigation }) => {
                 {avatarUrl ? (
                   <Image source={{ uri: avatarUrl }} style={styles.avatar} />
                 ) : (
-                  <User size={34} color={colors.light.accent} weight="regular" />
+                  <User size={34} color={colors.light.accent}  />
                 )}
                 {user.is_verified === true ? (
                   <View style={styles.verifiedBadge}>
-                    <ShieldCheck size={16} color={colors.light.onAccent} weight="bold" />
+                    <ShieldCheck size={16} color={colors.light.onAccent} />
                   </View>
                 ) : null}
               </View>

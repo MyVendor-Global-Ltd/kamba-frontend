@@ -59,12 +59,9 @@ export const CartScreen = ({ navigation }) => {
     }
   }, []);
 
-  const increaseQuantity = useCallback(async (productId) => {
+  const increaseQuantity = useCallback(async (productId, currentQuantity) => {
     try {
-      const cart = await cartAPI.updateItem(productId, (item) => ({
-        ...item,
-        quantity: (item.quantity || 1) + 1,
-      }));
+      const cart = await cartAPI.updateItem(productId, (currentQuantity || 1) + 1);
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
       setTotal(cart.total || 0);
@@ -76,12 +73,9 @@ export const CartScreen = ({ navigation }) => {
     }
   }, []);
 
-  const decreaseQuantity = useCallback(async (productId) => {
+  const decreaseQuantity = useCallback(async (productId, currentQuantity) => {
     try {
-      const cart = await cartAPI.updateItem(productId, (item) => ({
-        ...item,
-        quantity: Math.max((item.quantity || 1) - 1, 1),
-      }));
+      const cart = await cartAPI.updateItem(productId, Math.max((currentQuantity || 1) - 1, 1));
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
       setTotal(cart.total || 0);
@@ -98,13 +92,8 @@ export const CartScreen = ({ navigation }) => {
       setError('Your cart is empty');
       return;
     }
-    try {
-      navigation.navigate('Checkout');
-    } catch (err) {
-      const message = err.response?.data?.error;
-      setError(typeof message === 'string' ? message : 'Could not proceed to checkout.');
-    }
-  }, [cartItems]);
+    navigation.navigate('Checkout');
+  }, [cartItems, navigation]);
 
   return (
     <ScreenShell scrollable={false} padded bg={colors.light.background}>
@@ -125,19 +114,19 @@ export const CartScreen = ({ navigation }) => {
         ) : (
           <View style={styles.cartItems}>
             {cartItems.map((item) => (
-              <View key={item.productId} style={styles.cartItem}>
+              <View key={item.product_id || item.productId} style={styles.cartItem}>
                 <View style={styles.itemDetails}>
                   <Text style={styles.itemName}>
                     {item.name || 'Product'}
                   </Text>
                   <Text style={styles.itemVendor}>
-                    {item.vendor || ''}
+                    {typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name || ''}
                   </Text>
                 </View>
                 <View style={styles.itemActions}>
                   <TouchableOpacity
                     style={styles.quantityButton}
-                    onPress={() => decreaseQuantity(item.productId)}
+                    onPress={() => decreaseQuantity(item.product_id || item.productId, item.quantity)}
                     accessibilityRole="button"
                     accessibilityLabel="Decrease quantity"
                   >
@@ -148,7 +137,7 @@ export const CartScreen = ({ navigation }) => {
                   </Text>
                   <TouchableOpacity
                     style={styles.quantityButton}
-                    onPress={() => increaseQuantity(item.productId)}
+                    onPress={() => increaseQuantity(item.product_id || item.productId, item.quantity)}
                     accessibilityRole="button"
                     accessibilityLabel="Increase quantity"
                   >
@@ -160,7 +149,7 @@ export const CartScreen = ({ navigation }) => {
                 </Text>
                 <TouchableOpacity
                   style={styles.removeButton}
-                  onPress={() => removeItem(item.productId)}
+                  onPress={() => removeItem(item.product_id || item.productId)}
                   accessibilityRole="button"
                   accessibilityLabel="Remove item"
                 >

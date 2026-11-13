@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,7 +15,35 @@ export const OrderDetailScreen = ({ navigation }) => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { orderId } = navigation.getParam('orderId', '');
+  const orderId = navigation.getParam('orderId', '');
+
+  const handleConfirmDelivery = useCallback(async () => {
+    try {
+      const updated = await orderAPI.confirmDelivery(orderId);
+      if (updated?.id) {
+        setOrder(updated);
+      }
+    } catch (err) {
+      const message = err.response?.data?.error;
+      setError(typeof message === 'string'
+        ? message
+        : 'Could not confirm delivery. Please try again.');
+    }
+  }, [orderId]);
+
+  const handleCancelOrder = useCallback(async () => {
+    try {
+      const updated = await orderAPI.cancelOrder(orderId);
+      if (updated?.id) {
+        setOrder(updated);
+      }
+    } catch (err) {
+      const message = err.response?.data?.error;
+      setError(typeof message === 'string'
+        ? message
+        : 'Could not cancel order. Please try again.');
+    }
+  }, [orderId]);
 
   useEffect(() => {
     (async () => {
@@ -81,7 +109,7 @@ export const OrderDetailScreen = ({ navigation }) => {
         <View style={styles.orderDetails}>
           <Text style={styles.label}>Total</Text>
           <Text style={styles.value}>
-            {order.totalAmount || 0} {order.currency || 'NGN'}
+            {order.total_amount || order.totalAmount || 0} {order.currency || 'NGN'}
           </Text>
         </View>
 
@@ -89,7 +117,7 @@ export const OrderDetailScreen = ({ navigation }) => {
           <View style={styles.itemsSection}>
             <Text style={styles.sectionLabel}>Items</Text>
             {order.items.map((item) => (
-              <View key={item.productId} style={styles.item}>
+              <View key={item.product_id || item.productId} style={styles.item}>
                 <Text style={styles.itemName}>{item.name || 'Product'}</Text>
                 <Text style={styles.itemDetails}>
                   Qty: {item.quantity || 1} - {item.price || 0} {order.currency || 'NGN'} each
@@ -102,7 +130,7 @@ export const OrderDetailScreen = ({ navigation }) => {
         {canConfirmDelivery && (
           <TouchableOpacity
             style={styles.confirmDeliveryButton}
-            onPress={() => handleConfirmDelivery()}
+            onPress={handleConfirmDelivery}
             accessibilityRole="button"
             accessibilityLabel="Confirm delivery"
           >
@@ -115,7 +143,7 @@ export const OrderDetailScreen = ({ navigation }) => {
         {canCancelOrder && (
           <TouchableOpacity
             style={styles.cancelOrderButton}
-            onPress={() => handleCancelOrder()}
+            onPress={handleCancelOrder}
             accessibilityRole="button"
             accessibilityLabel="Cancel order"
           >
@@ -142,36 +170,6 @@ export const OrderDetailScreen = ({ navigation }) => {
       </View>
     </ScreenShell>
   );
-};
-
-const handleConfirmDelivery = async () => {
-  try {
-    const order = await orderAPI.confirmDelivery(navigation.getParam('orderId', ''));
-    if (order?.id) {
-      // Refresh the order details
-      setOrder(order);
-    }
-  } catch (err) {
-    const message = err.response?.data?.error;
-    setError(typeof message === 'string'
-      ? message
-      : 'Could not confirm delivery. Please try again.');
-  }
-};
-
-const handleCancelOrder = async () => {
-  try {
-    const order = await orderAPI.cancelOrder(navigation.getParam('orderId', ''));
-    if (order?.id) {
-      // Refresh the order details
-      setOrder(order);
-    }
-  } catch (err) {
-    const message = err.response?.data?.error;
-    setError(typeof message === 'string'
-      ? message
-      : 'Could not cancel order. Please try again.');
-  }
 };
 
 const styles = StyleSheet.create({

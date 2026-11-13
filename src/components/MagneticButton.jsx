@@ -96,7 +96,7 @@ export const MagneticButton = ({
       });
     }
     const IconComponent = typeof iconName === 'string' ? phosphorIcons[iconName] : null;
-    if (IconComponent) return <IconComponent size={iconSize} color={color} weight="bold" style={style} />;
+    if (IconComponent) return <IconComponent size={iconSize} color={color}  style={style} />;
     return null;
   };
 

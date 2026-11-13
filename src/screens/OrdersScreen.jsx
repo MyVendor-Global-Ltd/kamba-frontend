@@ -63,19 +63,21 @@ export const OrdersScreen = ({ navigation }) => {
         ) : (
           <View style={styles.ordersList}>
             {orders.map((order) => (
-              <View
+              <TouchableOpacity
                 key={order.id}
                 style={styles.orderItem}
                 onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+                accessibilityRole="button"
+                accessibilityLabel={`Order ${order.id}`}
               >
                 <Text style={styles.orderNumber}>Order #{order.id}</Text>
                 <Text style={styles.orderStatus}>
                   {order.status || 'Pending'}
                 </Text>
                 <Text style={styles.orderAmount}>
-                  {order.totalAmount || 0} {order.currency || 'NGN'}
+                  {order.total_amount || order.totalAmount || 0} {order.currency || 'NGN'}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}

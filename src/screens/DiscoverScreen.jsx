@@ -107,7 +107,7 @@ export const DiscoverScreen = ({ navigation, route }) => {
         </View>
 
         <View style={styles.searchBox}>
-          <MagnifyingGlass size={20} color={colors.light.textMuted} weight="regular" />
+          <MagnifyingGlass size={20} color={colors.light.textMuted}  />
           <TextInput
             value={searchText}
             onChangeText={setSearchText}

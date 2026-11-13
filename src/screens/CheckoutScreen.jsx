@@ -52,9 +52,10 @@ export const CheckoutScreen = ({ navigation }) => {
       setError('Your cart is empty');
       return;
     }
+    const vendorId = cartItems[0]?.vendor_id || cartItems[0]?.vendorId;
     setPlacingOrder(true);
     try {
-      const order = await orderAPI.createOrder(cartItems);
+      const order = await orderAPI.createOrder(cartItems, vendorId);
       if (order?.id) {
         navigation.navigate('OrderDetail', { orderId: order.id });
       } else {
@@ -66,7 +67,7 @@ export const CheckoutScreen = ({ navigation }) => {
       setError(typeof message === 'string' ? message : 'Could not place order.');
       setPlacingOrder(false);
     }
-  }, [cartItems]);
+  }, [cartItems, navigation]);
 
   if (loading) {
     return (
@@ -91,14 +92,14 @@ export const CheckoutScreen = ({ navigation }) => {
     <ScreenShell scrollable={false} padded bg={colors.light.background}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <ShoppingBag size={28} color={colors.light.accent} weight="bold" />
+          <ShoppingBag size={28} color={colors.light.accent} />
           <Text style={styles.headerTitle}>Checkout</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
           {cartItems.map((item) => (
-            <View key={item.productId} style={styles.cartItem}>
+            <View key={item.product_id || item.productId} style={styles.cartItem}>
               <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name || 'Product'}</Text>
                 <Text style={styles.itemQty}>
@@ -132,8 +133,7 @@ export const CheckoutScreen = ({ navigation }) => {
 
         <TouchableOpacity
           style={styles.checkoutButton}
-          onPress={placeOrder}
-          disabled={placingOrder || cartItems.length === 0}
+          onPress={placingOrder || cartItems.length === 0 ? undefined : placeOrder}
           accessibilityRole="button"
           accessibilityLabel="Place order"
         >
@@ -141,7 +141,7 @@ export const CheckoutScreen = ({ navigation }) => {
             {placingOrder ? (
               <ActivityIndicator size="small" color={colors.light.onAccent} />
             ) : (
-              <ArrowRight size={20} color={colors.light.onAccent} weight="bold" />
+              <ArrowRight size={20} color={colors.light.onAccent} />
             )}
             <Text style={styles.buttonText}>
               {placingOrder ? 'Placing order...' : 'Place order'}

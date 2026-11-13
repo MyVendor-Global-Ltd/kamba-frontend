@@ -14,7 +14,7 @@ export const MarketplaceCategoryChip = ({ category, selected = false, onPress })
       accessibilityState={{ selected }}
     >
       <View style={[styles.iconFrame, selected && styles.selectedIconFrame]}>
-        <Icon size={18} color={selected ? colors.light.onAccent : colors.light.accent} weight="regular" />
+        <Icon size={18} color={selected ? colors.light.onAccent : colors.light.accent}  />
       </View>
       <Text style={[styles.label, selected && styles.selectedLabel]}>{category.label}</Text>
     </Pressable>

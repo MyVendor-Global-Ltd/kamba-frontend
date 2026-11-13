@@ -78,7 +78,7 @@ export const SearchScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.searchBox}>
-          <MagnifyingGlass size={20} color={colors.light.textMuted} weight="regular" />
+          <MagnifyingGlass size={20} color={colors.light.textMuted}  />
           <TextInput
             value={query}
             onChangeText={setQuery}

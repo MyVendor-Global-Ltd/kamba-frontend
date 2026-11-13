@@ -54,7 +54,7 @@ export const SettingsScreen = ({ navigation }) => (
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <ArrowLeft size={24} color={colors.light.textPrimary} weight="bold" />
+          <ArrowLeft size={24} color={colors.light.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
@@ -71,7 +71,7 @@ export const SettingsScreen = ({ navigation }) => (
             accessibilityRole="button"
           >
             <View style={styles.menuIcon}>
-              <item.icon size={22} color={colors.light.accent} weight="bold" />
+              <item.icon size={22} color={colors.light.accent} />
             </View>
             <View style={styles.menuContent}>
               <Text style={styles.menuLabel}>{item.label}</Text>
