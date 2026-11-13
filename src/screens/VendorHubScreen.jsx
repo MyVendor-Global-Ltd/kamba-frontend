@@ -1,10 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+} from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { KambaTextileMotif } from '../components/KambaTextileMotif';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
-import { Storefront } from '../utils/phosphorIcons';
+import { Storefront, ArrowRight } from '../utils/phosphorIcons';
 
 export const VendorHubScreen = ({ navigation }) => (
   <ScreenShell scrollable padded bg={colors.light.background}>
@@ -24,14 +29,34 @@ export const VendorHubScreen = ({ navigation }) => (
         <Text style={styles.heroTitle}>A marketplace built around your community.</Text>
       </View>
 
-      <ScreenState
-        type="empty"
-        icon={Storefront}
-        title="Seller tools are not connected"
-        description="This preview cannot register vendors, create shops, list products, or manage orders. No seller account or store will be created."
-        actionLabel="Browse local shops"
-        onAction={() => navigation.navigate('Main', { screen: 'Discover' })}
-      />
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Storefront size={24} color={colors.light.accent} weight="bold" />
+          <Text style={styles.cardTitle}>Become a Vendor</Text>
+        </View>
+        <Text style={styles.cardDesc}>
+          Start selling to buyers in your community. List products, receive
+          orders, and track your payments.
+        </Text>
+        <TouchableOpacity
+          style={styles.upgradeButton}
+          onPress={() => navigation.navigate('VendorOnboarding')}
+          accessibilityRole="button"
+          accessibilityLabel="Upgrade to vendor"
+        >
+          <Text style={styles.upgradeButtonText}>Upgrade to Vendor</Text>
+          <ArrowRight size={16} color={colors.light.onAccent} weight="bold" />
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        style={styles.browseButton}
+        onPress={() => navigation.navigate('Main', { screen: 'Discover' })}
+        accessibilityRole="button"
+        accessibilityLabel="Browse local shops"
+      >
+        <Text style={styles.browseButtonText}>Browse local shops</Text>
+      </TouchableOpacity>
     </View>
   </ScreenShell>
 );
@@ -75,6 +100,56 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamilies.display,
     fontSize: typography.scale.displaySmall.fontSize,
     lineHeight: typography.scale.displaySmall.lineHeight,
+  },
+  card: {
+    backgroundColor: colors.light.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+    marginBottom: spacing.lg,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  cardTitle: {
+    fontFamily: typography.fontFamilies.label,
+    fontSize: typography.scale.labelMedium.fontSize,
+    color: colors.light.textPrimary,
+  },
+  cardDesc: {
+    fontFamily: typography.fontFamilies.body,
+    fontSize: typography.scale.bodyMedium.fontSize,
+    color: colors.light.textSecondary,
+    lineHeight: typography.scale.bodyMedium.lineHeight,
+    marginBottom: spacing.md,
+  },
+  upgradeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.light.accent,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+  },
+  upgradeButtonText: {
+    fontFamily: typography.fontFamilies.label,
+    fontSize: typography.scale.labelMedium.fontSize,
+    color: colors.light.onAccent,
+    fontWeight: '600',
+  },
+  browseButton: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  browseButtonText: {
+    fontFamily: typography.fontFamilies.label,
+    fontSize: typography.scale.labelMedium.fontSize,
+    color: colors.light.textSecondary,
   },
 });
 

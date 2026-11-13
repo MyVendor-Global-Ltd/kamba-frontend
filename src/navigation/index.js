@@ -6,20 +6,22 @@ import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { storage } from '../utils/storage';
 import { authAPI } from '../utils/api';
-import { House as Home, ShoppingBag, User, GridFour as Grid } from '../utils/phosphorIcons';
+import { Home as HomeIcon, ShoppingBag, User, GridFour as Grid } from '../utils/phosphorIcons';
 
 import { SplashScreen } from '../screens/auth/SplashScreen';
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { OTPScreen } from '../screens/auth/OTPScreen';
-import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { PhoneUsernameScreen } from '../screens/auth/PhoneUsernameScreen';
+import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { OnboardingScreen } from '../screens/auth/OnboardingScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiscoverScreen } from '../screens/DiscoverScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { StoreDetailScreen } from '../screens/StoreDetailScreen';
+import { ProductListScreen } from '../screens/ProductListScreen';
+import { ProductDetailScreen } from '../screens/ProductDetailScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
@@ -32,6 +34,9 @@ import { ProfileDetailScreen } from '../screens/ProfileDetailScreen';
 import { SecurityScreen } from '../screens/SecurityScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { VendorHubScreen } from '../screens/VendorHubScreen';
+import { VendorPaymentScreen } from '../screens/VendorPaymentScreen';
+import { CheckoutScreen } from '../screens/CheckoutScreen';
+import { VendorOnboardingScreen } from '../screens/VendorOnboardingScreen';
 import { UnavailableFeatureScreen } from '../screens/UnavailableFeatureScreen';
 
 const Tab = createBottomTabNavigator();
@@ -82,7 +87,6 @@ function MainTabs() {
           fontSize: typography.scale.labelSmall.fontSize,
           letterSpacing: 0.2,
         },
-        tabBarIconStyle: { marginTop: 2 },
       }}
     >
       <Tab.Screen
@@ -90,9 +94,7 @@ function MainTabs() {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Home size={size} color={color} weight="bold" />
-          ),
+          tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} weight="bold" />,
         }}
       />
       <Tab.Screen
@@ -100,9 +102,7 @@ function MainTabs() {
         component={DiscoverScreen}
         options={{
           tabBarLabel: 'Discover',
-          tabBarIcon: ({ color, size }) => (
-            <Grid size={size} color={color} weight="bold" />
-          ),
+          tabBarIcon: ({ color, size }) => <Grid size={size} color={color} weight="bold" />,
         }}
       />
       <Tab.Screen
@@ -110,9 +110,7 @@ function MainTabs() {
         component={CartScreen}
         options={{
           tabBarLabel: 'Cart',
-          tabBarIcon: ({ color, size }) => (
-            <ShoppingBag size={size} color={color} weight="bold" />
-          ),
+          tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} weight="bold" />,
         }}
       />
       <Tab.Screen
@@ -120,9 +118,7 @@ function MainTabs() {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} weight="bold" />
-          ),
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} weight="bold" />,
         }}
       />
     </Tab.Navigator>
@@ -132,10 +128,7 @@ function MainTabs() {
 function AuthStack() {
   return (
     <Stack.Navigator
-      screenOptions={{
-        ...screenOptions,
-        headerShown: false,
-      }}
+      screenOptions={{ ...screenOptions, headerShown: false }}
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen
@@ -193,15 +186,12 @@ function RootNavigator() {
           if (active) setInitialRoute('Auth');
           return;
         }
-
         const savedUser = await storage.getUserData();
         if (active) setInitialRoute(savedUser?.id ? 'Main' : 'Auth');
       }
     };
     checkAuth();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   if (!initialRoute) {
@@ -211,10 +201,7 @@ function RootNavigator() {
   return (
     <Stack.Navigator
       initialRouteName={initialRoute}
-      screenOptions={{
-        ...screenOptions,
-        headerShown: false,
-      }}
+      screenOptions={{ ...screenOptions, headerShown: false }}
     >
       <Stack.Screen
         name="Auth"
@@ -242,6 +229,11 @@ function RootNavigator() {
         options={{ headerShown: true, headerTitle: 'Sell on Kamba', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
+        name="VendorPayments"
+        component={VendorPaymentScreen}
+        options={{ headerShown: true, headerTitle: 'Vendor Payments', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
         options={{ headerShown: true, headerTitle: 'Notifications', headerBackTitle: 'Back' }}
@@ -254,16 +246,32 @@ function RootNavigator() {
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
       <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
-      <Stack.Screen name="Payments" component={PaymentMethodsScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Security" component={SecurityScreen} />
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen
+        name="OrderDetail"
+        component={OrderDetailScreen}
+        options={{ headerShown: true, headerTitle: 'Order Details', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={{ headerShown: true, headerTitle: 'Product', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="Checkout"
+        component={CheckoutScreen}
+        options={{ headerShown: true, headerTitle: 'Checkout', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="VendorOnboarding"
+        component={VendorOnboardingScreen}
+        options={{ headerShown: true, headerTitle: 'Become a Vendor', headerBackTitle: 'Back' }}
+      />
       {[
-        'Checkout',
         'Addresses',
-        'OrderDetail',
-        'ProductDetail',
         'AddCard',
         'EditProfile',
         'Language',
@@ -276,7 +284,11 @@ function RootNavigator() {
         'SecurityLog',
         'ActiveSessions',
       ].map((name) => (
-        <Stack.Screen key={name} name={name} component={UnavailableFeatureScreen} />
+        <Stack.Screen
+          key={name}
+          name={name}
+          component={UnavailableFeatureScreen}
+        />
       ))}
     </Stack.Navigator>
   );

@@ -123,6 +123,10 @@ export const userAPI = {
       throw error;
     }
   },
+  async upgradeToVendor() {
+    const response = await api.post('/auth/upgrade-to-vendor');
+    return response.data;
+  },
 };
 
 export const vendorAPI = {
@@ -137,6 +141,102 @@ export const vendorAPI = {
   async getStore(slug) {
     const response = await api.get(`/vendors/stores/${encodeURIComponent(slug)}`);
     return response.data?.store || null;
+  },
+};
+
+export const productAPI = {
+  async listProducts(params = {}) {
+    const response = await api.get('/api/products', { params });
+    const products = response.data?.products;
+    if (!Array.isArray(products)) {
+      throw new Error('Product list was not in the expected format.');
+    }
+    return products;
+  },
+  async getProduct(productId) {
+    const response = await api.get(`/api/products/${productId}`);
+    return response.data?.product || null;
+  },
+};
+
+export const cartAPI = {
+  async getCart() {
+    const response = await api.get('/api/cart');
+    return response.data?.cart || { items: [], subtotal: 0, total: 0 };
+  },
+  async addItem(productId, quantity = 1) {
+    const response = await api.post('/api/cart/items', { productId, quantity });
+    return response.data?.cart || { items: [], subtotal: 0, total: 0 };
+  },
+  async updateItem(productId, quantity) {
+    const response = await api.put(`/api/cart/items/${productId}`, { quantity });
+    return response.data?.cart || { items: [], subtotal: 0, total: 0 };
+  },
+  async removeItem(productId) {
+    const response = await api.delete(`/api/cart/items/${productId}`);
+    return response.data?.cart || { items: [], subtotal: 0, total: 0 };
+  },
+};
+
+export const orderAPI = {
+  async createOrder(cartItems, vendorId) {
+    const response = await api.post('/api/checkout', { cartItems, vendorId });
+    return response.data?.order || null;
+  },
+  async listOrders() {
+    const response = await api.get('/api/orders');
+    return response.data?.orders || [];
+  },
+  async getOrder(orderId) {
+    const response = await api.get(`/api/orders/${orderId}`);
+    return response.data?.order || null;
+  },
+  async cancelOrder(orderId) {
+    const response = await api.post(`/api/orders/${orderId}/cancel`);
+    return response.data?.order || null;
+  },
+  async confirmDelivery(orderId) {
+    const response = await api.post(`/api/orders/${orderId}/delivery/confirm`);
+    return response.data?.order || null;
+  },
+  async createDispute(orderId) {
+    const response = await api.post(`/api/orders/${orderId}/disputes`);
+    return response.data?.dispute || null;
+  },
+  async getDispute(disputeId) {
+    const response = await api.get(`/api/disputes/${disputeId}`);
+    return response.data?.dispute || null;
+  },
+};
+
+export const vendorAPI = {
+  async listProducts() {
+    const response = await api.get('/api/vendor/products');
+    return response.data?.products || [];
+  },
+  async createProduct(productData) {
+    const response = await api.post('/api/vendor/products', productData);
+    return response.data?.product || null;
+  },
+  async updateProduct(productId, updates) {
+    const response = await api.patch(`/api/vendor/products/${productId}`, updates);
+    return response.data?.product || null;
+  },
+  async deleteProduct(productId) {
+    const response = await api.delete(`/api/vendor/products/${productId}`);
+    return response.data?.success !== false;
+  },
+  async listOrders() {
+    const response = await api.get('/api/vendor/orders');
+    return response.data?.orders || [];
+  },
+  async updateOrderStatus(orderId, status) {
+    const response = await api.patch(`/api/vendor/orders/${orderId}`, { status });
+    return response.data?.order || null;
+  },
+  async getPayments() {
+    const response = await api.get('/api/vendor/payments');
+    return response.data?.payments || [];
   },
 };
 
