@@ -112,79 +112,81 @@ export const CartScreen = ({ navigation }) => {
             onAction={() => navigation.navigate('Discover')}
           />
         ) : (
-          <View style={styles.cartItems}>
-            {cartItems.map((item) => (
-              <View key={item.product_id || item.productId} style={styles.cartItem}>
-                <View style={styles.itemDetails}>
-                  <Text style={styles.itemName}>
-                    {item.name || 'Product'}
+          <>
+            <View style={styles.cartItems}>
+              {cartItems.map((item) => (
+                <View key={item.product_id || item.productId} style={styles.cartItem}>
+                  <View style={styles.itemDetails}>
+                    <Text style={styles.itemName}>
+                      {item.name || 'Product'}
+                    </Text>
+                    <Text style={styles.itemVendor}>
+                      {typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name || ''}
+                    </Text>
+                  </View>
+                  <View style={styles.itemActions}>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => decreaseQuantity(item.product_id || item.productId, item.quantity)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Decrease quantity"
+                    >
+                      <Text style={styles.quantityButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.quantityValue}>
+                      {item.quantity || 1}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.quantityButton}
+                      onPress={() => increaseQuantity(item.product_id || item.productId, item.quantity)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Increase quantity"
+                    >
+                      <Text style={styles.quantityButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.itemPrice}>
+                    {item.price || 0} {item.currency || 'NGN'}
                   </Text>
-                  <Text style={styles.itemVendor}>
-                    {typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name || ''}
-                  </Text>
-                </View>
-                <View style={styles.itemActions}>
                   <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => decreaseQuantity(item.product_id || item.productId, item.quantity)}
+                    style={styles.removeButton}
+                    onPress={() => removeItem(item.product_id || item.productId)}
                     accessibilityRole="button"
-                    accessibilityLabel="Decrease quantity"
+                    accessibilityLabel="Remove item"
                   >
-                    <Text style={styles.quantityButtonText}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.quantityValue}>
-                    {item.quantity || 1}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => increaseQuantity(item.product_id || item.productId, item.quantity)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Increase quantity"
-                  >
-                    <Text style={styles.quantityButtonText}>+</Text>
+                    <X size={16} color={colors.error} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.itemPrice}>
-                  {item.price || 0} {item.currency || 'NGN'}
-                </Text>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => removeItem(item.product_id || item.productId)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Remove item"
-                >
-                  <X size={16} color={colors.error} />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
 
-          <View style={styles.cartSummary}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.subtotalAmount}>{subtotal} {currency}</Text>
+            <View style={styles.cartSummary}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.subtotalAmount}>{subtotal} {currency}</Text>
 
-            <Text style={styles.summaryLabel}>Platform fee</Text>
-            <Text style={styles.subtotalAmount}>{(subtotal * 0.1).toFixed(0)} {currency}</Text>
+              <Text style={styles.summaryLabel}>Platform fee</Text>
+              <Text style={styles.subtotalAmount}>{(subtotal * 0.1).toFixed(0)} {currency}</Text>
 
-            <Text style={styles.summaryLabel}>Delivery fee</Text>
-            <Text style={styles.subtotalAmount}>200 {currency}</Text>
+              <Text style={styles.summaryLabel}>Delivery fee</Text>
+              <Text style={styles.subtotalAmount}>200 {currency}</Text>
 
-            <View style={styles.divider} />
+              <View style={styles.divider} />
 
-            <Text style={styles.summaryLabelTotal}>TOTAL</Text>
-            <Text style={styles.totalAmount}>{total} {currency}</Text>
-          </View>
+              <Text style={styles.summaryLabelTotal}>TOTAL</Text>
+              <Text style={styles.totalAmount}>{total} {currency}</Text>
+            </View>
 
-          <TouchableOpacity
-            style={styles.checkoutButton}
-            onPress={checkout}
-            accessibilityRole="button"
-            accessibilityLabel="Proceed to checkout"
-          >
-            <Text style={styles.checkoutButtonText}>
-              Proceed to checkout
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.checkoutButton}
+              onPress={checkout}
+              accessibilityRole="button"
+              accessibilityLabel="Proceed to checkout"
+            >
+              <Text style={styles.checkoutButtonText}>
+                Proceed to checkout
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
       </View>
     </ScreenShell>
