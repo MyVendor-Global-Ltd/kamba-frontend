@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     color: colors.light.textPrimary,
     fontFamily: typography.fontFamilies.body,
     fontSize: typography.scale.bodyMedium.fontSize,
-    margin: 0 4,
+    marginHorizontal: 4,
   },
   addToCartArea: {
     padding: spacing.md,
