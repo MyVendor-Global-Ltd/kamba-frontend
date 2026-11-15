@@ -1,8 +1,10 @@
 import { ArrowLeft } from 'phosphor-react-native/src/icons/ArrowLeft';
 import { ArrowRight } from 'phosphor-react-native/src/icons/ArrowRight';
+import { ArrowClockwise } from 'phosphor-react-native/src/icons/ArrowClockwise';
 import { Bell } from 'phosphor-react-native/src/icons/Bell';
 import { Camera } from 'phosphor-react-native/src/icons/Camera';
 import { CaretDown } from 'phosphor-react-native/src/icons/CaretDown';
+import { CaretRight } from 'phosphor-react-native/src/icons/CaretRight';
 import { CaretUp } from 'phosphor-react-native/src/icons/CaretUp';
 import { ChatCircle } from 'phosphor-react-native/src/icons/ChatCircle';
 import { Check } from 'phosphor-react-native/src/icons/Check';
@@ -37,7 +39,11 @@ import { Phone } from 'phosphor-react-native/src/icons/Phone';
 import { Plus } from 'phosphor-react-native/src/icons/Plus';
 import { Question } from 'phosphor-react-native/src/icons/Question';
 import { SealCheck } from 'phosphor-react-native/src/icons/SealCheck';
+import { Bank } from 'phosphor-react-native/src/icons/Bank';
+import { Calendar } from 'phosphor-react-native/src/icons/Calendar';
+import { Shield } from 'phosphor-react-native/src/icons/Shield';
 import { ShieldCheck } from 'phosphor-react-native/src/icons/ShieldCheck';
+import { ShieldWarning } from 'phosphor-react-native/src/icons/ShieldWarning';
 import { ShoppingBag } from 'phosphor-react-native/src/icons/ShoppingBag';
 import { SignOut } from 'phosphor-react-native/src/icons/SignOut';
 import { Star } from 'phosphor-react-native/src/icons/Star';
@@ -55,14 +61,19 @@ import { XCircle } from 'phosphor-react-native/src/icons/XCircle';
 export {
   ArrowLeft,
   ArrowRight,
+  ArrowClockwise as RefreshCw,
   Bell,
+  Bank,
   Camera,
   CaretDown as ChevronDown,
+  CaretRight as ChevronRight,
   CaretUp as ChevronUp,
   ChatCircle,
   Check,
   CheckCircle,
   Clock,
+  Clock as History,
+  Clock as Loader2,
   CreditCard,
   Envelope as Mail,
   Eye,
@@ -85,6 +96,7 @@ export {
   List,
   Lock,
   MagnifyingGlass,
+  MagnifyingGlass as Search,
   MapPin,
   Minus,
   Moon,
@@ -94,7 +106,9 @@ export {
   Plus,
   Question as QuestionCircle,
   SealCheck as BadgeCheck,
+  Shield,
   ShieldCheck,
+  ShieldWarning as AlertCircle,
   ShoppingBag,
   SignOut,
   Star,
@@ -115,8 +129,10 @@ export const phosphorIcons = {
   ArrowRight,
   BadgeCheck: SealCheck,
   Bell,
+  Bank,
   Camera,
   CaretDown,
+  CaretRight,
   CaretUp,
   ChatCircle,
   Check,
@@ -152,6 +168,7 @@ export const phosphorIcons = {
   Lock,
   Mail: Envelope,
   MagnifyingGlass,
+  Search: MagnifyingGlass,
   MapPin,
   Minus,
   Moon,
@@ -161,10 +178,12 @@ export const phosphorIcons = {
   Plus,
   Question,
   QuestionCircle: Question,
+  RefreshCw: ArrowClockwise,
   Return: KeyReturn,
   Save: FloppyDisk,
   SealCheck,
   Settings: Gear,
+  Shield,
   ShieldCheck,
   ShoppingBag,
   SignOut,
