@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     color: colors.light.textPrimary,
   },
   paymentStatus: {
-    fontSize: typography.scale.caption.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
     color: paymentStatusColor,
     fontWeight: '600',
   },
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     color: colors.light.textMuted,
-    fontSize: typography.scale.caption.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
   },
   detailValue: {
     color: colors.light.textPrimary,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heldText: {
-    fontSize: typography.scale.caption.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
     color: colors.light.warning,
   },
   pendingBadge: {
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pendingText: {
-    fontSize: typography.scale.caption.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
     color: colors.light.warning,
   },
   disputedBadge: {
@@ -326,11 +326,11 @@ const styles = StyleSheet.create({
   },
   timerLabel: {
     marginBottom: spacing.xxs,
-    fontSize: typography.scale.caption.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
     color: colors.light.textMuted,
   },
   timerValue: {
-    fontSize: typography.scale.caption.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
     color: colors.light.textMuted,
   },
   divider: {

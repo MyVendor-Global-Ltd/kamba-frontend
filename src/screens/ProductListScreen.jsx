@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   productVendor: {
     color: colors.light.textSecondary,
     fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.xSmall.fontSize,
+    fontSize: typography.scale.labelSmall.fontSize,
     textAlign: 'center',
   },
   productPrice: {
