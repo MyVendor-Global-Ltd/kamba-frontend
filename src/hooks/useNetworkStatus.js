@@ -2,7 +2,7 @@
 // Detects online/offline state for "Offline? Dial *901#" banner
 
 import { useEffect, useState } from 'react';
-import { NetInfo } from '@react-native-community/netinfo';
+import NetInfo from '@react-native-community/netinfo';
 
 /**
  * Hook to monitor network connectivity status

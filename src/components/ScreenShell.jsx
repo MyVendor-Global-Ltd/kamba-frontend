@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, StatusBar, SafeAreaView } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { colors, spacing } from '../theme';
 
@@ -7,20 +8,22 @@ export const ScreenShell = ({
   children,
   scrollable = true,
   padded = true,
-  bg = colors.ink,
+  bg = colors.light.background,
   style,
   contentContainerStyle,
   keyboardShouldPersistTaps = 'handled',
   showsVerticalScrollIndicator = false,
   extraScrollHeight = 0,
+  refreshControl,
 }) => {
   const content = (
     <View style={[styles.container, { backgroundColor: bg }, style]}>
-      <StatusBar barStyle="light-content" backgroundColor={bg} translucent={false} />
+      <StatusBar barStyle="dark-content" backgroundColor={bg} translucent={false} />
       {scrollable ? (
         <KeyboardAwareScrollView
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
           showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+          refreshControl={refreshControl}
           contentContainerStyle={[
             styles.scrollContent,
             padded && styles.padded,
@@ -39,13 +42,13 @@ export const ScreenShell = ({
     </View>
   );
 
-  return <SafeAreaView style={styles.safeArea}>{content}</SafeAreaView>;
+  return <SafeAreaView style={[styles.safeArea, { backgroundColor: bg }]}>{content}</SafeAreaView>;
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.light.background,
   },
   container: {
     flex: 1,

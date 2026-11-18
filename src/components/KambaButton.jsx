@@ -1,54 +1,8 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, typography, spacing, radius, shadows, motion } from '../theme';
 import * as Haptics from 'expo-haptics';
-
-const Spinner = ({ size = 20, color = '#fff' }) => {
-  const spin = useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    spin.setValue(0);
-    Animated.timing(spin, {
-      toValue: 1,
-      duration: 800,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (finished) {
-        spin.setValue(0);
-        Animated.loop(
-          Animated.timing(spin, {
-            toValue: 1,
-            duration: 800,
-            easing: Easing.linear,
-            useNativeDriver: true,
-          })
-        ).start();
-      }
-    });
-  }, []);
-
-  const rotate = spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  return (
-    <Animated.View
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        borderWidth: 2.5,
-        borderColor: color,
-        borderRightColor: 'transparent',
-        borderTopColor: 'transparent',
-        transform: [{ rotate }],
-      }}
-    />
-  );
-};
 
 export const KambaButton = ({
   label,
@@ -75,17 +29,11 @@ export const KambaButton = ({
 
   const handlePressOut = () => {
     if (disabled || loading) return;
-      Animated.spring(pressAnim, {
-        toValue: 1.03,
-        ...motion.easing.springBouncy,
-        useNativeDriver: true,
-      }).start(() => {
-        Animated.spring(pressAnim, {
-          toValue: 1,
-          ...motion.easing.spring,
-          useNativeDriver: true,
-      }).start();
-    });
+    Animated.spring(pressAnim, {
+      toValue: 1,
+      ...motion.easing.spring,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handlePress = () => {
@@ -94,16 +42,16 @@ export const KambaButton = ({
   };
 
   const sizes = {
-    sm: { height: 44, fontSize: typography.scale.labelLarge.fontSize, padding: spacing.lg },
-    md: { height: 54, fontSize: typography.scale.bodyMedium.fontSize, padding: spacing.xl },
-    lg: { height: 60, fontSize: typography.scale.bodyLarge.fontSize, padding: spacing.xxl },
+    sm: { height: 40, fontSize: typography.scale.labelMedium.fontSize, padding: spacing.md },
+    md: { height: 48, fontSize: typography.scale.labelLarge.fontSize, padding: spacing.lg },
+    lg: { height: 56, fontSize: typography.scale.headlineSmall.fontSize, padding: spacing.xl },
   };
 
   const { height, fontSize, padding } = sizes[size];
 
   const styles = StyleSheet.create({
     container: {
-      borderRadius: radius.full,
+      borderRadius: radius.lg,
       height,
       justifyContent: 'center',
       alignItems: 'center',
@@ -113,39 +61,39 @@ export const KambaButton = ({
       paddingHorizontal: padding,
     },
     primary: {
-      ...shadows.coral,
+      ...shadows.accent,
     },
     secondary: {
-      backgroundColor: colors.inkRaised,
+      backgroundColor: colors.light.surfaceElevated,
       borderWidth: 1,
-      borderColor: colors.inkBorder,
+      borderColor: colors.light.border,
     },
     ghost: {
       backgroundColor: 'transparent',
     },
     outlineCoral: {
-      backgroundColor: colors.coralDim,
+      backgroundColor: colors.light.accentSoft,
       borderWidth: 1.5,
-      borderColor: 'rgba(255,107,71,0.5)',
+      borderColor: colors.light.accent,
     },
     textPrimary: {
-      color: '#fff',
-      fontFamily: typography.fontFamilies.bodySemiBold,
+      color: colors.light.onAccent,
+      fontFamily: typography.fontFamilies.label,
       fontSize,
     },
     textSecondary: {
-      color: colors.textPrimary,
-      fontFamily: typography.fontFamilies.bodySemiBold,
+      color: colors.light.textPrimary,
+      fontFamily: typography.fontFamilies.label,
       fontSize,
     },
     textGhost: {
-      color: colors.coral,
-      fontFamily: typography.fontFamilies.bodySemiBold,
+      color: colors.light.accent,
+      fontFamily: typography.fontFamilies.label,
       fontSize,
     },
     textOutlineCoral: {
-      color: colors.coral,
-      fontFamily: typography.fontFamilies.bodySemiBold,
+      color: colors.light.accent,
+      fontFamily: typography.fontFamilies.label,
       fontSize,
     },
     disabled: {
@@ -173,15 +121,17 @@ export const KambaButton = ({
   };
 
   const bgColors = {
-    primary: null, // handled by LinearGradient
-    secondary: colors.inkRaised,
+    primary: null,
+    secondary: colors.light.surfaceElevated,
     ghost: 'transparent',
-    outlineCoral: colors.coralDim,
+    outlineCoral: colors.light.accentSoft,
   };
 
   const Content = () => (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-      {loading ? <Spinner size={18} /> : icon}
+      {loading ? (
+        <ActivityIndicator size="small" color={variant === 'primary' ? colors.light.onAccent : colors.light.accent} />
+      ) : icon}
       {!loading && <Text style={textStyles[variant]}>{label}</Text>}
     </View>
   );
@@ -191,7 +141,7 @@ export const KambaButton = ({
       <Animated.View
         style={{
           transform: [{ scale: pressAnim }],
-          ...shadows.coral,
+          ...shadows.accent,
         }}
       >
         <TouchableOpacity
@@ -200,9 +150,12 @@ export const KambaButton = ({
           onPress={handlePress}
           disabled={disabled || loading}
           activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ disabled: disabled || loading, busy: loading }}
         >
           <LinearGradient
-            colors={['#FF6B47', '#E8512E']}
+            colors={[colors.light.accent, colors.light.accentStrong]}
             style={[
               styles.container,
               variantStyles[variant],
@@ -230,6 +183,9 @@ export const KambaButton = ({
           onPress={handlePress}
           disabled={disabled || loading}
           activeOpacity={1}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          accessibilityState={{ disabled: disabled || loading, busy: loading }}
         >
           <View
             style={[
@@ -258,6 +214,9 @@ export const KambaButton = ({
         onPress={handlePress}
         disabled={disabled || loading}
         activeOpacity={1}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: disabled || loading, busy: loading }}
       >
         <View
           style={[

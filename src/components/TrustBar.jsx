@@ -5,8 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 import { colors, spacing, typography, icons } from '../theme/tokens';
-
-const PhosphorIcons = require('phosphor-react-native').default;
+import { phosphorIcons } from '../utils/phosphorIcons';
 
 export const TrustBar = ({
   items = [
@@ -26,13 +25,13 @@ export const TrustBar = ({
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: fadeAnim.value,
     transform: [{ translateY: interpolate(fadeAnim.value, [0, 1], [10, 0]) }],
-  }), []);
+  }));
 
   return (
     <Animated.View style={[styles.container, animatedStyle, style]} testID={testID}>
       {items.map((item, index) => (
         <View key={index} style={styles.item}>
-          <PhosphorIcons[item.icon] size={icons.sizes.xs} color={colors.light.textSecondary} weight="bold" style={styles.icon} />
+          {React.createElement(phosphorIcons[item.icon], { size: icons.sizes.xs, color: colors.light.textSecondary, weight: 'bold', style: styles.icon })}
           <Text style={styles.text}>{item.text}</Text>
           {index < items.length - 1 && <View style={styles.divider} />}
         </View>

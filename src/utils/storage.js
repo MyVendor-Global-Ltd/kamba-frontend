@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 const TOKEN_KEY = 'kamba_token';
+const AUTH_COOKIES_KEY = 'kamba_auth_cookies';
 const USERNAME_KEY = 'kamba_username';
 const USER_DATA_KEY = 'kamba_user_data';
 
@@ -32,6 +33,36 @@ export const storage = {
       console.warn('Failed to set token:', e);
       return false;
     }
+  },
+
+  async getAuthCookies() {
+    const cookies = await tokenStore.getItemAsync(AUTH_COOKIES_KEY);
+    return cookies ? JSON.parse(cookies) : {};
+  },
+
+  async setAuthCookies(cookies) {
+    const currentCookies = await this.getAuthCookies();
+    const nextCookies = { ...currentCookies };
+
+    Object.entries(cookies).forEach(([name, value]) => {
+      if (value) {
+        nextCookies[name] = value;
+      } else {
+        delete nextCookies[name];
+      }
+    });
+
+    if (Object.keys(nextCookies).length === 0) {
+      await tokenStore.deleteItemAsync(AUTH_COOKIES_KEY);
+    } else {
+      await tokenStore.setItemAsync(AUTH_COOKIES_KEY, JSON.stringify(nextCookies));
+    }
+    return true;
+  },
+
+  async clearAuthCookies() {
+    await tokenStore.deleteItemAsync(AUTH_COOKIES_KEY);
+    return true;
   },
 
   async clearToken() {
@@ -96,6 +127,7 @@ export const storage = {
   async clearAll() {
     await Promise.all([
       this.clearToken(),
+      this.clearAuthCookies(),
       this.clearUsername(),
       AsyncStorage.removeItem(USER_DATA_KEY),
     ]);

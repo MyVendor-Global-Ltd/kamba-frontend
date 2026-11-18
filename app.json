@@ -6,10 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFFDFC",
-    "splash": {
-      "backgroundColor": "#FFFDFC",
-      "resizeMode": "contain"
-    },
     "ios": {
       "supportsTablet": true
     },

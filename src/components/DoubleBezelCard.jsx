@@ -23,7 +23,7 @@ export const DoubleBezelCard = ({
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressAnim.value }],
-  }), []);
+  }));
 
   const handlePressIn = () => {
     pressAnim.value = withSpring(pressScale, { damping: 20, stiffness: 150 });

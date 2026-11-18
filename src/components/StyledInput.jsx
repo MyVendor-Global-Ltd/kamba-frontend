@@ -6,7 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, Eas
 import * as Haptics from 'expo-haptics';
 import { colors, typography, spacing, radius, motion, icons } from '../theme/tokens';
 import { formatNaira, parseNaira } from '../utils/formatNaira';
-const PhosphorIcons = require('phosphor-react-native');
+import { phosphorIcons } from '../utils/phosphorIcons';
 const styles = StyleSheet.create({
   container: { gap: spacing.xs },
   labelWrapper: { paddingHorizontal: spacing.xs },
@@ -129,8 +129,8 @@ export const StyledInput = ({
     transform: [{ translateX: interpolate(shakeAnim.value, [0, 1], [0, 10]) }],
     borderWidth: borderAnim.value,
     borderColor: hasError ? colors.light.error : focused ? colors.light.accent : colors.light.border,
-    backgroundColor: focused ? colors.light.accentHover : colors.light.surface,
-  }), []);
+    backgroundColor: colors.light.surface,
+  }));
 
   const animatedLabelStyle = useAnimatedStyle(() => ({
     transform: [
@@ -138,7 +138,7 @@ export const StyledInput = ({
       { scale: interpolate(labelAnim.value, [0, 1], [1, 0.85]) },
     ],
     color: hasError ? colors.light.error : focused ? colors.light.accent : colors.light.textMuted,
-  }), []);
+  }));
 
   const handleChangeText = (text) => {
     let processedText = text;
@@ -160,8 +160,8 @@ export const StyledInput = ({
   const renderIcon = (iconName, color, style) => {
     if (!iconName) return null;
     if (typeof iconName === 'function') return iconName({ size: icons.sizes.md, color, weight: 'bold', ...style });
-    const IconComponent = typeof iconName === 'string' ? PhosphorIcons[iconName] : null;
-    if (IconComponent) return <IconComponent size={icons.sizes.md} color={color} weight="bold" style={style} />;
+    const IconComponent = typeof iconName === 'string' ? phosphorIcons[iconName] : null;
+    if (IconComponent) return <IconComponent size={icons.sizes.md} color={color}  style={style} />;
     return null;
   };
 
@@ -206,7 +206,6 @@ export const StyledInput = ({
           ]}
           caretColor={colors.light.accent}
           selectionColor={colors.light.accentSoft}
-          disabled={disabled}
           {...props}
         />
         {secureTextEntry && (
@@ -216,7 +215,7 @@ export const StyledInput = ({
             accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            {showPassword ? renderIcon('EyeOff', colors.light.textMuted) : renderIcon('Eye', colors.light.textMuted)}
+            {showPassword ? renderIcon('EyeSlash', colors.light.textMuted) : renderIcon('Eye', colors.light.textMuted)}
           </TouchableOpacity>
         )}
         {rightElement && !secureTextEntry && <View style={styles.rightElement}>{rightElement}</View>}

@@ -56,8 +56,7 @@ export const UsernameScreen = ({ navigation, route }) => {
   };
 
   const handleTextChange = (text) => {
-    // Enforce spec filter: letters, numbers, -, !, _, *, # (max 24)
-    const cleaned = formatUsername(text).slice(0, 24);
+    const cleaned = formatUsername(text);
     setUsername(cleaned);
     setCharCount(cleaned.length);
 
@@ -144,7 +143,7 @@ export const UsernameScreen = ({ navigation, route }) => {
           {/* Character counter (visible when typing) */}
           <View style={styles.counterRow}>
             {charCount > 0 && (
-              <Text style={styles.charCounter}>{charCount}/24</Text>
+              <Text style={styles.charCounter}>{charCount}/16</Text>
             )}
           </View>
 
@@ -163,7 +162,7 @@ export const UsernameScreen = ({ navigation, route }) => {
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus={true}
-                maxLength={24}
+                maxLength={16}
                 selectionColor={colors.coral}
               />
             </View>
