@@ -248,7 +248,6 @@ const styles = StyleSheet.create({
   },
   paymentStatus: {
     fontSize: typography.scale.labelSmall.fontSize,
-    color: paymentStatusColor,
     fontWeight: '600',
   },
   paymentDetails: {},
