@@ -38,6 +38,7 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { VendorHubScreen } from '../screens/VendorHubScreen';
 import { DeliveryProviderScreen } from '../screens/DeliveryProviderScreen';
 import { VendorPaymentScreen } from '../screens/VendorPaymentScreen';
+import { VendorPayoutAccountScreen } from '../screens/VendorPayoutAccountScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { LocationPickerScreen } from '../screens/LocationPickerScreen';
 import { ServicesScreen } from '../screens/ServicesScreen';
@@ -259,6 +260,11 @@ function RootNavigator() {
         name="VendorPayments"
         component={VendorPaymentScreen}
         options={{ headerShown: true, headerTitle: 'Vendor Payments', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="VendorPayoutAccount"
+        component={VendorPayoutAccountScreen}
+        options={{ headerShown: true, headerTitle: 'Payout Bank Account', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="DeliveryProvider"
