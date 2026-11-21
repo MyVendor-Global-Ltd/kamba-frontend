@@ -80,7 +80,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     try {
       const result = await orderAPI.confirmDelivery(orderId);
       await loadOrder(false);
-      setNotice(result?.payment_status === 'released'
+      setNotice(result?.status === 'released'
         ? 'Receipt confirmed. The payment provider confirmed the release.'
         : 'Receipt confirmed. Payment release is being processed.');
     } catch (err) {
