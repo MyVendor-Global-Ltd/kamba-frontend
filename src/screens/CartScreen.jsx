@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -15,6 +15,7 @@ import { cartAPI } from '../utils/api';
 
 export const CartScreen = ({ navigation }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
   const [total, setTotal] = useState(0);
@@ -28,6 +29,7 @@ export const CartScreen = ({ navigation }) => {
     try {
       const cart = await cartAPI.getCart();
       setCartItems(cart.items || []);
+      setSelectedProductIds((current) => current.length ? current.filter((id) => (cart.items || []).some((item) => item.product_id === id)) : (cart.items || []).map((item) => item.product_id));
       setSubtotal(cart.subtotal || 0);
       setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
@@ -50,10 +52,26 @@ export const CartScreen = ({ navigation }) => {
     loadCart();
   }, [loadCart]);
 
+  const selectedItems = useMemo(
+    () => cartItems.filter((item) => selectedProductIds.includes(item.product_id)),
+    [cartItems, selectedProductIds],
+  );
+  const selectedSubtotal = selectedItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const feeBps = Number(cartItems[0]?.platform_fee_bps ?? 500);
+  const selectedFee = Math.ceil((selectedSubtotal * feeBps) / 10000);
+  const selectedTotal = selectedSubtotal + selectedFee;
+
+  const toggleSelected = useCallback((productId) => {
+    setSelectedProductIds((current) => current.includes(productId)
+      ? current.filter((id) => id !== productId)
+      : [...current, productId]);
+  }, []);
+
   const removeItem = useCallback(async (productId) => {
     try {
       const cart = await cartAPI.removeItem(productId);
       setCartItems(cart.items || []);
+      setSelectedProductIds((current) => current.filter((id) => (cart.items || []).some((item) => item.product_id === id)));
       setSubtotal(cart.subtotal || 0);
       setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
@@ -99,12 +117,12 @@ export const CartScreen = ({ navigation }) => {
   }, []);
 
   const checkout = useCallback(async () => {
-    if (cartItems.length === 0) {
+    if (selectedItems.length === 0) {
       setError('Your cart is empty');
       return;
     }
-    navigation.navigate('Checkout');
-  }, [cartItems, navigation]);
+    navigation.navigate('Checkout', { selectedProductIds });
+  }, [selectedItems, selectedProductIds, navigation]);
 
   return (
     <ScreenShell scrollable={false} padded bg={colors.light.background}>
@@ -127,6 +145,15 @@ export const CartScreen = ({ navigation }) => {
             <View style={styles.cartItems}>
               {cartItems.map((item) => (
                 <View key={item.product_id || item.productId} style={styles.cartItem}>
+                  <TouchableOpacity
+                    style={[styles.selectItem, selectedProductIds.includes(item.product_id) && styles.selectItemActive]}
+                    onPress={() => toggleSelected(item.product_id)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: selectedProductIds.includes(item.product_id) }}
+                    accessibilityLabel={`Select ${item.name || 'product'}`}
+                  >
+                    <Text style={styles.selectItemText}>{selectedProductIds.includes(item.product_id) ? '✓' : ''}</Text>
+                  </TouchableOpacity>
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName}>
                       {item.name || 'Product'}
@@ -172,24 +199,25 @@ export const CartScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.cartSummary}>
-              <Text style={styles.summaryLabel}>Items subtotal</Text>
-              <Text style={styles.subtotalAmount}>{formatMoney(subtotal, currency)}</Text>
+              <Text style={styles.summaryLabel}>Selected items ({selectedItems.length})</Text>
+              <Text style={styles.subtotalAmount}>{formatMoney(selectedSubtotal, currency)}</Text>
 
-              <Text style={styles.summaryLabel}>Kamba platform charge</Text>
-              <Text style={styles.subtotalAmount}>{formatMoney(platformFee, currency)}</Text>
+              <Text style={styles.summaryLabel}>Estimated Kamba platform charge</Text>
+              <Text style={styles.subtotalAmount}>{formatMoney(selectedFee, currency)}</Text>
 
               <Text style={styles.summaryLabel}>Delivery</Text>
               <Text style={styles.subtotalAmount}>Calculated at checkout</Text>
 
               <View style={styles.divider} />
 
-              <Text style={styles.summaryLabelTotal}>PICKUP TOTAL</Text>
-              <Text style={styles.totalAmount}>{formatMoney(total, currency)}</Text>
+              <Text style={styles.summaryLabelTotal}>SELECTED ITEMS TOTAL · PICKUP ESTIMATE</Text>
+              <Text style={styles.totalAmount}>{formatMoney(selectedTotal, currency)}</Text>
             </View>
 
             <TouchableOpacity
               style={styles.checkoutButton}
               onPress={checkout}
+              disabled={selectedItems.length === 0}
               accessibilityRole="button"
               accessibilityLabel="Proceed to checkout"
             >
@@ -228,6 +256,12 @@ const styles = StyleSheet.create({
   cartItems: {
     padding: spacing.md,
   },
+  selectItem: {
+    width: 24, height: 24, borderWidth: 1.5, borderColor: colors.light.border,
+    borderRadius: 7, alignItems: 'center', justifyContent: 'center', marginRight: spacing.sm,
+  },
+  selectItemActive: { backgroundColor: colors.light.accent, borderColor: colors.light.accent },
+  selectItemText: { color: colors.light.onAccent, fontWeight: '700', fontSize: 15 },
   cartItem: {
     flexDirection: 'row',
     alignItems: 'center',
