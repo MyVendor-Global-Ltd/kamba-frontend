@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ScreenShell } from '../components/ScreenShell';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { serviceAPI } from '../utils/api';
@@ -67,7 +67,7 @@ export const ServiceDetailScreen = ({ navigation, route }) => {
   const business = service.business_profiles || {};
   return (
     <ScreenShell padded bg={colors.light.background}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.container}>
         <View style={styles.intro}>
           <Text style={styles.category}>{service.category}</Text>
           <Text style={styles.title}>{service.service_title}</Text>
@@ -104,7 +104,7 @@ export const ServiceDetailScreen = ({ navigation, route }) => {
             {submitting ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.submitText}>Send request</Text>}
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </ScreenShell>
   );
 };
