@@ -291,6 +291,25 @@ export const orderAPI = {
   },
 };
 
+export const vendorPayoutAPI = {
+  async listBanks() {
+    const response = await api.get('/commerce/vendor/payout-account/banks');
+    return responsePayload(response)?.banks || [];
+  },
+  async getAccount() {
+    const response = await api.get('/commerce/vendor/payout-account');
+    return responsePayload(response)?.payout_account || null;
+  },
+  async resolveAccount({ bank_code, account_number }) {
+    const response = await api.post('/commerce/vendor/payout-account/resolve', { bank_code, account_number });
+    return responsePayload(response) || null;
+  },
+  async confirmAccount({ bank_code, account_number, account_name }) {
+    const response = await api.post('/commerce/vendor/payout-account/confirm', { bank_code, account_number, account_name });
+    return responsePayload(response)?.payout_account || null;
+  },
+};
+
 export const serviceAPI = {
   async listServices(params = {}) {
     const response = await api.get('/vendors/services', { params });
