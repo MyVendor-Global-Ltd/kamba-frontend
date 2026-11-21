@@ -34,6 +34,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const [evidenceLoading, setEvidenceLoading] = useState(false);
   const [isBuyer, setIsBuyer] = useState(false);
   const [orderReviews, setOrderReviews] = useState([]);
+  const [reviewStatusError, setReviewStatusError] = useState('');
   const [reviewDrafts, setReviewDrafts] = useState({});
 
   const loadOrder = useCallback(async (showLoading = true) => {
@@ -59,11 +60,14 @@ export const OrderDetailScreen = ({ navigation, route }) => {
       if (buyerCanReview) {
         try {
           setOrderReviews(await marketplaceAPI.listOrderReviews(orderId));
+          setReviewStatusError('');
         } catch {
           setOrderReviews([]);
+          setReviewStatusError('Could not check your existing reviews. Refresh this order before submitting a review.');
         }
       } else {
         setOrderReviews([]);
+        setReviewStatusError('');
       }
       if (freshOrder?.delivery_id) {
         setEvidenceLoading(true);
@@ -337,7 +341,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
           <View style={styles.reviewPanel}>
             <Text style={styles.sectionTitle}>Review your purchase</Text>
             <Text style={styles.helper}>Only products in this completed order can receive a verified-purchase review.</Text>
-            {items.map((item, index) => {
+            {reviewStatusError ? <Text style={styles.helper}>{reviewStatusError}</Text> : items.map((item) => {
               const productId = item.product_id || item.productId;
               if (!productId) return null;
               const existing = orderReviews.find((review) => review.product_id === productId);
