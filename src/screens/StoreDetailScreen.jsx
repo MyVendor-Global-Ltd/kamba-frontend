@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Image,
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { BadgeCheck, MapPin, Storefront } from '../utils/phosphorIcons';
@@ -10,7 +13,7 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 import { KambaTextileMotif } from '../components/KambaTextileMotif';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
-import { vendorAPI } from '../utils/api';
+import { productAPI, vendorAPI } from '../utils/api';
 
 const getCount = (value) => {
   if (typeof value !== 'number' && typeof value !== 'string') return null;
@@ -21,9 +24,12 @@ const getCount = (value) => {
   return Math.floor(count).toLocaleString();
 };
 
-export const StoreDetailScreen = ({ route }) => {
+export const StoreDetailScreen = ({ navigation, route }) => {
   const slug = route?.params?.slug;
   const [store, setStore] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productsError, setProductsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,9 +46,26 @@ export const StoreDetailScreen = ({ route }) => {
     try {
       const result = await vendorAPI.getStore(slug);
       setStore(result);
-      if (!result) setError('This shop is unavailable or could not be found.');
+      if (!result) {
+        setProducts([]);
+        setError('This shop is unavailable or could not be found.');
+        return;
+      }
+      setProductsLoading(true);
+      setProductsError('');
+      try {
+        const catalog = await productAPI.listProducts({ store: result.slug, limit: 50 });
+        setProducts(catalog);
+      } catch (productErr) {
+        setProducts([]);
+        const message = productErr.response?.data?.error;
+        setProductsError(typeof message === 'string' ? message : 'This shop loaded, but its products could not be fetched.');
+      } finally {
+        setProductsLoading(false);
+      }
     } catch (err) {
       setStore(null);
+      setProducts([]);
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
         ? message
@@ -63,6 +86,7 @@ export const StoreDetailScreen = ({ route }) => {
   const location = typeof store?.location_text === 'string' ? store.location_text.trim() : '';
   const description = typeof store?.description === 'string' ? store.description.trim() : '';
   const verified = store?.vendor_profiles?.is_verified === true;
+  const formatNaira = (amountKobo) => `₦${(Number(amountKobo || 0) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <ScreenShell
@@ -154,11 +178,56 @@ export const StoreDetailScreen = ({ route }) => {
             </View>
           ) : null}
 
-          <View style={styles.notice}>
-            <Text style={styles.noticeTitle}>Ordering is not available here</Text>
-            <Text style={styles.noticeText}>
-              This shop view does not currently include product browsing or ordering actions.
-            </Text>
+          <View style={styles.productsSection}>
+            <View style={styles.productsHeading}>
+              <Text style={styles.cardTitle}>Products</Text>
+              <Text style={styles.productsCount}>{products.length ? `${products.length} listed` : ''}</Text>
+            </View>
+            {productsLoading ? (
+              <View style={styles.productsState}>
+                <ActivityIndicator size="small" color={colors.light.accent} />
+                <Text style={styles.description}>Loading this shop's products…</Text>
+              </View>
+            ) : productsError ? (
+              <ScreenState
+                type="error"
+                title="Products unavailable"
+                description={productsError}
+                actionLabel="Retry"
+                onAction={loadStore}
+              />
+            ) : products.length ? (
+              <View style={styles.productList}>
+                {products.map((product) => (
+                  <TouchableOpacity
+                    key={product.id}
+                    style={styles.productCard}
+                    onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`View ${product.name}`}
+                  >
+                    {product.images?.[0] ? (
+                      <Image source={{ uri: product.images[0] }} style={styles.productImage} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.productImage, styles.productImageFallback]}>
+                        <Storefront size={22} color={colors.light.textMuted} />
+                      </View>
+                    )}
+                    <View style={styles.productCopy}>
+                      <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+                      <Text style={styles.productPrice}>{formatNaira(product.price)}</Text>
+                      <Text style={styles.productStock}>
+                        {Number(product.stock_quantity) > 0 ? `${product.stock_quantity} in stock` : 'Out of stock'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.productsState}>
+                <Text style={styles.description}>This shop has not listed any available products yet.</Text>
+              </View>
+            )}
           </View>
         </View>
       ) : null}
@@ -167,6 +236,18 @@ export const StoreDetailScreen = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
+  productsSection: { gap: spacing.md },
+  productsHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  productsCount: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
+  productsState: { alignItems: 'center', gap: spacing.sm, padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.light.surface },
+  productList: { gap: spacing.md },
+  productCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, backgroundColor: colors.light.surface },
+  productImage: { width: 88, height: 88, borderRadius: radius.md, backgroundColor: colors.light.accentSoft },
+  productImageFallback: { alignItems: 'center', justifyContent: 'center' },
+  productCopy: { flex: 1, gap: spacing.xs },
+  productName: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  productPrice: { color: colors.light.accent, fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.titleSmall.fontSize },
+  productStock: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
   content: {
     gap: spacing.lg,
     paddingBottom: spacing.xxl,
