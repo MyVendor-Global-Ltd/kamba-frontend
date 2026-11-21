@@ -36,6 +36,8 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   const [followBusy, setFollowBusy] = useState(false);
   const [followMessage, setFollowMessage] = useState('');
   const [followAuthRequired, setFollowAuthRequired] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewSummary, setReviewSummary] = useState({ count: 0, average_rating: '0.00' });
 
   const loadStore = useCallback(async () => {
     if (!slug) {
@@ -75,6 +77,14 @@ export const StoreDetailScreen = ({ navigation, route }) => {
         setFollowMessage(followErr.response?.status === 403
           ? 'A buyer account is required to follow shops.'
           : 'Sign in as a buyer to follow this shop.');
+      }
+      try {
+        const reviewResult = await marketplaceAPI.listStoreReviews(slug, { limit: 5, offset: 0 });
+        setReviews(Array.isArray(reviewResult?.reviews) ? reviewResult.reviews : []);
+        setReviewSummary({ count: Number(reviewResult?.count) || 0, average_rating: reviewResult?.average_rating || '0.00' });
+      } catch {
+        setReviews([]);
+        setReviewSummary({ count: 0, average_rating: '0.00' });
       }
       setProductsLoading(true);
       setProductsError('');
@@ -233,6 +243,21 @@ export const StoreDetailScreen = ({ navigation, route }) => {
             </View>
           ) : null}
 
+          <View style={styles.reviewsSection}>
+            <View style={styles.productsHeading}>
+              <Text style={styles.cardTitle}>Customer reviews</Text>
+              <Text style={styles.productsCount}>{reviewSummary.average_rating}/5 · {reviewSummary.count}</Text>
+            </View>
+            {reviews.length ? reviews.map((review) => (
+              <View key={review.id} style={styles.reviewCard}>
+                <Text style={styles.reviewRating}>{review.rating}/5 · {review.username || 'Buyer'}</Text>
+                {review.product_name ? <Text style={styles.reviewProduct}>{review.product_name}</Text> : null}
+                {review.comment ? <Text style={styles.description}>{review.comment}</Text> : null}
+                <Text style={styles.reviewDate}>{review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}</Text>
+              </View>
+            )) : <Text style={styles.description}>No verified-purchase reviews yet.</Text>}
+          </View>
+
           <View style={styles.productsSection}>
             <View style={styles.productsHeading}>
               <Text style={styles.cardTitle}>Products</Text>
@@ -295,6 +320,11 @@ const styles = StyleSheet.create({
   followButton: { minHeight: 46, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.light.accent },
   followButtonText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
   followMessage: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
+  reviewsSection: { gap: spacing.md, padding: spacing.md, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, backgroundColor: colors.light.surface },
+  reviewCard: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.light.border },
+  reviewRating: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
+  reviewProduct: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
+  reviewDate: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
   productsSection: { gap: spacing.md },
   productsHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   productsCount: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
