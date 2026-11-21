@@ -13,7 +13,7 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 import { KambaTextileMotif } from '../components/KambaTextileMotif';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
-import { productAPI, vendorAPI } from '../utils/api';
+import { marketplaceAPI, productAPI, vendorAPI } from '../utils/api';
 
 const getCount = (value) => {
   if (typeof value !== 'number' && typeof value !== 'string') return null;
@@ -32,6 +32,9 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   const [productsError, setProductsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [following, setFollowing] = useState(null);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followMessage, setFollowMessage] = useState('');
 
   const loadStore = useCallback(async () => {
     if (!slug) {
@@ -49,12 +52,26 @@ export const StoreDetailScreen = ({ navigation, route }) => {
     try {
       const result = await vendorAPI.getStore(slug);
       setStore(result);
+      setFollowing(null);
+      setFollowMessage('');
       if (!result) {
         setProducts([]);
         setProductsLoading(false);
         setProductsError('');
         setError('This shop is unavailable or could not be found.');
         return;
+      }
+      try {
+        const follow = await marketplaceAPI.getFollowStatus(slug);
+        setFollowing(Boolean(follow?.following));
+        if (follow?.follower_count !== undefined) {
+          setStore((current) => current ? { ...current, follower_count: follow.follower_count } : current);
+        }
+      } catch (followErr) {
+        setFollowing(null);
+        setFollowMessage(followErr.response?.status === 403
+          ? 'A buyer account is required to follow shops.'
+          : 'Sign in as a buyer to follow this shop.');
       }
       setProductsLoading(true);
       setProductsError('');
@@ -87,6 +104,27 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   }, [loadStore]);
 
   const followerCount = store ? getCount(store.follower_count) : null;
+  const toggleFollow = async () => {
+    if (following === null) {
+      navigation.navigate('Auth', { screen: 'Login' });
+      return;
+    }
+    setFollowBusy(true);
+    setFollowMessage('');
+    try {
+      const result = following
+        ? await marketplaceAPI.unfollowStore(slug)
+        : await marketplaceAPI.followStore(slug);
+      setFollowing(Boolean(result?.following));
+      if (result?.follower_count !== undefined) {
+        setStore((current) => current ? { ...current, follower_count: result.follower_count } : current);
+      }
+    } catch (followErr) {
+      setFollowMessage(followErr.response?.data?.message || followErr.response?.data?.error || 'Could not update your follow status.');
+    } finally {
+      setFollowBusy(false);
+    }
+  };
   const salesCount = store ? getCount(store.total_sales) : null;
   const hasMetrics = followerCount !== null || salesCount !== null;
   const storeName = store?.store_name || store?.name || 'Local shop';
@@ -168,6 +206,13 @@ export const StoreDetailScreen = ({ navigation, route }) => {
             </Text>
           </View>
 
+          <View style={styles.followPanel}>
+            <TouchableOpacity style={styles.followButton} onPress={toggleFollow} disabled={followBusy} accessibilityRole="button">
+              {followBusy ? <ActivityIndicator size="small" color={colors.light.onAccent} /> : <Text style={styles.followButtonText}>{following === null ? 'Sign in to follow' : following ? 'Following · Unfollow' : 'Follow shop'}</Text>}
+            </TouchableOpacity>
+            {!!followMessage ? <Text style={styles.followMessage}>{followMessage}</Text> : null}
+          </View>
+
           {hasMetrics ? (
             <View style={styles.metrics}>
               {followerCount !== null ? (
@@ -243,6 +288,10 @@ export const StoreDetailScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  followPanel: { gap: spacing.xs },
+  followButton: { minHeight: 46, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.light.accent },
+  followButtonText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  followMessage: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
   productsSection: { gap: spacing.md },
   productsHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   productsCount: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
