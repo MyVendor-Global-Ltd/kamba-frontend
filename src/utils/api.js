@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { storage } from './storage';
 import { responsePayload } from './apiResponse';
 
-const configuredBaseUrl = (process.env.EXPO_PUBLIC_API_URL || 'https://api.kamba.ng').replace(/\/+$/, '');
+const configuredBaseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:9001').replace(/\/+$/, '');
 const API_BASE_URL = configuredBaseUrl.endsWith('/api/v1')
   ? configuredBaseUrl
   : configuredBaseUrl.endsWith('/v1')
