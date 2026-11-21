@@ -287,6 +287,70 @@ export const orderAPI = {
   },
 };
 
+export const serviceAPI = {
+  async listServices(params = {}) {
+    const response = await api.get('/vendors/services', { params });
+    const services = responsePayload(response)?.services;
+    if (!Array.isArray(services)) throw new Error('Service list was not in the expected format.');
+    return services;
+  },
+  async getService(slug) {
+    const response = await api.get(`/vendors/services/${encodeURIComponent(slug)}`);
+    return responsePayload(response)?.service_profile || null;
+  },
+  async createRequest(payload, idempotencyKey) {
+    const response = await api.post('/service-bookings/requests', payload, {
+      headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {},
+    });
+    return responsePayload(response)?.request || null;
+  },
+  async listRequests(params = {}) {
+    const response = await api.get('/service-bookings/requests', { params });
+    return responsePayload(response)?.requests || [];
+  },
+  async getRequest(requestId) {
+    const response = await api.get(`/service-bookings/requests/${requestId}`);
+    return responsePayload(response)?.request || null;
+  },
+  async submitQuote(requestId, quote) {
+    const response = await api.post(`/service-bookings/requests/${requestId}/quotes`, quote);
+    return responsePayload(response)?.quote || null;
+  },
+  async respondToQuote(requestId, quoteId, decision) {
+    const response = await api.post(
+      `/service-bookings/requests/${requestId}/quotes/${quoteId}/respond`,
+      { decision },
+    );
+    return responsePayload(response) || null;
+  },
+  async updateRequestStatus(requestId, status, fields = {}) {
+    const response = await api.patch(`/service-bookings/requests/${requestId}/status`, {
+      ...fields,
+      status,
+    });
+    return responsePayload(response) || null;
+  },
+  async initiatePayment(requestId) {
+    const response = await api.post(`/service-bookings/requests/${requestId}/payment`);
+    return responsePayload(response) || null;
+  },
+  async getPayment(requestId) {
+    const response = await api.get(`/service-bookings/requests/${requestId}/payment`);
+    return responsePayload(response) || null;
+  },
+  async confirmCompletion(requestId) {
+    const response = await api.post(`/service-bookings/requests/${requestId}/payment/confirm-completion`);
+    return responsePayload(response) || null;
+  },
+  async createPaymentDispute(requestId, reason) {
+    const response = await api.post(
+      `/service-bookings/requests/${requestId}/payment/disputes`,
+      { reason },
+    );
+    return responsePayload(response) || null;
+  },
+};
+ 
 export const vendorAPI = {
   async listStores(params = {}) {
     const response = await api.get('/vendors/stores', { params });
