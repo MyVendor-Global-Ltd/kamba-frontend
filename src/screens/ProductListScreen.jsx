@@ -15,11 +15,17 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { StoreCard } from '../components/StoreCard';
-import { productAPI } from '../utils/api';
+import { productAPI, userAPI } from '../utils/api';
 import { vendorAPI } from '../utils/api';
 import marketplaceCategories from '../data/marketplaceCategories';
 
 const getStoreName = (store) => store.store_name || store.name || 'Local shop';
+
+const formatNaira = (amountKobo) =>
+  `₦${(Number(amountKobo || 0) / 100).toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export const ProductListScreen = ({ navigation, route }) => {
   const [query, setQuery] = useState('');
@@ -27,12 +33,20 @@ export const ProductListScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [savedLocation, setSavedLocation] = useState(null);
+  const [locationReady, setLocationReady] = useState(false);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const params = {};
+      if (Number.isFinite(savedLocation?.lat) && Number.isFinite(savedLocation?.lng)) {
+        params.lat = savedLocation.lat;
+        params.lng = savedLocation.lng;
+        params.radius = 15;
+        params.sort = 'nearest';
+      }
       if (categoryFilter !== 'all') {
         params.category = categoryFilter;
       }
@@ -50,11 +64,20 @@ export const ProductListScreen = ({ navigation, route }) => {
     } finally {
       setLoading(false);
     }
-  }, [categoryFilter, query]);
+  }, [categoryFilter, query, savedLocation]);
 
   useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+    let active = true;
+    userAPI.getLocation()
+      .then((location) => { if (active) setSavedLocation(location); })
+      .catch(() => { if (active) setSavedLocation(null); })
+      .finally(() => { if (active) setLocationReady(true); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (locationReady) loadProducts();
+  }, [loadProducts, locationReady]);
 
   const filteredProducts = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -89,7 +112,9 @@ export const ProductListScreen = ({ navigation, route }) => {
         <View style={styles.headingBlock}>
           <Text style={styles.eyebrow}>SHOP PRODUCTS</Text>
           <Text style={styles.heading}>Find items from local shops</Text>
-          <Text style={styles.description}>Search or browse by category.</Text>
+          <Text style={styles.description}>{Number.isFinite(savedLocation?.lat) && Number.isFinite(savedLocation?.lng)
+            ? `Showing products within 15 km of ${savedLocation.location_text || 'your saved location'}.`
+            : 'Search or browse by category. Set a location to find nearby products.'}</Text>
         </View>
 
         <View style={styles.searchBox}>
@@ -172,7 +197,7 @@ export const ProductListScreen = ({ navigation, route }) => {
               {filteredProducts.map((product) => (
                 <StoreCard
                   key={product.id}
-                  store={product.vendor || { store_name: 'Shop' }}
+                  store={{ store_name: product.store_name || 'Local shop', slug: product.store_slug }}
                   onPress={() => openProduct(product)}
                 >
                   <View style={styles.productImage}>
@@ -206,13 +231,13 @@ export const ProductListScreen = ({ navigation, route }) => {
                       {product.name}
                     </Text>
                     <Text style={styles.productVendor}>
-                      {product.vendor?.store_name || 'Shop'}
+                      {product.store_name || 'Local shop'}
                     </Text>
                   </View>
                   <View style={styles.productPrice}>
                     {product.price !== undefined ? (
                       <Text style={styles.productPriceAmount}>
-                        {product.price} {product.currency || 'NGN'}
+                        {formatNaira(product.price)}
                       </Text>
                     ) : (
                       <Text style={styles.productPriceAmount}>Price on request</Text>
