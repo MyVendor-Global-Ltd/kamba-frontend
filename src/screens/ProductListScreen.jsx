@@ -16,10 +16,7 @@ import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { StoreCard } from '../components/StoreCard';
 import { productAPI, userAPI } from '../utils/api';
-import { vendorAPI } from '../utils/api';
 import marketplaceCategories from '../data/marketplaceCategories';
-
-const getStoreName = (store) => store.store_name || store.name || 'Local shop';
 
 const formatNaira = (amountKobo) =>
   `₦${(Number(amountKobo || 0) / 100).toLocaleString('en-NG', {
@@ -212,10 +209,10 @@ export const ProductListScreen = ({ navigation, route }) => {
                         overflow: 'hidden',
                       }}
                     >
-                      {product.image_url
+                      {(product.image_url || product.images?.[0])
                         ? (
                           <Image
-                            source={{ uri: product.image_url }}
+                            source={{ uri: product.image_url || product.images[0] }}
                             style={{ width: '100%', height: '100%' }}
                           />
                         )
