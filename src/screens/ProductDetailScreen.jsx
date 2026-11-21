@@ -22,6 +22,7 @@ export const ProductDetailScreen = ({ navigation, route }) => {
   const [saving, setSaving] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState({ count: 0, average_rating: '0.00' });
+  const [reviewsError, setReviewsError] = useState('');
   const productId = route.params?.productId;
 
   const loadProduct = useCallback(async () => {
@@ -38,11 +39,13 @@ export const ProductDetailScreen = ({ navigation, route }) => {
         setSaved(null);
       }
       try {
+        setReviewsError('');
         const result = await marketplaceAPI.listProductReviews(p.id, { limit: 5, offset: 0 });
         setReviews(Array.isArray(result?.reviews) ? result.reviews : []);
         setReviewSummary({ count: Number(result?.count) || 0, average_rating: result?.average_rating || '0.00' });
       } catch {
         setReviews([]);
+        setReviewsError('Reviews could not be loaded right now.');
         setReviewSummary({ count: 0, average_rating: '0.00' });
       }
     } catch (err) {
@@ -212,7 +215,7 @@ export const ProductDetailScreen = ({ navigation, route }) => {
                   <Text style={styles.descriptionLabel}>Verified-purchase reviews</Text>
                   <Text style={styles.reviewAverage}>{reviewSummary.average_rating}/5 · {reviewSummary.count}</Text>
                 </View>
-                {reviews.length ? reviews.map((review) => (
+                {reviewsError ? <Text style={styles.reviewEmpty}>{reviewsError}</Text> : reviews.length ? reviews.map((review) => (
                   <View key={review.id} style={styles.reviewItem}>
                     <Text style={styles.reviewRating}>{review.rating}/5 · {review.username || 'Buyer'}</Text>
                     {review.comment ? <Text style={styles.descriptionText}>{review.comment}</Text> : null}
