@@ -291,6 +291,23 @@ export const orderAPI = {
   },
 };
 
+export const marketplaceCheckoutAPI = {
+  async createCheckout(payload, idempotencyKey) {
+    const response = await api.post('/commerce/marketplace-checkouts', payload, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+    return responsePayload(response) || null;
+  },
+  async initiatePayment(checkoutId) {
+    const response = await api.post(`/commerce/marketplace-checkouts/${checkoutId}/payment`);
+    return responsePayload(response) || null;
+  },
+  async getStatus(checkoutId) {
+    const response = await api.get(`/commerce/marketplace-checkouts/${checkoutId}`);
+    return responsePayload(response) || null;
+  },
+};
+
 export const vendorPayoutAPI = {
   async listBanks() {
     const response = await api.get('/commerce/vendor/payout-account/banks');
