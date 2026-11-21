@@ -69,7 +69,7 @@ export const CheckoutScreen = ({ navigation, route }) => {
         throw new Error('The server did not return an authoritative cart price. Please retry shortly.');
       }
       if (requestedProductIds.length && items.length !== requestedProductIds.length) throw new Error('One or more selected items are no longer in your cart. Return to your cart and review it.');
-      const selectedSubtotal = items.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+      const selectedSubtotal = items.reduce((sum, item) => sum + Number(item.line_total ?? ((Number(item.price) || 0) * (Number(item.quantity) || 1))), 0);
       const currentFeeBps = Number.isSafeInteger(cart.platform_fee_bps) ? cart.platform_fee_bps : 500;
       const selectedPlatformFee = Math.ceil((selectedSubtotal * currentFeeBps) / 10000);
       setCartItems(items);
