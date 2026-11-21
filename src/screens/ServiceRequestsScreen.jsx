@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, StyleSheet, Text, TextInput, TouchableOpaci
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { colors, radius, spacing, typography } from '../theme/tokens';
-import { serviceAPI } from '../utils/api';
+import { authAPI, serviceAPI } from '../utils/api';
 import { storage } from '../utils/storage';
 
 const formatNaira = (kobo) => `₦${(Number(kobo || 0) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -154,7 +154,14 @@ export const ServiceRequestsScreen = ({ route }) => {
     if (showLoading) setLoading(true);
     setError('');
     try {
-      const user = await storage.getUserData();
+      let user = null;
+      try {
+        const response = await authAPI.getDashboard();
+        user = response.data?.result || null;
+        if (user?.id) await storage.setUserData(user);
+      } catch {
+        user = await storage.getUserData();
+      }
       setIsVendor(user?.role === 'vendor');
       setRequests(await serviceAPI.listRequests({ limit: 100 }));
     } catch (err) {
