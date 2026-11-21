@@ -26,6 +26,8 @@ jobs:
           npm audit --json > npm-audit.json || true
           node -e "const a=require('./npm-audit.json'); for (const [name, item] of Object.entries(a.vulnerabilities || {})) console.log(JSON.stringify({name, severity:item.severity, range:item.range, fixAvailable:item.fixAvailable}))"
           npm audit --audit-level=high
+      - name: Test backend response contract
+        run: node --test tests/*.test.js
       - name: Validate Expo dependencies
         run: npx expo-doctor
       - name: Export Android bundle
