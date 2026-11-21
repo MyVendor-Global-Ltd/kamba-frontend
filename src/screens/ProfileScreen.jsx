@@ -10,7 +10,7 @@ import {
 import { colors, spacing, typography, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
-import { User, ArrowRight } from '../utils/phosphorIcons';
+import { User, ArrowRight, Heart } from '../utils/phosphorIcons';
 import { authAPI } from '../utils/api';
 import { storage } from '../utils/storage';
 
@@ -130,6 +130,11 @@ export const ProfileScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.actions}>
+          <TouchableOpacity style={styles.actionRow} onPress={() => navigation.navigate('Favorites')} accessibilityRole="button" accessibilityLabel="Saved products">
+            <Heart size={18} color={colors.light.accent} />
+            <Text style={styles.actionLabel}>Saved Products</Text>
+            <ArrowRight size={16} color={colors.light.textMuted} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionRow}
             onPress={() => navigation.navigate('EditProfile')}

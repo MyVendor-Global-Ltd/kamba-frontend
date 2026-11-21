@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { productAPI, cartAPI } from '../utils/api';
+import { marketplaceAPI, productAPI, cartAPI } from '../utils/api';
 
 export const ProductDetailScreen = ({ navigation, route }) => {
   const [product, setProduct] = useState(null);
@@ -18,6 +18,8 @@ export const ProductDetailScreen = ({ navigation, route }) => {
   const [quantity, setQuantity] = useState(1);
   const [notice, setNotice] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
+  const [saved, setSaved] = useState(null);
+  const [saving, setSaving] = useState(false);
   const productId = route.params?.productId;
 
   const loadProduct = useCallback(async () => {
@@ -27,6 +29,12 @@ export const ProductDetailScreen = ({ navigation, route }) => {
       const p = await productAPI.getProduct(productId);
       if (!p) throw new Error('This product is no longer available.');
       setProduct(p);
+      try {
+        const wishlist = await marketplaceAPI.getWishlist();
+        setSaved(wishlist.some((item) => item.product_id === p.id));
+      } catch {
+        setSaved(null);
+      }
     } catch (err) {
       setError(
         err.response?.data?.error || 'Could not load product details.'
@@ -87,6 +95,31 @@ export const ProductDetailScreen = ({ navigation, route }) => {
     setQuantity((q) => Math.max(q - 1, 1));
   };
 
+  const toggleSaved = async () => {
+    if (saved === null) {
+      navigation.navigate('Auth', { screen: 'Login' });
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setNotice('');
+    try {
+      if (saved) {
+        await marketplaceAPI.removeWishlistItem(product.id);
+        setSaved(false);
+        setNotice('Removed from saved products.');
+      } else {
+        await marketplaceAPI.addWishlistItem(product.id);
+        setSaved(true);
+        setNotice('Saved to your favorites.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || err.response?.data?.error || 'Could not update saved products.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleAddToCart = () => {
     if (quantity > stockQuantity) {
       // Show simple feedback
@@ -129,6 +162,10 @@ export const ProductDetailScreen = ({ navigation, route }) => {
                   SKU: {product.sku || 'N/A'}
                 </Text>
               </View>
+
+              <TouchableOpacity style={styles.saveButton} onPress={toggleSaved} disabled={saving} accessibilityRole="button">
+                {saving ? <ActivityIndicator size="small" color={colors.light.accent} /> : <Text style={styles.saveButtonText}>{saved === null ? 'Sign in to save' : saved ? 'Remove from favorites' : 'Save to favorites'}</Text>}
+              </TouchableOpacity>
 
               <View style={styles.productMeta}>
                 <View style={styles.metaRow}>
@@ -271,6 +308,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.light.surface,
     position: 'relative',
   },
+  saveButton: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, marginBottom: spacing.md },
+  saveButtonText: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
   productDetails: {
     padding: spacing.md,
   },
