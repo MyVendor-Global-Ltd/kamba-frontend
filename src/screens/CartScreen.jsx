@@ -87,7 +87,9 @@ export const CartScreen = ({ navigation }) => {
       const cart = await cartAPI.updateItem(productId, Math.max((currentQuantity || 1) - 1, 1));
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
+      setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
+      setCurrency(cart.currency || 'NGN');
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
