@@ -150,7 +150,7 @@ export const productAPI = {
   },
   async getProduct(productId) {
     const response = await api.get(`/commerce/products/${productId}`);
-    return responsePayload(response) || null;
+    return responsePayload(response)?.product ?? responsePayload(response) ?? null;
   },
 };
 
@@ -219,7 +219,7 @@ export const orderAPI = {
   },
   async cancelOrder(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/cancel`);
-    return responsePayload(response)?.product ?? responsePayload(response) ?? null;
+    return responsePayload(response) || null;
   },
   async confirmDelivery(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/delivery/confirm`);
