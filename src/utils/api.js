@@ -228,8 +228,12 @@ export const orderAPI = {
     const response = await api.post(`/commerce/orders/${orderId}/delivery/confirm`);
     return responsePayload(response) || null;
   },
-  async createDispute(orderId) {
-    const response = await api.post(`/commerce/orders/${orderId}/disputes`);
+  async getPaymentStatus(orderId) {
+    const response = await api.get(`/commerce/orders/${orderId}/payment`);
+    return responsePayload(response) || null;
+  },
+  async createDispute(orderId, reason) {
+    const response = await api.post(`/commerce/orders/${orderId}/disputes`, { reason });
     return responsePayload(response) || null;
   },
   async getDispute(disputeId) {
