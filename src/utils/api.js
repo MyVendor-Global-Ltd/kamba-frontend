@@ -157,19 +157,19 @@ export const productAPI = {
 export const cartAPI = {
   async getCart() {
     const response = await api.get('/commerce/cart');
-    return response.data?.result || { items: [], subtotal: 0, total: 0 };
+    return responsePayload(response) || { items: [], subtotal: 0, total: 0 };
   },
   async addItem(productId, quantity = 1) {
     const response = await api.post('/commerce/cart/items', { product_id: productId, quantity });
-    return response.data?.result || { items: [], subtotal: 0, total: 0 };
+    return responsePayload(response) || { items: [], subtotal: 0, total: 0 };
   },
   async updateItem(productId, quantity) {
     const response = await api.put(`/commerce/cart/items/${productId}`, { quantity });
-    return response.data?.result || { items: [], subtotal: 0, total: 0 };
+    return responsePayload(response) || { items: [], subtotal: 0, total: 0 };
   },
   async removeItem(productId) {
     const response = await api.delete(`/commerce/cart/items/${productId}`);
-    return response.data?.result || { items: [], subtotal: 0, total: 0 };
+    return responsePayload(response) || { items: [], subtotal: 0, total: 0 };
   },
 };
 
@@ -223,15 +223,15 @@ export const orderAPI = {
   },
   async confirmDelivery(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/delivery/confirm`);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
   async createDispute(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/disputes`);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
   async getDispute(disputeId) {
     const response = await api.get(`/commerce/disputes/${disputeId}`);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
 };
 
@@ -254,11 +254,11 @@ export const vendorAPI = {
   },
   async createProduct(productData) {
     const response = await api.post('/commerce/vendor/products', productData);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
   async updateProduct(productId, updates) {
     const response = await api.patch(`/commerce/vendor/products/${productId}`, updates);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
   async deleteProduct(productId) {
     const response = await api.delete(`/commerce/vendor/products/${productId}`);
@@ -270,7 +270,7 @@ export const vendorAPI = {
   },
   async updateOrderStatus(orderId, status) {
     const response = await api.patch(`/commerce/vendor/orders/${orderId}`, { status });
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
   async getPayments() {
     const response = await api.get('/commerce/vendor/payments');
