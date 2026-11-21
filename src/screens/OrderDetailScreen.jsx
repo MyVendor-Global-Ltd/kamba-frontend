@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { colors, spacing, typography, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { orderAPI, deliveryAPI } from '../utils/api';
+import { authAPI, marketplaceAPI, orderAPI, deliveryAPI } from '../utils/api';
 import { formatCurrency } from '../utils/format';
 
 const money = (amount, currency = 'NGN') => {
@@ -32,6 +32,10 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const [handoverExpiresAt, setHandoverExpiresAt] = useState(null);
   const [deliveryEvidence, setDeliveryEvidence] = useState([]);
   const [evidenceLoading, setEvidenceLoading] = useState(false);
+  const [isBuyer, setIsBuyer] = useState(false);
+  const [orderReviews, setOrderReviews] = useState([]);
+  const [reviewStatusError, setReviewStatusError] = useState('');
+  const [reviewDrafts, setReviewDrafts] = useState({});
 
   const loadOrder = useCallback(async (showLoading = true) => {
     if (!orderId) {
@@ -44,6 +48,27 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     try {
       const freshOrder = await orderAPI.getOrder(orderId);
       setOrder(freshOrder);
+      let buyerCanReview = false;
+      try {
+        const profileResponse = await authAPI.getDashboard();
+        const profile = profileResponse.data?.result;
+        buyerCanReview = profile?.role === 'buyer' && profile.id === freshOrder?.buyer_id;
+      } catch {
+        buyerCanReview = false;
+      }
+      setIsBuyer(buyerCanReview);
+      if (buyerCanReview) {
+        try {
+          setOrderReviews(await marketplaceAPI.listOrderReviews(orderId));
+          setReviewStatusError('');
+        } catch {
+          setOrderReviews([]);
+          setReviewStatusError('Could not check your existing reviews. Refresh this order before submitting a review.');
+        }
+      } else {
+        setOrderReviews([]);
+        setReviewStatusError('');
+      }
       if (freshOrder?.delivery_id) {
         setEvidenceLoading(true);
         try {
@@ -186,6 +211,39 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     }
   }, [orderId, loadOrder]);
 
+  const updateReviewDraft = useCallback((productId, patch) => {
+    setReviewDrafts((current) => ({
+      ...current,
+      [productId]: { rating: 5, comment: '', ...(current[productId] || {}), ...patch },
+    }));
+  }, []);
+
+  const handleSubmitReview = useCallback(async (productId) => {
+    const draft = reviewDrafts[productId] || { rating: 5, comment: '' };
+    const comment = String(draft.comment || '').trim();
+    if (!Number.isInteger(draft.rating) || draft.rating < 1 || draft.rating > 5 || comment.length > 2000) {
+      setError('Choose a rating from 1 to 5. Your optional comment must be at most 2,000 characters.');
+      return;
+    }
+    setAction(`review:${productId}`);
+    setError('');
+    setNotice('');
+    try {
+      await marketplaceAPI.createReview(orderId, {
+        product_id: productId,
+        rating: draft.rating,
+        ...(comment ? { comment } : {}),
+      });
+      setOrderReviews(await marketplaceAPI.listOrderReviews(orderId));
+      setNotice('Your verified-purchase review has been submitted.');
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.error;
+      setError(typeof message === 'string' ? message : 'Could not submit this review.');
+    } finally {
+      setAction('');
+    }
+  }, [orderId, reviewDrafts]);
+
   const handleDispute = useCallback(async () => {
     const reason = disputeReason.trim();
     if (reason.length < 10 || reason.length > 2000) {
@@ -278,6 +336,61 @@ export const OrderDetailScreen = ({ navigation, route }) => {
           ))}
           {items.length === 0 ? <Text style={styles.label}>No item details were returned for this order.</Text> : null}
         </View>
+
+        {isBuyer && ['delivered', 'released'].includes(order.status) && items.length > 0 ? (
+          <View style={styles.reviewPanel}>
+            <Text style={styles.sectionTitle}>Review your purchase</Text>
+            <Text style={styles.helper}>Only products in this completed order can receive a verified-purchase review.</Text>
+            {reviewStatusError ? <Text style={styles.helper}>{reviewStatusError}</Text> : items.map((item) => {
+              const productId = item.product_id || item.productId;
+              if (!productId) return null;
+              const existing = orderReviews.find((review) => review.product_id === productId);
+              const draft = reviewDrafts[productId] || { rating: 5, comment: '' };
+              return (
+                <View key={productId} style={styles.reviewCard}>
+                  <Text style={styles.reviewProduct}>{item.name || 'Product'}</Text>
+                  {existing ? (
+                    <Text style={styles.helper}>Your review: {existing.rating}/5{existing.comment ? ` · ${existing.comment}` : ''}</Text>
+                  ) : (
+                    <>
+                      <View style={styles.ratingRow}>
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <TouchableOpacity
+                            key={rating}
+                            style={[styles.ratingButton, draft.rating === rating && styles.ratingButtonActive]}
+                            onPress={() => updateReviewDraft(productId, { rating })}
+                            disabled={Boolean(action)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Rate ${rating} out of 5`}
+                          >
+                            <Text style={[styles.ratingText, draft.rating === rating && styles.ratingTextActive]}>{rating}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <TextInput
+                        value={draft.comment}
+                        onChangeText={(comment) => updateReviewDraft(productId, { comment })}
+                        style={styles.reviewInput}
+                        placeholder="Optional comment about this product"
+                        placeholderTextColor={colors.light.textMuted}
+                        multiline
+                        maxLength={2000}
+                        textAlignVertical="top"
+                      />
+                      <TouchableOpacity
+                        style={styles.secondaryButton}
+                        onPress={() => handleSubmitReview(productId)}
+                        disabled={Boolean(action)}
+                      >
+                        {action === `review:${productId}` ? <ActivityIndicator color={colors.light.accent} /> : <Text style={styles.secondaryText}>Submit review</Text>}
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
 
         {order.delivery_type === 'delivery' && order.delivery_id ? (
           <View style={styles.evidenceSection}>
@@ -400,6 +513,16 @@ export const OrderDetailScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  reviewPanel: { gap: spacing.md, padding: spacing.md, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, backgroundColor: colors.light.surface },
+  reviewCard: { gap: spacing.sm, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.light.border },
+  reviewProduct: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  ratingRow: { flexDirection: 'row', gap: spacing.sm },
+  ratingButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderColor: colors.light.border },
+  ratingButtonActive: { backgroundColor: colors.light.accent, borderColor: colors.light.accent },
+  ratingText: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  ratingTextActive: { color: colors.light.onAccent },
+  reviewInput: { minHeight: 80, padding: spacing.md, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.md, color: colors.light.textPrimary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, textAlignVertical: 'top' },
+
   container: { gap: spacing.lg, paddingBottom: spacing.xxxl },
   heading: { gap: spacing.xs },
   eyebrow: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, letterSpacing: 1 },
