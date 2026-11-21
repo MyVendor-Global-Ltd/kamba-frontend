@@ -21,6 +21,7 @@ export const CheckoutScreen = ({ navigation }) => {
   const [storeId, setStoreId] = useState(null);
   const [subtotal, setSubtotal] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
+  const [cartTotal, setCartTotal] = useState(0);
   const [deliveryType, setDeliveryType] = useState('pickup');
   const [universities, setUniversities] = useState([]);
   const [zones, setZones] = useState([]);
@@ -48,7 +49,7 @@ export const CheckoutScreen = ({ navigation }) => {
     [universities, selectedUniversityId],
   );
   const deliveryFee = deliveryQuote?.buyer_delivery_charge_kobo || 0;
-  const total = subtotal + platformFee + (deliveryType === 'delivery' ? deliveryFee : 0);
+  const total = cartTotal + (deliveryType === 'delivery' ? deliveryFee : 0);
 
   const loadCart = useCallback(async () => {
     setLoading(true);
@@ -56,11 +57,15 @@ export const CheckoutScreen = ({ navigation }) => {
     try {
       const cart = await cartAPI.getCart();
       const items = cart.items || [];
-      const sub = cart.subtotal || 0;
+      if (!Number.isSafeInteger(cart.subtotal) || !Number.isSafeInteger(cart.platform_fee)
+        || !Number.isSafeInteger(cart.total)) {
+        throw new Error('The server did not return an authoritative cart price. Please retry shortly.');
+      }
       setCartItems(items);
       setStoreId(items[0]?.store_id || null);
-      setSubtotal(sub);
-      setPlatformFee(Math.ceil((sub * 500) / 10000));
+      setSubtotal(cart.subtotal);
+      setPlatformFee(cart.platform_fee);
+      setCartTotal(cart.total);
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string' ? message : 'Could not load cart.');
@@ -295,7 +300,7 @@ export const CheckoutScreen = ({ navigation }) => {
           ))}
           <View style={styles.divider} />
           <View style={styles.row}><Text style={styles.summaryLabel}>Subtotal</Text><Text style={styles.summaryValue}>{formatNaira(subtotal)}</Text></View>
-          <View style={styles.row}><Text style={styles.summaryLabel}>Platform fee (5%)</Text><Text style={styles.summaryValue}>{formatNaira(platformFee)}</Text></View>
+          <View style={styles.row}><Text style={styles.summaryLabel}>Kamba platform charge</Text><Text style={styles.summaryValue}>{formatNaira(platformFee)}</Text></View>
           {deliveryType === 'delivery' && <View style={styles.row}><Text style={styles.summaryLabel}>Delivery fee</Text><Text style={styles.summaryValue}>{deliveryQuote ? formatNaira(deliveryFee) : '—'}</Text></View>}
           <View style={styles.divider} />
           <View style={styles.rowTotal}><Text style={styles.totalLabel}>Total</Text><Text style={styles.totalValue}>{formatNaira(total)}</Text></View>
