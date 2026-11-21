@@ -226,6 +226,17 @@ export const DeliveryProviderScreen = () => {
     }
   }, []);
 
+  const acceptedAssignments = assignments.filter((assignment) =>
+    assignment.assignment_status === 'accepted'
+    && !['delivered', 'failed', 'cancelled'].includes(assignment.delivery_status)
+  );
+  const pendingOffers = assignments.filter((assignment) => assignment.assignment_status === 'offered');
+  const workloadLabel = acceptedAssignments.length
+    ? `Busy · ${acceptedAssignments.length} active job${acceptedAssignments.length === 1 ? '' : 's'}`
+    : pendingOffers.length
+      ? `Offer pending · ${pendingOffers.length}`
+      : 'No active assignments';
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -360,6 +371,10 @@ export const DeliveryProviderScreen = () => {
                 </View>
                 <Switch value={Boolean(provider.is_available)} onValueChange={handleAvailability} disabled={saving} trackColor={{ false: colors.light.border, true: colors.light.accentSoft }} />
               </View>
+              <View style={styles.workloadRow}>
+                <Text style={styles.label}>Current workload</Text>
+                <Text style={styles.workloadValue}>{workloadLabel}</Text>
+              </View>
             </View>
 
             <View style={styles.sectionHeading}>
@@ -423,6 +438,8 @@ const styles = StyleSheet.create({
   evidencePreview: { width: '100%', height: 160, borderRadius: radius.md, backgroundColor: colors.light.accentSoft },
   availabilityRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.light.border, paddingTop: spacing.md },
   approved: { color: colors.light.success, fontFamily: typography.fontFamilies.label, fontWeight: '700' },
+  workloadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  workloadValue: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
   successText: { color: colors.light.success, fontFamily: typography.fontFamilies.body, fontWeight: '600' },
   notice: { color: colors.light.success, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
   errorText: { color: colors.light.error, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
