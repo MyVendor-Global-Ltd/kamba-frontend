@@ -113,7 +113,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     )
   );
   const canCancel = Boolean(
-    order && order.status === 'pending_payment' &&
+    order && !order.marketplace_checkout_id && order.status === 'pending_payment' &&
     paymentStatus === 'pending' && order.payment_checkout_not_started === true
   );
   const canOpenDispute = Boolean(
@@ -146,8 +146,12 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   }, [loadOrder]);
 
   const handleStartPayment = useCallback(() => {
+    if (order?.marketplace_checkout_id) {
+      navigation.navigate('PaymentCheckout', { checkoutId: order.marketplace_checkout_id });
+      return;
+    }
     navigation.navigate('PaymentCheckout', { orderId });
-  }, [orderId, navigation]);
+  }, [order, orderId, navigation]);
 
   const handleRefreshPayment = useCallback(async () => {
     setAction('refresh');

@@ -11,15 +11,18 @@ import { colors, spacing, typography, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { ShoppingBag, ArrowRight } from '../utils/phosphorIcons';
-import { cartAPI, deliveryAPI, orderAPI } from '../utils/api';
+import { cartAPI, deliveryAPI, marketplaceCheckoutAPI } from '../utils/api';
 import { getCheckoutAttempt } from '../utils/checkoutAttempt';
+
+const EMPTY_PRODUCT_IDS = [];
 
 const formatNaira = (kobo = 0) =>
   `₦${(Number(kobo || 0) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export const CheckoutScreen = ({ navigation }) => {
+export const CheckoutScreen = ({ navigation, route }) => {
+  const requestedProductIds = route?.params?.selectedProductIds ?? EMPTY_PRODUCT_IDS;
   const [cartItems, setCartItems] = useState([]);
-  const [storeId, setStoreId] = useState(null);
+  const [storeIds, setStoreIds] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
@@ -28,7 +31,7 @@ export const CheckoutScreen = ({ navigation }) => {
   const [zones, setZones] = useState([]);
   const [selectedUniversityId, setSelectedUniversityId] = useState('');
   const [selectedZoneId, setSelectedZoneId] = useState('');
-  const [deliveryQuote, setDeliveryQuote] = useState(null);
+  const [deliveryQuotes, setDeliveryQuotes] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState({
     recipient_name: '',
     phone: '',
@@ -50,7 +53,8 @@ export const CheckoutScreen = ({ navigation }) => {
     () => universities.find((item) => item.id === selectedUniversityId) || null,
     [universities, selectedUniversityId],
   );
-  const deliveryFee = deliveryQuote?.buyer_delivery_charge_kobo || 0;
+  const deliveryFee = deliveryQuotes.reduce((sum, quote) => sum + Number(quote?.buyer_delivery_charge_kobo || 0), 0);
+  const deliveryQuoteReady = storeIds.length > 0 && deliveryQuotes.length === storeIds.length;
   const total = cartTotal + (deliveryType === 'delivery' ? deliveryFee : 0);
 
   const loadCart = useCallback(async () => {
@@ -58,23 +62,28 @@ export const CheckoutScreen = ({ navigation }) => {
     setError('');
     try {
       const cart = await cartAPI.getCart();
-      const items = cart.items || [];
+      const allItems = cart.items || [];
+      const items = requestedProductIds.length ? allItems.filter((item) => requestedProductIds.includes(item.product_id)) : allItems;
       if (!Number.isSafeInteger(cart.subtotal) || !Number.isSafeInteger(cart.platform_fee)
         || !Number.isSafeInteger(cart.total)) {
         throw new Error('The server did not return an authoritative cart price. Please retry shortly.');
       }
+      if (requestedProductIds.length && items.length !== requestedProductIds.length) throw new Error('One or more selected items are no longer in your cart. Return to your cart and review it.');
+      const selectedSubtotal = items.reduce((sum, item) => sum + Number(item.line_total ?? ((Number(item.price) || 0) * (Number(item.quantity) || 1))), 0);
+      const currentFeeBps = Number.isSafeInteger(cart.platform_fee_bps) ? cart.platform_fee_bps : 500;
+      const selectedPlatformFee = Math.ceil((selectedSubtotal * currentFeeBps) / 10000);
       setCartItems(items);
-      setStoreId(items[0]?.store_id || null);
-      setSubtotal(cart.subtotal);
-      setPlatformFee(cart.platform_fee);
-      setCartTotal(cart.total);
+      setStoreIds([...new Set(items.map((item) => item.store_id))]);
+      setSubtotal(selectedSubtotal);
+      setPlatformFee(selectedPlatformFee);
+      setCartTotal(selectedSubtotal + selectedPlatformFee);
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string' ? message : 'Could not load cart.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [requestedProductIds]);
 
   useEffect(() => {
     loadCart();
@@ -87,7 +96,7 @@ export const CheckoutScreen = ({ navigation }) => {
     setSelectedUniversityId(university.id);
     setSelectedZoneId('');
     setZones([]);
-    setDeliveryQuote(null);
+    setDeliveryQuotes([]);
     setQuoteError('');
     setDeliveryAddress((current) => ({
       ...current,
@@ -111,29 +120,25 @@ export const CheckoutScreen = ({ navigation }) => {
 
   const selectZone = useCallback(async (zone) => {
     setSelectedZoneId(zone.id);
-    setDeliveryQuote(null);
+    setDeliveryQuotes([]);
     setQuoteError('');
     setDeliveryAddress((current) => ({ ...current, zone_id: zone.id }));
-    if (!storeId || !selectedUniversityId) {
-      setQuoteError('This cart is missing its store or university information.');
+    if (!storeIds.length || !selectedUniversityId) {
+      setQuoteError('This cart is missing store or university information.');
       return;
     }
     setQuoteLoading(true);
     try {
-      const quote = await deliveryAPI.getQuote({
-        store_id: storeId,
-        university_id: selectedUniversityId,
-        destination_zone_id: zone.id,
-        delivery_mode: 'express',
-      });
-      setDeliveryQuote(quote);
+      const quotes = await Promise.all(storeIds.map((storeId) => deliveryAPI.getQuote({ store_id: storeId, university_id: selectedUniversityId, destination_zone_id: zone.id, delivery_mode: 'express' })));
+      if (quotes.some((quote) => !quote)) throw new Error('A delivery quote is unavailable for one or more stores.');
+      setDeliveryQuotes(quotes);
     } catch (err) {
       const message = err.response?.data?.error || err.response?.data?.message;
       setQuoteError(typeof message === 'string' ? message : 'Delivery is not available on this route right now.');
     } finally {
       setQuoteLoading(false);
     }
-  }, [storeId, selectedUniversityId]);
+  }, [storeIds, selectedUniversityId]);
 
   const placeOrder = useCallback(async () => {
     if (cartItems.length === 0) {
@@ -142,7 +147,7 @@ export const CheckoutScreen = ({ navigation }) => {
     }
     setError('');
     if (deliveryType === 'delivery') {
-      if (!deliveryQuote || !selectedUniversityId || !selectedZoneId) {
+      if (!deliveryQuoteReady || !selectedUniversityId || !selectedZoneId) {
         setError(quoteError || 'Choose a university and delivery zone with an available route price.');
         return;
       }
@@ -167,15 +172,13 @@ export const CheckoutScreen = ({ navigation }) => {
             },
           }
         : { delivery_type: 'pickup' };
-      const attempt = getCheckoutAttempt(options, checkoutAttemptRef.current);
+      const checkoutOptions = { ...options, product_ids: requestedProductIds.length ? requestedProductIds : cartItems.map((item) => item.product_id) };
+      const attempt = getCheckoutAttempt(checkoutOptions, checkoutAttemptRef.current);
       checkoutAttemptRef.current = attempt;
-      const order = await orderAPI.createOrder({
-        ...options,
-        idempotency_key: attempt.key,
-      });
-      if (order?.id) {
+      const result = await marketplaceCheckoutAPI.createCheckout(checkoutOptions, attempt.key);
+      if (result?.checkout?.id) {
         checkoutAttemptRef.current = null;
-        navigation.navigate('OrderDetail', { orderId: order.id });
+        navigation.navigate('PaymentCheckout', { checkoutId: result.checkout.id, childOrders: result.orders || [] });
       } else {
         setError('The order was not created. Please try again.');
       }
@@ -185,7 +188,7 @@ export const CheckoutScreen = ({ navigation }) => {
     } finally {
       setPlacingOrder(false);
     }
-  }, [cartItems, deliveryType, deliveryQuote, selectedUniversityId, selectedZoneId, deliveryAddress, quoteError, navigation]);
+  }, [cartItems, requestedProductIds, deliveryType, deliveryQuoteReady, selectedUniversityId, selectedZoneId, deliveryAddress, quoteError, navigation]);
 
   if (loading) {
     return <ScreenShell><ActivityIndicator size="large" color={colors.light.accent} /></ScreenShell>;
@@ -274,9 +277,9 @@ export const CheckoutScreen = ({ navigation }) => {
 
               {quoteLoading && <View style={styles.quoteStatus}><ActivityIndicator size="small" color={colors.light.accent} /><Text style={styles.helper}>Checking route price…</Text></View>}
               {!!quoteError && <Text style={styles.inlineError}>{quoteError}</Text>}
-              {deliveryQuote && (
+              {deliveryQuoteReady && (
                 <View style={styles.quoteBox}>
-                  <Text style={styles.quoteLabel}>Delivery charge</Text>
+                  <Text style={styles.quoteLabel}>Delivery across {storeIds.length} store{storeIds.length === 1 ? '' : 's'}</Text>
                   <Text style={styles.quoteAmount}>{formatNaira(deliveryFee)}</Text>
                   <Text style={styles.helper}>Express delivery · {selectedUniversity?.name}</Text>
                 </View>
@@ -309,7 +312,7 @@ export const CheckoutScreen = ({ navigation }) => {
           <View style={styles.divider} />
           <View style={styles.row}><Text style={styles.summaryLabel}>Subtotal</Text><Text style={styles.summaryValue}>{formatNaira(subtotal)}</Text></View>
           <View style={styles.row}><Text style={styles.summaryLabel}>Kamba platform charge</Text><Text style={styles.summaryValue}>{formatNaira(platformFee)}</Text></View>
-          {deliveryType === 'delivery' && <View style={styles.row}><Text style={styles.summaryLabel}>Delivery fee</Text><Text style={styles.summaryValue}>{deliveryQuote ? formatNaira(deliveryFee) : '—'}</Text></View>}
+          {deliveryType === 'delivery' && <View style={styles.row}><Text style={styles.summaryLabel}>Delivery fee</Text><Text style={styles.summaryValue}>{deliveryQuoteReady ? formatNaira(deliveryFee) : '—'}</Text></View>}
           <View style={styles.divider} />
           <View style={styles.rowTotal}><Text style={styles.totalLabel}>Total</Text><Text style={styles.totalValue}>{formatNaira(total)}</Text></View>
         </View>
@@ -317,11 +320,11 @@ export const CheckoutScreen = ({ navigation }) => {
         {!!error && <Text style={styles.inlineError}>{error}</Text>}
 
         <TouchableOpacity
-          style={[styles.checkoutButton, (placingOrder || !cartItems.length || (deliveryType === 'delivery' && (!deliveryQuote || quoteLoading))) && styles.checkoutDisabled]}
-          onPress={placingOrder || !cartItems.length || (deliveryType === 'delivery' && (!deliveryQuote || quoteLoading)) ? undefined : placeOrder}
+          style={[styles.checkoutButton, (placingOrder || !cartItems.length || (deliveryType === 'delivery' && (!deliveryQuoteReady || quoteLoading))) && styles.checkoutDisabled]}
+          onPress={placingOrder || !cartItems.length || (deliveryType === 'delivery' && (!deliveryQuoteReady || quoteLoading)) ? undefined : placeOrder}
           accessibilityRole="button"
           accessibilityLabel="Place order"
-          disabled={placingOrder || !cartItems.length || (deliveryType === 'delivery' && (!deliveryQuote || quoteLoading))}
+          disabled={placingOrder || !cartItems.length || (deliveryType === 'delivery' && (!deliveryQuoteReady || quoteLoading))}
         >
           <View style={styles.buttonContent}>
             {placingOrder ? <ActivityIndicator size="small" color={colors.light.onAccent} /> : <ArrowRight size={20} color={colors.light.onAccent} />}
