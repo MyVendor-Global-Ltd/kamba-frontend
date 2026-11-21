@@ -210,6 +210,10 @@ export const deliveryAPI = {
     const response = await api.patch('/delivery/providers/availability', { is_available });
     return responsePayload(response) || null;
   },
+  async setCapacity(max_active_deliveries) {
+    const response = await api.patch('/delivery/providers/capacity', { max_active_deliveries });
+    return responsePayload(response) || null;
+  },
   async listAssignments() {
     const response = await api.get('/delivery/providers/assignments');
     return responsePayload(response)?.assignments || [];
