@@ -394,4 +394,47 @@ export const vendorAPI = {
   },
 };
 
+export const marketplaceAPI = {
+  async getWishlist() {
+    const response = await api.get('/marketplace/wishlist');
+    return responsePayload(response)?.items || [];
+  },
+  async addWishlistItem(productId) {
+    const response = await api.post(`/marketplace/wishlist/${productId}`);
+    return responsePayload(response) || null;
+  },
+  async removeWishlistItem(productId) {
+    const response = await api.delete(`/marketplace/wishlist/${productId}`);
+    return responsePayload(response) || null;
+  },
+  async getFollowStatus(slug) {
+    const response = await api.get(`/marketplace/stores/${encodeURIComponent(slug)}/follow`);
+    return responsePayload(response) || null;
+  },
+  async followStore(slug) {
+    const response = await api.post(`/marketplace/stores/${encodeURIComponent(slug)}/follow`);
+    return responsePayload(response) || null;
+  },
+  async unfollowStore(slug) {
+    const response = await api.delete(`/marketplace/stores/${encodeURIComponent(slug)}/follow`);
+    return responsePayload(response) || null;
+  },
+  async listProductReviews(productId, params = {}) {
+    const response = await api.get(`/marketplace/products/${productId}/reviews`, { params });
+    return responsePayload(response) || { reviews: [], count: 0, average_rating: 0 };
+  },
+  async listStoreReviews(slug, params = {}) {
+    const response = await api.get(`/marketplace/stores/${encodeURIComponent(slug)}/reviews`, { params });
+    return responsePayload(response) || { reviews: [], count: 0, average_rating: 0 };
+  },
+  async createReview(orderId, review) {
+    const response = await api.post(`/marketplace/orders/${orderId}/reviews`, review);
+    return responsePayload(response) || null;
+  },
+  async listVendorReviews(params = {}) {
+    const response = await api.get('/marketplace/vendor/reviews', { params });
+    return responsePayload(response)?.reviews || [];
+  },
+};
+
 export default api;
