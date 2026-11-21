@@ -22,6 +22,7 @@ const RequestCard = ({ item, isVendor, onRefresh, setError }) => {
   const [scheduleAt, setScheduleAt] = useState('');
   const [busy, setBusy] = useState(false);
   const [payment, setPayment] = useState(null);
+  const [disputeReason, setDisputeReason] = useState('');
 
   useEffect(() => {
     if (isVendor) return;
@@ -137,7 +138,29 @@ const RequestCard = ({ item, isVendor, onRefresh, setError }) => {
         </TouchableOpacity>
       ) : null}
       {!isVendor && payment?.status === 'held' ? (
-        <Text style={styles.meta}>Payment is held pending completion confirmation or the configured release workflow.</Text>
+        <View style={styles.actionPanel}>
+          <Text style={styles.meta}>Payment is held pending completion confirmation or the configured release workflow.</Text>
+          <Text style={styles.sectionTitle}>Report a service payment issue</Text>
+          <TextInput
+            value={disputeReason}
+            onChangeText={setDisputeReason}
+            style={[styles.input, styles.multiline]}
+            placeholder="Explain the issue (10–2,000 characters)"
+            placeholderTextColor={colors.light.textMuted}
+            multiline
+            maxLength={2000}
+          />
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            disabled={busy || disputeReason.trim().length < 10}
+            onPress={() => run(async () => {
+              await serviceAPI.createPaymentDispute(item.id, disputeReason.trim());
+              setDisputeReason('');
+            })}
+          >
+            <Text style={styles.secondaryText}>Submit service complaint</Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
     </View>
   );
