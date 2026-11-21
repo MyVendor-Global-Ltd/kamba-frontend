@@ -172,17 +172,7 @@ export const orderAPI = {
     const idempotencyKey = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
     const response = await api.post(
       '/commerce/checkout',
-      {
-        vendor_id: vendorId,
-        delivery_type: 'pickup',
-        delivery_address: {
-          recipient_name: '',
-          phone: '',
-          address_line: '',
-          city: '',
-          state: '',
-        },
-      },
+      { delivery_type: 'pickup' },
       { headers: { 'Idempotency-Key': idempotencyKey } }
     );
     return response.data?.result?.order || null;

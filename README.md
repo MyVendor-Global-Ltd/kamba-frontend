@@ -258,3 +258,17 @@ This is a **closed-source, proprietary** project. External contributions are not
 *Kamba — Your area has more to offer than you know.*
 
 </div>
+
+## Backend API configuration
+
+Copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL`.
+
+- Android emulator: `http://10.0.2.2:9001`
+- Physical Android device: use the laptop's LAN IP, for example `http://192.168.1.20:9001`, while both devices are on the same Wi-Fi or hotspot.
+- Hosted environment: use the deployed HTTPS backend origin.
+
+The API client appends `/api/v1` automatically. Restart Expo with cache cleared after changing the environment value.
+
+## CI validation
+
+GitHub Actions runs `npm ci`, `npm audit --audit-level=high`, `expo-doctor` and an Android JavaScript bundle export on pushes and pull requests. The current Expo SDK 58 dependency tree has three moderate advisories for which npm only offers a major downgrade to Expo SDK 52; high and critical advisories are cleared, and the SDK is not force-downgraded.
