@@ -143,6 +143,18 @@ export const VendorPaymentScreen = ({ navigation }) => {
                       <Text style={styles.detailValue}>{new Date(payment.released_at).toLocaleString()}</Text>
                     </View>
                   ) : null}
+                  {payment.payout_status ? (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Bank transfer status</Text>
+                      <Text style={styles.detailValue}>{String(payment.payout_status).replaceAll('_', ' ')}</Text>
+                    </View>
+                  ) : null}
+                  {payment.payout_reference ? (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Transfer reference</Text>
+                      <Text style={styles.detailValue}>{payment.payout_reference}</Text>
+                    </View>
+                  ) : null}
                   {payment.auto_release_at && ['held', 'releasing'].includes(payment.status) ? (
                     <View style={styles.detailRow}>
                       <Text style={styles.detailLabel}>Release eligibility time</Text>
@@ -158,14 +170,28 @@ export const VendorPaymentScreen = ({ navigation }) => {
 
                   {payment.status === 'held' ? (
                     <View style={styles.notice}>
-                      <Text style={styles.noticeText}>Payment has been verified. Your seller payable is awaiting the configured release workflow. This internal status is not proof of a completed bank transfer.</Text>
+                      <Text style={styles.noticeText}>
+                        {payment.payout_status === 'failed'
+                          ? 'Paystack could not complete this transfer. Your seller payable remains held; an administrator must review the failure before retrying.'
+                          : payment.payout_status === 'reversed'
+                            ? 'Paystack reversed the transfer. The seller payable has been recovered to Kamba and requires a reviewed retry.'
+                            : 'Payment has been verified. Your seller payable is awaiting the configured release workflow. This internal status is not proof of a completed bank transfer.'}
+                      </Text>
                     </View>
                   ) : null}
                   {payment.status === 'pending' ? (
                     <View style={styles.notice}><Text style={styles.noticeText}>Awaiting verified payment from the payment provider.</Text></View>
                   ) : null}
                   {payment.status === 'releasing' ? (
-                    <View style={styles.notice}><Text style={styles.noticeText}>A settlement request has been submitted. The payout is not complete until the provider confirms it.</Text></View>
+                    <View style={styles.notice}>
+                      <Text style={styles.noticeText}>
+                        {payment.payout_status === 'requires_otp'
+                          ? 'Paystack requires business approval for this transfer. The payout is not complete until the approval is finalized and Paystack confirms success.'
+                          : payment.payout_status === 'initiating'
+                            ? 'Kamba is reconciling the transfer request with Paystack. Do not submit another payout request.'
+                            : 'A settlement request is pending with Paystack. The payout is not complete until the provider confirms it.'}
+                      </Text>
+                    </View>
                   ) : null}
                   {payment.status === 'disputed' ? (
                     <View style={styles.noticeError}>
