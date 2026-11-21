@@ -147,6 +147,19 @@ export const HomeScreen = ({ navigation }) => {
           </View>
 
           <TouchableOpacity
+            style={styles.servicesButton}
+            onPress={() => navigation.navigate('Services')}
+            accessibilityRole="button"
+            accessibilityLabel="Find local service providers"
+          >
+            <View style={styles.servicesButtonCopy}>
+              <Text style={styles.servicesButtonTitle}>Need a service?</Text>
+              <Text style={styles.servicesButtonDescription}>Find local professionals and request a booking or quote.</Text>
+            </View>
+            <Text style={styles.servicesButtonArrow}>Explore →</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={styles.searchButton}
             onPress={() => navigation.navigate('Search')}
             activeOpacity={0.82}
@@ -335,6 +348,35 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamilies.body,
     fontSize: typography.scale.bodyMedium.fontSize,
     lineHeight: typography.scale.bodyMedium.lineHeight,
+  },
+  servicesButton: {
+    minHeight: 76,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+    backgroundColor: colors.light.surface,
+  },
+  servicesButtonCopy: { flex: 1, gap: spacing.xs },
+  servicesButtonTitle: {
+    color: colors.light.textPrimary,
+    fontFamily: typography.fontFamilies.headline,
+    fontSize: typography.scale.headlineSmall.fontSize,
+  },
+  servicesButtonDescription: {
+    color: colors.light.textSecondary,
+    fontFamily: typography.fontFamilies.body,
+    fontSize: typography.scale.bodySmall.fontSize,
+    lineHeight: typography.scale.bodySmall.lineHeight,
+  },
+  servicesButtonArrow: {
+    color: colors.light.accent,
+    fontFamily: typography.fontFamilies.label,
+    fontSize: typography.scale.labelMedium.fontSize,
   },
   searchButton: {
     minHeight: 54,

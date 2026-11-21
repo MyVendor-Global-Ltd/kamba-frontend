@@ -40,6 +40,9 @@ import { DeliveryProviderScreen } from '../screens/DeliveryProviderScreen';
 import { VendorPaymentScreen } from '../screens/VendorPaymentScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { LocationPickerScreen } from '../screens/LocationPickerScreen';
+import { ServicesScreen } from '../screens/ServicesScreen';
+import { ServiceDetailScreen } from '../screens/ServiceDetailScreen';
+import { ServiceRequestsScreen } from '../screens/ServiceRequestsScreen';
 import { VendorOnboardingScreen } from '../screens/VendorOnboardingScreen';
 import { UnavailableFeatureScreen } from '../screens/UnavailableFeatureScreen';
 
@@ -221,6 +224,21 @@ function RootNavigator() {
         name="LocationPicker"
         component={LocationPickerScreen}
         options={{ headerShown: true, headerTitle: 'Your location', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="Services"
+        component={ServicesScreen}
+        options={{ headerShown: true, headerTitle: 'Local services', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="ServiceDetail"
+        component={ServiceDetailScreen}
+        options={{ headerShown: true, headerTitle: 'Service details', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="ServiceRequests"
+        component={ServiceRequestsScreen}
+        options={{ headerShown: true, headerTitle: 'Service requests', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="Search"
