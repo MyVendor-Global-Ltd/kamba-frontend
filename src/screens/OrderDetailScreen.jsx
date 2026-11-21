@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Linking,
   StyleSheet,
   Text,
@@ -29,6 +30,8 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const [disputeReason, setDisputeReason] = useState('');
   const [handoverCode, setHandoverCode] = useState('');
   const [handoverExpiresAt, setHandoverExpiresAt] = useState(null);
+  const [deliveryEvidence, setDeliveryEvidence] = useState([]);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
 
   const loadOrder = useCallback(async (showLoading = true) => {
     if (!orderId) {
@@ -41,6 +44,20 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     try {
       const freshOrder = await orderAPI.getOrder(orderId);
       setOrder(freshOrder);
+      if (freshOrder?.delivery_id) {
+        setEvidenceLoading(true);
+        try {
+          const evidence = await deliveryAPI.getDeliveryEvidence(freshOrder.delivery_id);
+          setDeliveryEvidence(Array.isArray(evidence) ? evidence : []);
+        } catch {
+          // Evidence is supplemental; a temporary storage/network failure must not hide order details.
+          setDeliveryEvidence([]);
+        } finally {
+          setEvidenceLoading(false);
+        }
+      } else {
+        setDeliveryEvidence([]);
+      }
       try {
         const freshPayment = await orderAPI.getPaymentStatus(orderId);
         setPayment(freshPayment);
@@ -262,6 +279,42 @@ export const OrderDetailScreen = ({ navigation, route }) => {
           {items.length === 0 ? <Text style={styles.label}>No item details were returned for this order.</Text> : null}
         </View>
 
+        {order.delivery_type === 'delivery' && order.delivery_id ? (
+          <View style={styles.evidenceSection}>
+            <View style={styles.evidenceHeading}>
+              <Text style={styles.sectionTitle}>Delivery evidence</Text>
+              {evidenceLoading ? <ActivityIndicator size="small" color={colors.light.accent} /> : null}
+            </View>
+            <Text style={styles.helper}>
+              Pickup and handover photos are recorded by the assigned provider. They document handling and handover, not the product's internal condition.
+            </Text>
+            {deliveryEvidence.map((item) => (
+              <View key={item.id} style={styles.evidenceCard}>
+                <Image
+                  source={{ uri: item.url }}
+                  style={styles.evidenceImage}
+                  resizeMode="cover"
+                  accessibilityLabel={item.evidence_type === 'pickup' ? 'Package pickup evidence' : 'Buyer handover evidence'}
+                />
+                <View style={styles.evidenceCopy}>
+                  <Text style={styles.evidenceTitle}>
+                    {item.evidence_type === 'pickup' ? 'Package collected' : 'Handover recorded'}
+                  </Text>
+                  <Text style={styles.helper}>
+                    {item.captured_at ? new Date(item.captured_at).toLocaleString() : 'Capture time unavailable'}
+                  </Text>
+                  {item.package_reference ? (
+                    <Text style={styles.helper}>Package reference: {item.package_reference}</Text>
+                  ) : null}
+                </View>
+              </View>
+            ))}
+            {!evidenceLoading && deliveryEvidence.length === 0 ? (
+              <Text style={styles.helper}>No delivery photos are available yet. They will appear after the provider records a pickup or handover.</Text>
+            ) : null}
+          </View>
+        ) : null}
+
         {order.status === 'delivered' && paymentStatus === 'held' ? (
           <Text style={styles.helper}>The delivery provider has marked this order delivered. Confirm only after you have received it.</Text>
         ) : null}
@@ -357,6 +410,12 @@ const styles = StyleSheet.create({
   label: { color: colors.light.textSecondary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
   value: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
   total: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.display, fontSize: typography.scale.headlineLarge.fontSize },
+  evidenceSection: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  evidenceHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  evidenceCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, borderTopColor: colors.light.border },
+  evidenceImage: { width: 92, height: 92, borderRadius: radius.lg, backgroundColor: colors.light.background },
+  evidenceCopy: { flex: 1, gap: spacing.xs },
+  evidenceTitle: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
   itemsSection: { gap: spacing.sm },
   sectionTitle: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineSmall.fontSize },
   item: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border },
