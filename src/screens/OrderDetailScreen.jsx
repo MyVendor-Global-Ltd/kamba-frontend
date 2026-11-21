@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Linking,
   StyleSheet,
   Text,
   TextInput,
@@ -146,31 +145,9 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     setNotice('Delivery progress refreshed from Kamba.');
   }, [loadOrder]);
 
-  const handleStartPayment = useCallback(async () => {
-    setAction('payment');
-    setError('');
-    setNotice('');
-    try {
-      const result = await orderAPI.initiatePayment(orderId);
-      if (result?.payment_instructions?.method === 'bank_transfer') {
-        setPaymentInstructions(result.payment_instructions);
-        setNotice('Use the temporary bank account below and transfer the exact amount shown. Kamba will confirm payment automatically.');
-        await loadOrder(false);
-        return;
-      }
-      if (!result?.checkout_url || !result.checkout_url.startsWith('https://')) {
-        throw new Error('Kamba did not receive valid payment instructions from the provider.');
-      }
-      await loadOrder(false);
-      await Linking.openURL(result.checkout_url);
-      setNotice('Secure payment page opened. Complete payment there, return to Kamba, then refresh the payment status.');
-    } catch (err) {
-      const message = err.response?.data?.error || err.message;
-      setError(typeof message === 'string' ? message : 'Could not open the payment page. You can retry from this order.');
-    } finally {
-      setAction('');
-    }
-  }, [orderId, loadOrder]);
+  const handleStartPayment = useCallback(() => {
+    navigation.navigate('PaymentCheckout', { orderId });
+  }, [orderId, navigation]);
 
   const handleRefreshPayment = useCallback(async () => {
     setAction('refresh');
