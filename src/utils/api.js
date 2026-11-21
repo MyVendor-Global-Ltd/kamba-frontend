@@ -239,7 +239,7 @@ export const deliveryAPI = {
 
 export const orderAPI = {
   async createOrder(options = {}) {
-    const idempotencyKey = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    const idempotencyKey = options.idempotency_key || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const deliveryType = options.delivery_type || 'pickup';
     const payload = { delivery_type: deliveryType };
     if (deliveryType === 'delivery') {
