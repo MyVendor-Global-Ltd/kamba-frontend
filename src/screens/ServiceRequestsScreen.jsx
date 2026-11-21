@@ -73,6 +73,9 @@ const RequestCard = ({ item, isVendor, onRefresh, setError, refreshVersion }) =>
       </View>
       <Text style={styles.meta}>{item.request_type === 'booking' ? 'Booking' : 'Quotation'} · {new Date(item.created_at).toLocaleDateString()}</Text>
       <Text style={styles.description}>{item.description}</Text>
+      {!isVendor && payment?.status ? (
+        <Text style={styles.meta}>Service payment: {String(payment.status).replaceAll('_', ' ')}</Text>
+      ) : null}
 
       {Array.isArray(item.quotes) ? item.quotes.map((quote) => (
         <View key={quote.id} style={styles.quote}>
@@ -135,7 +138,7 @@ const RequestCard = ({ item, isVendor, onRefresh, setError, refreshVersion }) =>
       {!isVendor && item.status === 'completed' && payment?.status === 'held' ? (
         <TouchableOpacity style={styles.primaryButton} disabled={busy} onPress={() => run(async () => {
           const result = await serviceAPI.confirmCompletion(item.id);
-          setPayment((current) => ({ ...(current || {}), status: result?.status || 'released' }));
+          setPayment((current) => ({ ...(current || {}), ...(result || {}), status: result?.status ?? current?.status }));
         })}>
           <Text style={styles.primaryText}>Confirm service completion</Text>
         </TouchableOpacity>
