@@ -15,6 +15,7 @@ export const LocationPickerScreen = ({ navigation }) => {
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [locationNotice, setLocationNotice] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -87,6 +88,7 @@ export const LocationPickerScreen = ({ navigation }) => {
 
   const handleLocationTextChange = useCallback((value) => {
     setLocationText(value);
+    setLocationNotice('');
     if (coordinates && value.trim() !== coordinateLabel.trim()) {
       setCoordinates(null);
       setCoordinateLabel('');
@@ -111,6 +113,7 @@ export const LocationPickerScreen = ({ navigation }) => {
               setCoordinates(null);
               setCoordinateLabel('');
               setHasSavedLocation(false);
+              setLocationNotice('');
               navigation.goBack();
             } catch (err) {
               const message = err.response?.data?.error || err.response?.data?.message;
@@ -132,12 +135,17 @@ export const LocationPickerScreen = ({ navigation }) => {
     }
     setSaving(true);
     setError('');
+    setLocationNotice('');
     try {
-      await userAPI.updateLocation({
+      const result = await userAPI.updateLocation({
         location_text: label,
         ...(coordinates ? { lat: coordinates.lat, lng: coordinates.lng } : {}),
       });
       setHasSavedLocation(true);
+      if (result?.has_coordinates !== true) {
+        setLocationNotice('Your location label was saved, but Kamba could not resolve it to coordinates. Nearby shop filtering will not be active for this location. Enable GPS or configure address lookup, or continue browsing all shops.');
+        return;
+      }
       navigation.goBack();
     } catch (err) {
       const message = err.response?.data?.error || err.response?.data?.message;
@@ -186,12 +194,18 @@ export const LocationPickerScreen = ({ navigation }) => {
         </View>
 
         {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+        {!!locationNotice && <Text accessibilityRole="alert" style={styles.notice}>{locationNotice}</Text>}
 
         <TouchableOpacity style={[styles.saveButton, (saving || loadingSaved) && styles.disabled]} onPress={saveLocation} disabled={saving || loadingSaved}>
           {saving ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.saveText}>Save location</Text>}
         </TouchableOpacity>
         {loadingSaved ? <Text style={styles.helper}>Loading your saved location…</Text> : null}
         <Text style={styles.privacy}>Your precise coordinates are used for nearby discovery and are not shown on public store pages.</Text>
+        {locationNotice ? (
+          <TouchableOpacity style={styles.textOnlyButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.textOnlyText}>Continue to shops</Text>
+          </TouchableOpacity>
+        ) : null}
         {hasSavedLocation ? (
           <TouchableOpacity style={styles.textOnlyButton} onPress={clearSavedLocation} disabled={saving}>
             <Text style={[styles.textOnlyText, { color: colors.light.danger || '#B42318' }]}>Clear saved location</Text>
@@ -216,6 +230,7 @@ const styles = StyleSheet.create({
   helper: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, lineHeight: typography.scale.bodySmall.lineHeight },
   textOnlyButton: { alignSelf: 'flex-start', paddingVertical: spacing.xs },
   textOnlyText: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
+  notice: { color: colors.light.textSecondary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, lineHeight: typography.scale.bodySmall.lineHeight },
   error: { color: colors.light.danger || '#B42318', fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
   saveButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.accentStrong, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   saveText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize },
