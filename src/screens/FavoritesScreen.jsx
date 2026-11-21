@@ -13,14 +13,17 @@ export const FavoritesScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
+  const [authRequired, setAuthRequired] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setAuthRequired(false);
     try {
       setItems(await marketplaceAPI.getWishlist());
     } catch (err) {
       setItems([]);
+      setAuthRequired([401, 403].includes(err.response?.status));
       setError(err.response?.data?.message || err.response?.data?.error || 'Could not load saved products.');
     } finally {
       setLoading(false);
@@ -56,10 +59,8 @@ export const FavoritesScreen = ({ navigation }) => {
             type="error"
             title="Saved products unavailable"
             description={error}
-            actionLabel={error.toLowerCase().includes('unauthorized') || error.toLowerCase().includes('token') ? 'Sign in' : 'Try again'}
-            onAction={() => error.toLowerCase().includes('unauthorized') || error.toLowerCase().includes('token')
-              ? navigation.navigate('Auth', { screen: 'Login' })
-              : load()}
+            actionLabel={authRequired ? 'Sign in as buyer' : 'Try again'}
+            onAction={() => authRequired ? navigation.navigate('Auth', { screen: 'Login' }) : load()}
           />
         ) : loading ? (
           <ActivityIndicator size="large" color={colors.light.accent} />
