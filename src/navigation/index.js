@@ -23,6 +23,7 @@ import { StoreDetailScreen } from '../screens/StoreDetailScreen';
 import { ProductListScreen } from '../screens/ProductListScreen';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen';
 import { OrderDetailScreen } from '../screens/OrderDetailScreen';
+import { PaymentCheckoutScreen } from '../screens/PaymentCheckoutScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
@@ -292,6 +293,11 @@ function RootNavigator() {
         name="OrderDetail"
         component={OrderDetailScreen}
         options={{ headerShown: true, headerTitle: 'Order Details', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="PaymentCheckout"
+        component={PaymentCheckoutScreen}
+        options={{ headerShown: true, headerTitle: 'Secure Checkout', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="ProductDetail"
