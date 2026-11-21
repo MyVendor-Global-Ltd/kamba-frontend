@@ -14,11 +14,13 @@ import { ShoppingBag, ArrowRight } from '../utils/phosphorIcons';
 import { cartAPI, deliveryAPI, marketplaceCheckoutAPI } from '../utils/api';
 import { getCheckoutAttempt } from '../utils/checkoutAttempt';
 
+const EMPTY_PRODUCT_IDS = [];
+
 const formatNaira = (kobo = 0) =>
   `₦${(Number(kobo || 0) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export const CheckoutScreen = ({ navigation, route }) => {
-  const requestedProductIds = route?.params?.selectedProductIds || [];
+  const requestedProductIds = route?.params?.selectedProductIds ?? EMPTY_PRODUCT_IDS;
   const [cartItems, setCartItems] = useState([]);
   const [storeIds, setStoreIds] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
