@@ -113,7 +113,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     )
   );
   const canCancel = Boolean(
-    order && order.status === 'pending_payment' &&
+    order && !order.marketplace_checkout_id && order.status === 'pending_payment' &&
     paymentStatus === 'pending' && order.payment_checkout_not_started === true
   );
   const canOpenDispute = Boolean(
