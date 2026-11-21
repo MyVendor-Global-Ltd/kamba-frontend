@@ -20,6 +20,8 @@ export const ProductDetailScreen = ({ navigation, route }) => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [saved, setSaved] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewSummary, setReviewSummary] = useState({ count: 0, average_rating: '0.00' });
   const productId = route.params?.productId;
 
   const loadProduct = useCallback(async () => {
@@ -34,6 +36,14 @@ export const ProductDetailScreen = ({ navigation, route }) => {
         setSaved(wishlist.some((item) => item.product_id === p.id));
       } catch {
         setSaved(null);
+      }
+      try {
+        const result = await marketplaceAPI.listProductReviews(p.id, { limit: 5, offset: 0 });
+        setReviews(Array.isArray(result?.reviews) ? result.reviews : []);
+        setReviewSummary({ count: Number(result?.count) || 0, average_rating: result?.average_rating || '0.00' });
+      } catch {
+        setReviews([]);
+        setReviewSummary({ count: 0, average_rating: '0.00' });
       }
     } catch (err) {
       setError(
@@ -197,6 +207,20 @@ export const ProductDetailScreen = ({ navigation, route }) => {
                 </View>
               )}
 
+              <View style={styles.reviewSection}>
+                <View style={styles.reviewHeading}>
+                  <Text style={styles.descriptionLabel}>Verified-purchase reviews</Text>
+                  <Text style={styles.reviewAverage}>{reviewSummary.average_rating}/5 · {reviewSummary.count}</Text>
+                </View>
+                {reviews.length ? reviews.map((review) => (
+                  <View key={review.id} style={styles.reviewItem}>
+                    <Text style={styles.reviewRating}>{review.rating}/5 · {review.username || 'Buyer'}</Text>
+                    {review.comment ? <Text style={styles.descriptionText}>{review.comment}</Text> : null}
+                    <Text style={styles.reviewDate}>{review.created_at ? new Date(review.created_at).toLocaleDateString() : ''}</Text>
+                  </View>
+                )) : <Text style={styles.reviewEmpty}>No verified-purchase reviews yet.</Text>}
+              </View>
+
               <View style={styles.stockInfo}>
                   {inStock ? (
                     <Text style={styles.stockAvailable}>
@@ -310,6 +334,13 @@ const styles = StyleSheet.create({
   },
   saveButton: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', paddingHorizontal: spacing.md, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, marginBottom: spacing.md },
   saveButtonText: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
+  reviewSection: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.light.background },
+  reviewHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  reviewAverage: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
+  reviewItem: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.light.border },
+  reviewRating: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
+  reviewDate: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
+  reviewEmpty: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
   productDetails: {
     padding: spacing.md,
   },
