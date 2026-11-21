@@ -35,6 +35,7 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   const [following, setFollowing] = useState(null);
   const [followBusy, setFollowBusy] = useState(false);
   const [followMessage, setFollowMessage] = useState('');
+  const [followAuthRequired, setFollowAuthRequired] = useState(false);
 
   const loadStore = useCallback(async () => {
     if (!slug) {
@@ -54,6 +55,7 @@ export const StoreDetailScreen = ({ navigation, route }) => {
       setStore(result);
       setFollowing(null);
       setFollowMessage('');
+      setFollowAuthRequired(false);
       if (!result) {
         setProducts([]);
         setProductsLoading(false);
@@ -69,6 +71,7 @@ export const StoreDetailScreen = ({ navigation, route }) => {
         }
       } catch (followErr) {
         setFollowing(null);
+        setFollowAuthRequired(followErr.response?.status === 401);
         setFollowMessage(followErr.response?.status === 403
           ? 'A buyer account is required to follow shops.'
           : 'Sign in as a buyer to follow this shop.');
@@ -106,7 +109,7 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   const followerCount = store ? getCount(store.follower_count) : null;
   const toggleFollow = async () => {
     if (following === null) {
-      navigation.navigate('Auth', { screen: 'Login' });
+      if (followAuthRequired) navigation.navigate('Auth', { screen: 'Login' });
       return;
     }
     setFollowBusy(true);
@@ -207,8 +210,8 @@ export const StoreDetailScreen = ({ navigation, route }) => {
           </View>
 
           <View style={styles.followPanel}>
-            <TouchableOpacity style={styles.followButton} onPress={toggleFollow} disabled={followBusy} accessibilityRole="button">
-              {followBusy ? <ActivityIndicator size="small" color={colors.light.onAccent} /> : <Text style={styles.followButtonText}>{following === null ? 'Sign in to follow' : following ? 'Following · Unfollow' : 'Follow shop'}</Text>}
+            <TouchableOpacity style={styles.followButton} onPress={toggleFollow} disabled={followBusy || (following === null && !followAuthRequired)} accessibilityRole="button">
+              {followBusy ? <ActivityIndicator size="small" color={colors.light.onAccent} /> : <Text style={styles.followButtonText}>{following === null ? (followAuthRequired ? 'Sign in to follow' : 'Buyer account required') : following ? 'Following · Unfollow' : 'Follow shop'}</Text>}
             </TouchableOpacity>
             {!!followMessage ? <Text style={styles.followMessage}>{followMessage}</Text> : null}
           </View>
