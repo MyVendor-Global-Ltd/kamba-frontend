@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -12,6 +12,7 @@ import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { ShoppingBag, ArrowRight } from '../utils/phosphorIcons';
 import { cartAPI, deliveryAPI, orderAPI } from '../utils/api';
+import { getCheckoutAttempt } from '../utils/checkoutAttempt';
 
 const formatNaira = (kobo = 0) =>
   `₦${(Number(kobo || 0) / 100).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -43,6 +44,7 @@ export const CheckoutScreen = ({ navigation }) => {
   const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState('');
   const [quoteError, setQuoteError] = useState('');
+  const checkoutAttemptRef = useRef(null);
 
   const selectedUniversity = useMemo(
     () => universities.find((item) => item.id === selectedUniversityId) || null,
@@ -165,8 +167,14 @@ export const CheckoutScreen = ({ navigation }) => {
             },
           }
         : { delivery_type: 'pickup' };
-      const order = await orderAPI.createOrder(options);
+      const attempt = getCheckoutAttempt(options, checkoutAttemptRef.current);
+      checkoutAttemptRef.current = attempt;
+      const order = await orderAPI.createOrder({
+        ...options,
+        idempotency_key: attempt.key,
+      });
       if (order?.id) {
+        checkoutAttemptRef.current = null;
         navigation.navigate('OrderDetail', { orderId: order.id });
       } else {
         setError('The order was not created. Please try again.');
