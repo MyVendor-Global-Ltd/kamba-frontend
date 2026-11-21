@@ -427,6 +427,10 @@ export const marketplaceAPI = {
     const response = await api.get(`/marketplace/stores/${encodeURIComponent(slug)}/reviews`, { params });
     return responsePayload(response) || { reviews: [], count: 0, average_rating: 0 };
   },
+  async listOrderReviews(orderId) {
+    const response = await api.get(`/marketplace/orders/${orderId}/reviews`);
+    return responsePayload(response)?.reviews || [];
+  },
   async createReview(orderId, review) {
     const response = await api.post(`/marketplace/orders/${orderId}/reviews`, review);
     return responsePayload(response) || null;
