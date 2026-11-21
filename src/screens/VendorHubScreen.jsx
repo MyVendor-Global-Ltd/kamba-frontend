@@ -50,6 +50,16 @@ export const VendorHubScreen = ({ navigation }) => (
       </View>
 
       <TouchableOpacity
+        style={styles.payoutButton}
+        onPress={() => navigation.navigate('VendorPayoutAccount')}
+        accessibilityRole="button"
+        accessibilityLabel="Set up payout bank account"
+      >
+        <Text style={styles.payoutButtonText}>Set up payout bank account</Text>
+        <ArrowRight size={16} color={colors.light.accent} />
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.browseButton}
         onPress={() => navigation.navigate('Main', { screen: 'Discover' })}
         accessibilityRole="button"
@@ -141,6 +151,22 @@ const styles = StyleSheet.create({
     fontSize: typography.scale.labelMedium.fontSize,
     color: colors.light.onAccent,
     fontWeight: '600',
+  },
+  payoutButton: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.light.surface,
+  },
+  payoutButtonText: {
+    fontFamily: typography.fontFamilies.label,
+    fontSize: typography.scale.labelMedium.fontSize,
+    color: colors.light.accent,
   },
   browseButton: {
     alignItems: 'center',
