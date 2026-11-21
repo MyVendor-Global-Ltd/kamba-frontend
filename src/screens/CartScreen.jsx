@@ -71,7 +71,9 @@ export const CartScreen = ({ navigation }) => {
       const cart = await cartAPI.updateItem(productId, (currentQuantity || 1) + 1);
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
+      setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
+      setCurrency(cart.currency || 'NGN');
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
@@ -128,7 +130,7 @@ export const CartScreen = ({ navigation }) => {
                       {item.name || 'Product'}
                     </Text>
                     <Text style={styles.itemVendor}>
-                      {typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name || ''}
+                      {item.store_name || (typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name) || ''}
                     </Text>
                   </View>
                   <View style={styles.itemActions}>
