@@ -117,3 +117,18 @@ High-priority implementation gaps:
 4. Use feature branches and PRs. Run the repository CI and fix failures before merging.
 5. Do not claim deployment, provider settlement, physical-device verification or feature completion without evidence.
 6. Keep the website secondary until the mobile/backend workflows are stable.
+
+
+## Delivery provider capacity update — 2026-11-21
+
+- Backend PR #54 is merged: `delivery_providers.max_active_deliveries` defaults to 5 and is constrained to 1-10.
+- Approved providers configure capacity with `PATCH /api/v1/delivery/providers/capacity` using `{ max_active_deliveries: integer }`.
+- Dispatch counts accepted assignments and unexpired offers against provider capacity. Lowering capacity does not cancel existing jobs.
+- Mobile PR #33 is merged: Delivery Provider workspace exposes the capacity setting and shows used slots; API wrapper persists the setting through the backend.
+- Backend and mobile CI passed. Physical Android device verification remains pending.
+
+## Admin service-payment dispute resolution update — 2026-11-21
+
+- Backend PR #55 is merged: admin-only `GET /api/v1/service-bookings/admin/payment-disputes?status=open|resolved_buyer|resolved_vendor|all` lists disputes with service details, participants and payment allocation.
+- Existing `POST /api/v1/service-bookings/admin/payment-disputes/:disputeId/resolve` remains the only resolution action. A pending provider operation must be displayed as `refunding` or `releasing`, not as completed.
+- Website PR #10 adds `/admin/service-payment-disputes`, with written resolution rationale and explicit refund/release confirmation. It is open and has not yet been build-validated or merged.
