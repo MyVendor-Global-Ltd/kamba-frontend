@@ -4,22 +4,19 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   Image,
 } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { Storefront, ShoppingBag, ChevronRight } from '../utils/phosphorIcons';
 import { productAPI, cartAPI } from '../utils/api';
-import { vendorAPI } from '../utils/api';
 
 export const ProductDetailScreen = ({ navigation, route }) => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [inStock, setInStock] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [notice, setNotice] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
   const productId = route.params?.productId;
 
@@ -28,8 +25,8 @@ export const ProductDetailScreen = ({ navigation, route }) => {
     setError(null);
     try {
       const p = await productAPI.getProduct(productId);
+      if (!p) throw new Error('This product is no longer available.');
       setProduct(p);
-      setInStock(p?.stock !== false && p?.stock !== 0);
     } catch (err) {
       setError(
         err.response?.data?.error || 'Could not load product details.'
@@ -46,26 +43,44 @@ export const ProductDetailScreen = ({ navigation, route }) => {
   if (!product) {
     return (
       <ScreenShell scrollable padded bg={colors.light.background}>
-        <ActivityIndicator size="large" color={colors.light.accent} />
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.light.accent} />
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.errorText}>{error || 'Product not found.'}</Text>
+            <TouchableOpacity style={styles.addToCartButton} onPress={loadProduct}>
+              <Text style={styles.addToCartButtonText}>Try again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScreenShell>
     );
   }
+
+  const stockQuantity = Number(product.stock_quantity ?? product.stock ?? 0);
+  const inStock = Number.isFinite(stockQuantity) && stockQuantity > 0 && product.in_stock !== false;
+  const productImages = Array.isArray(product.images)
+    ? product.images
+    : (product.image_url ? [product.image_url] : []);
 
   const addToCart = async () => {
     if (!product.id) return;
     setAddingToCart(true);
     try {
-      const cart = await cartAPI.addItem(product.id, quantity);
-      setQuantity(cart.items.length > 0 ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 1);
+      await cartAPI.addItem(product.id, quantity);
+      setNotice('Added to your cart.');
+      setError(null);
     } catch (err) {
-      // Cart errors handled by interceptor
+      const message = err.response?.data?.error || err.response?.data?.message;
+      setError(typeof message === 'string' ? message : 'Could not add this product to your cart.');
+      setNotice('');
     } finally {
       setAddingToCart(false);
     }
   };
 
   const increaseQuantity = () => {
-    setQuantity((q) => Math.min(q + 1, product?.maxQuantity || 99));
+    setQuantity((q) => Math.min(q + 1, stockQuantity));
   };
 
   const decreaseQuantity = () => {
@@ -73,7 +88,7 @@ export const ProductDetailScreen = ({ navigation, route }) => {
   };
 
   const handleAddToCart = () => {
-    if (product.stock !== undefined && quantity > product.stock) {
+    if (quantity > stockQuantity) {
       // Show simple feedback
       return;
     }
@@ -88,9 +103,9 @@ export const ProductDetailScreen = ({ navigation, route }) => {
         ) : (
           <View style={styles.productCard}>
             <View style={styles.productImage}>
-              {product.image_url ? (
+              {productImages.length > 0 ? (
                 <Image
-                  source={{ uri: product.image_url }}
+                  source={{ uri: productImages[0] }}
                   style={{ width: '100%', height: 200 }}
                 />
               ) : (
@@ -125,13 +140,13 @@ export const ProductDetailScreen = ({ navigation, route }) => {
                 <View style={styles.metaRow}>
                   <Text style={styles.metaLabel}>Vendor:</Text>
                   <Text style={styles.metaValue}>
-                    {product.vendor?.store_name || 'Unknown shop'}
+                    {product.store_name || 'Local shop'}
                   </Text>
                 </View>
                 <View style={styles.metaRow}>
                   <Text style={styles.metaLabel}>Price:</Text>
                   <Text style={styles.metaValue}>
-                    {product.price} {product.currency || 'NGN'}
+                    {formatNaira(product.price, product.currency || 'NGN')}
                   </Text>
                 </View>
               </View>
@@ -145,19 +160,17 @@ export const ProductDetailScreen = ({ navigation, route }) => {
                 </View>
               )}
 
-              {product.stock !== undefined && (
-                <View style={styles.stockInfo}>
-                  {product.stock > 0 ? (
+              <View style={styles.stockInfo}>
+                  {inStock ? (
                     <Text style={styles.stockAvailable}>
-                      {product.stock} in stock
+                      {stockQuantity} in stock
                     </Text>
                   ) : (
                     <Text style={styles.stockOut}>
                       Out of stock
                     </Text>
                   )}
-                </View>
-              )}
+              </View>
 
               {inStock && !addingToCart && (
                 <View style={styles.quantityControl}>
@@ -183,6 +196,9 @@ export const ProductDetailScreen = ({ navigation, route }) => {
                   </View>
                 </View>
               )}
+
+              {!!notice && <Text accessibilityRole="alert" style={styles.noticeText}>{notice}</Text>}
+              {!!error && <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>}
 
               {!inStock && !addingToCart && (
                 <Text style={styles.stockOutText}>
@@ -226,7 +242,17 @@ export const ProductDetailScreen = ({ navigation, route }) => {
   );
 };
 
+const formatNaira = (amountKobo, currency = 'NGN') => {
+  const amount = (Number(amountKobo) || 0) / 100;
+  return currency === 'NGN'
+    ? `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : `${currency} ${amount.toFixed(2)}`;
+};
+
 const styles = StyleSheet.create({
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
+  errorText: { color: colors.light.error, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, textAlign: 'center' },
+  noticeText: { color: colors.light.success, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
   container: {
     flex: 1,
     backgroundColor: colors.light.background,
