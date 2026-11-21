@@ -51,6 +51,8 @@ export const StoreDetailScreen = ({ navigation, route }) => {
       setStore(result);
       if (!result) {
         setProducts([]);
+        setProductsLoading(false);
+        setProductsError('');
         setError('This shop is unavailable or could not be found.');
         return;
       }
@@ -69,6 +71,8 @@ export const StoreDetailScreen = ({ navigation, route }) => {
     } catch (err) {
       setStore(null);
       setProducts([]);
+      setProductsLoading(false);
+      setProductsError('');
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
         ? message
