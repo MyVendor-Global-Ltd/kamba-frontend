@@ -23,6 +23,14 @@
         {
           "locationWhenInUsePermission": "Kamba uses your location to find nearby shops and estimate distance. You can also enter a location manually."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Kamba uses your camera to capture delivery pickup and handover evidence.",
+          "photosPermission": "Kamba uses photos to attach delivery evidence when camera capture is unavailable.",
+          "microphonePermission": false
+        }
       ]
     ]
   }
