@@ -15,7 +15,7 @@ import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { StoreCard } from '../components/StoreCard';
 import { marketplaceCategories } from '../data/marketplaceCategories';
-import { vendorAPI } from '../utils/api';
+import { userAPI, vendorAPI } from '../utils/api';
 
 const allShopsCategory = { id: 'all', label: 'All shops', Icon: Storefront };
 const categories = [allShopsCategory, ...marketplaceCategories];
@@ -42,7 +42,15 @@ export const DiscoverScreen = ({ navigation, route }) => {
     setLoading(true);
     setError(null);
     try {
-      setStores(await vendorAPI.listStores({ page: 1, limit: 50 }));
+      let location = null;
+      try { location = await userAPI.getLocation(); } catch { /* Browsing remains available without a saved location. */ }
+      const params = { page: 1, limit: 50 };
+      if (Number.isFinite(location?.lat) && Number.isFinite(location?.lng)) {
+        params.lat = location.lat;
+        params.lng = location.lng;
+        params.radius = 15;
+      }
+      setStores(await vendorAPI.listStores(params));
     } catch (err) {
       setStores([]);
       const message = err.response?.data?.error;
@@ -55,8 +63,10 @@ export const DiscoverScreen = ({ navigation, route }) => {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', loadStores);
     loadStores();
-  }, [loadStores]);
+    return unsubscribe;
+  }, [navigation, loadStores]);
 
   const filteredStores = useMemo(() => {
     const query = searchText.trim().toLowerCase();
