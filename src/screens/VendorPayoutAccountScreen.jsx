@@ -41,7 +41,7 @@ export const VendorPayoutAccountScreen = () => {
   useEffect(() => { load(); }, [load]);
 
   const resolveAccount = useCallback(async () => {
-    if (!selectedBank || !/^\\d{10}$/.test(accountNumber)) {
+    if (!selectedBank || !/^\d{10}$/.test(accountNumber)) {
       setError('Choose a bank and enter a valid 10-digit account number.');
       return;
     }
@@ -63,7 +63,7 @@ export const VendorPayoutAccountScreen = () => {
   }, [selectedBank, accountNumber]);
 
   const confirmAccount = useCallback(async () => {
-    if (!preview || preview.resolved_account_name !== preview.resolved_account_name.trim()) return;
+    if (!preview) return;
     setWorking(true);
     setError('');
     setNotice('');
