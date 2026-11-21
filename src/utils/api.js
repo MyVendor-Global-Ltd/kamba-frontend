@@ -224,6 +224,10 @@ export const orderAPI = {
     const response = await api.post(`/commerce/orders/${orderId}/cancel`);
     return responsePayload(response) || null;
   },
+  async initiatePayment(orderId) {
+    const response = await api.post(`/commerce/orders/${orderId}/payment`);
+    return responsePayload(response) || null;
+  },
   async confirmDelivery(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/delivery/confirm`);
     return responsePayload(response) || null;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Linking,
   StyleSheet,
   Text,
   TextInput,
@@ -58,6 +59,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
 
   const paymentStatus = payment?.status || order?.payment_status || 'unknown';
   const items = useMemo(() => order?.order_items || order?.items || [], [order]);
+  const canStartPayment = Boolean(order && order.status === 'pending_payment' && paymentStatus === 'pending');
   const canConfirm = Boolean(
     order && paymentStatus === 'held' && (
       (order.delivery_type === 'delivery' && order.status === 'delivered') ||
@@ -72,6 +74,38 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     order && paymentStatus === 'held' &&
     ['paid_held', 'confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
   );
+
+  const handleStartPayment = useCallback(async () => {
+    setAction('payment');
+    setError('');
+    setNotice('');
+    try {
+      const result = await orderAPI.initiatePayment(orderId);
+      if (!result?.checkout_url || !result.checkout_url.startsWith('https://')) {
+        throw new Error('The payment provider did not return a valid checkout link.');
+      }
+      await loadOrder(false);
+      await Linking.openURL(result.checkout_url);
+      setNotice('Payment page opened. Complete payment there, return to Kamba, then refresh the payment status.');
+    } catch (err) {
+      const message = err.response?.data?.error || err.message;
+      setError(typeof message === 'string' ? message : 'Could not open the payment page. You can retry from this order.');
+    } finally {
+      setAction('');
+    }
+  }, [orderId, loadOrder]);
+
+  const handleRefreshPayment = useCallback(async () => {
+    setAction('refresh');
+    setError('');
+    setNotice('');
+    try {
+      await loadOrder(false);
+      setNotice('Payment status refreshed from Kamba.');
+    } finally {
+      setAction('');
+    }
+  }, [loadOrder]);
 
   const handleConfirm = useCallback(async () => {
     setAction('confirm');
@@ -207,6 +241,18 @@ export const OrderDetailScreen = ({ navigation, route }) => {
         {!!notice && <Text accessibilityRole="alert" style={styles.notice}>{notice}</Text>}
         {!!error && <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>}
 
+        {canStartPayment ? (
+          <View style={styles.paymentPanel}>
+            <Text style={styles.helper}>This order is awaiting payment. Kamba will verify payment with the provider; returning from the payment page does not by itself mark the order as paid.</Text>
+            <TouchableOpacity style={styles.primaryButton} onPress={handleStartPayment} disabled={Boolean(action)}>
+              {action === 'payment' ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>Continue to secure payment</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleRefreshPayment} disabled={Boolean(action)}>
+              {action === 'refresh' ? <ActivityIndicator color={colors.light.accent} /> : <Text style={styles.secondaryText}>Refresh payment status</Text>}
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {canConfirm ? (
           <TouchableOpacity style={styles.primaryButton} onPress={handleConfirm} disabled={Boolean(action)}>
             {action === 'confirm' ? <ActivityIndicator color={colors.light.onAccent} /> : (
@@ -274,6 +320,7 @@ const styles = StyleSheet.create({
   primaryButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.accent, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   cancelButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.danger, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   primaryText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize },
+  paymentPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
   disputePanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
   disputeInput: { minHeight: 120, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, padding: spacing.md, color: colors.light.textPrimary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize },
   secondaryButton: { minHeight: 48, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
