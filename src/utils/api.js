@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 import { storage } from './storage';
+import { responsePayload } from './apiResponse';
 
 const configuredBaseUrl = (process.env.EXPO_PUBLIC_API_URL || 'https://api.kamba.ng').replace(/\/+$/, '');
 const API_BASE_URL = configuredBaseUrl.endsWith('/api/v1')
@@ -10,12 +11,6 @@ const API_BASE_URL = configuredBaseUrl.endsWith('/api/v1')
     : configuredBaseUrl.endsWith('/api')
       ? `${configuredBaseUrl}/v1`
       : `${configuredBaseUrl}/api/v1`;
-
-function responsePayload(response) {
-  // The Express handler currently returns { success: true, ...serviceResult }.
-  // Accept the older { success: true, result: serviceResult } shape as well.
-  return response?.data?.result ?? response?.data ?? null;
-}
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
