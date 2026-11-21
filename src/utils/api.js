@@ -167,12 +167,38 @@ export const cartAPI = {
   },
 };
 
+export const deliveryAPI = {
+  async listUniversities() {
+    const response = await api.get('/delivery/universities');
+    return response.data?.result?.universities || [];
+  },
+  async listZones(universitySlug) {
+    const response = await api.get(`/delivery/universities/${encodeURIComponent(universitySlug)}/zones`);
+    return response.data?.result?.zones || [];
+  },
+  async getQuote({ store_id, university_id, destination_zone_id, delivery_mode = 'express' }) {
+    const response = await api.post('/delivery/quote', {
+      store_id,
+      university_id,
+      destination_zone_id,
+      delivery_mode,
+    });
+    return response.data?.result?.quote || null;
+  },
+};
+
 export const orderAPI = {
-  async createOrder(cartItems, vendorId) {
-    const idempotencyKey = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+  async createOrder(options = {}) {
+    const idempotencyKey = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+    const deliveryType = options.delivery_type || 'pickup';
+    const payload = { delivery_type: deliveryType };
+    if (deliveryType === 'delivery') {
+      payload.delivery_address = options.delivery_address;
+      payload.delivery_mode = options.delivery_mode || 'express';
+    }
     const response = await api.post(
       '/commerce/checkout',
-      { delivery_type: 'pickup' },
+      payload,
       { headers: { 'Idempotency-Key': idempotencyKey } }
     );
     return response.data?.result?.order || null;
