@@ -146,8 +146,12 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   }, [loadOrder]);
 
   const handleStartPayment = useCallback(() => {
+    if (order?.marketplace_checkout_id) {
+      navigation.navigate('PaymentCheckout', { checkoutId: order.marketplace_checkout_id });
+      return;
+    }
     navigation.navigate('PaymentCheckout', { orderId });
-  }, [orderId, navigation]);
+  }, [order, orderId, navigation]);
 
   const handleRefreshPayment = useCallback(async () => {
     setAction('refresh');
