@@ -1,65 +1,119 @@
-# Kamba Frontend Debugging Progress
+# Kamba Mobile + Backend Integration Checkpoint
 
-## Repositories and checkpoint
+**Last reconciled:** 2026-11-21  
+**Priority:** mobile app and backend. The Next.js website is secondary.
 
-- Frontend: `https://github.com/MyVendor-Global-Ltd/kamba-frontend`, branch `fix/expo-runtime-stability`.
-- Backend inspected read-only: `https://github.com/MyVendor-Global-Ltd/Kamba`, HEAD `e5fb5b86ab1f03ec952994d9ef8be8b677e48915`. No backend files were modified.
-- Latest pushed frontend checkpoint before current code work: `33cfb46 docs: record fetched branch and backend API audit`.
-- Current frontend edits are not yet committed/pushed as of this note. Review/commit/push after final checks.
+This file replaces older integration notes that referred to a smaller backend API. Those notes are historical and must not be used as the current API contract.
 
-## Work completed in the current continuation
+## Repositories
 
-1. Audited the fetched remote route commit `c3fc451`. It adds onboarding/username/phone/OTP routes, notifications/orders routes, and Search as a fifth tab. The referenced auth screens use mocked availability/OTP/success state; Notifications/Orders/Search are static placeholders. I removed the mock-only Username/PhoneVerify/OTP stack routes from active auth navigation and restored the existing four bottom tabs. Search is a root stack route and Home's Search entry opens it. Do not treat placeholder catalog data or these static screens as implemented backend features.
-2. Replaced stale API configuration/helpers in `src/utils/api.js` with the backend's `/api/v1` prefix, credentialed cookie requests, login/register/logout/refresh/dashboard and actual OTP/forgot/reset/username-availability paths. The API host may be supplied by `EXPO_PUBLIC_API_URL`; the old default host still needs deployment confirmation.
-3. Wired email Login and Register to the documented backend endpoints. Removed mock local auth token success. Store returned profile data; show API/network failures in the form. Registration username availability now queries the real backend endpoint rather than a hardcoded denylist.
-4. Phone login now fails closed with a clear message and does not route to a fake OTP screen. Google sign-in no longer fabricates success and explicitly says a frontend OAuth callback is required.
-5. Root auth bootstrap now checks the cookie-protected dashboard endpoint instead of trusting local mock tokens. Profile displays the stored user instead of invented “student/verified/member since” data and calls backend logout before clearing state.
-6. Fresh preview found and fixed an additional startup crash in `OnboardingScreen.jsx`: nonexistent `typography.sizes.sm/base` entries are replaced with existing `typography.scale.bodySmall/bodyMedium` tokens.
-7. Fixed nested navigation success handling in Login/Register so a successful auth routes to Main through the root stack, not a nonexistent Main route in the Auth stack.
+- Backend: https://github.com/MyVendor-Global-Ltd/Kamba
+- Mobile: https://github.com/MyVendor-Global-Ltd/kamba-frontend
+- Website: https://github.com/MyVendor-Global-Ltd/Kamba-website
 
-## Verification completed
+## Authoritative API contract
 
-- Babel parser checks passed for all changed JavaScript/JSX files; `git diff --check` passed.
-- `npx expo export --platform web --output-dir /tmp/kamba-auth-export-final` passed and produced a web bundle.
-- Fresh Expo preview restarted on port 8081. It reached Welcome with no JavaScript console error after the onboarding repair. Registration and email Login screens rendered without submitting personal/account data. Guest browsing reached Home; Discover tab rendered; Home Search opened its Search root route; all four tabs remained visible. Phone Send Code showed the unsupported-backend message and did not request/send an OTP.
-- Expo Doctor still returns 18/20 checks. Remaining pre-existing findings: `app.json` contains unsupported `splash` config property, and installed patch versions differ from Expo's expected versions: expo `58.0.19` vs `~58.0.21`, expo-font `58.0.10` vs `~58.0.11`, expo-linking `58.0.14` vs `~58.0.15`, expo-splash-screen `58.0.11` vs `~58.0.12`. No dependency or Expo configuration changes were made.
-- Web Animated emits the known warning that `useNativeDriver` is unsupported on web and falls back to JS animation.
-- Real account/login/logout calls were not submitted. No live backend connectivity, CORS, cookie persistence, native-device behavior, or authenticated session was verified.
+The backend file `docs/WORKFLOWS_AND_SECURITY.md` is the shared, living workflow/security contract for mobile and Next.js:
 
-## Backend contract and blockers
+https://github.com/MyVendor-Global-Ltd/Kamba/blob/main/docs/WORKFLOWS_AND_SECURITY.md
 
-Backend sources reviewed include README, app entrypoint, auth routes/controllers/services, OTP service/controller, cookie middleware, vendor routes, and public stores/services. Implemented contracts include:
+It records routes, role gates, ownership requirements, request fields, server-side decisions, state transitions, security cases, mobile integration status and known gaps. Feature-specific documents such as `docs/DELIVERY_API.md`, `docs/SERVICE_BOOKINGS_API.md` and `docs/COMMERCE_API.md` provide additional detail.
 
-- `POST /api/v1/auth/register`: email, password, `confirm_password`, username, optional referral_code; returns user id/email/username and sets HttpOnly access/refresh cookies.
-- `POST /api/v1/auth/login`: email/password; sets HttpOnly cookies, returns user id/email/username.
-- `POST /api/v1/auth/logout`; `POST /api/v1/auth/refresh`; cookie-authenticated `GET /api/v1/auth/dashboard`.
-- `GET /api/v1/auth/username-availability?username=...`.
-- OTP request/verify routes use `userId`, `purpose`, `endpoint` / `inputOtp`; verification alone does not persist phone verification.
-- Public `GET /api/v1/vendors/stores` and `/services` list paginated data; details are slug-based.
+**Update the backend workflow contract in the same PR whenever an API request, response, route, role rule or state transition changes.** Do not create a competing mobile-only API contract. A route/helper existing is not proof that the whole user flow works.
 
-The checked-in backend does not expose phone-login, username claim, catalog product search, checkout/order/payment, notifications, favorites, or address endpoints. Google is a GET redirect OAuth route, but frontend callback/redirect configuration is not established. Do not invent successful integrations for missing endpoints.
+## Backend hosting and API origin
 
-A read-only request to `https://api.kamba.ng/health` failed with DNS `Could not resolve host: api.kamba.ng`. The checked-in backend `src/index.js` has no CORS middleware. Credentialed web auth therefore cannot be called live-working until the correct host resolves and deployment/proxy CORS permits credentialed requests from the frontend. Confirm the correct public API origin and cross-origin cookie policy with the user/backend owner if needed.
+The backend is **not currently hosted**. `https://api.kamba.ng` is not a verified live backend address and must not be treated as one.
 
-## Next steps
+- Mobile reads `EXPO_PUBLIC_API_URL` from its environment. The API client appends `/api/v1`.
+- Website reads `NEXT_PUBLIC_API_URL` from its environment. Its API client uses the configured origin.
+- Backend uses `PORT`, `FRONTEND_URL` and `CORS_ORIGINS` for server listening and browser origin policy.
+- Both clients should receive the same backend origin when deployed, but each runtime has its own environment setting and needs its own rebuild/redeployment when that setting changes.
+- Never put secrets in `EXPO_PUBLIC_*` or `NEXT_PUBLIC_*` variables.
 
-1. Finish source review, commit/push the current validated frontend code promptly to the existing branch (never force-push), then verify clean status and remote tip.
-2. Do not submit real registration/login/logout while the host/DNS/CORS configuration is unverified. A browser/web export proves startup only, not backend auth.
-3. Catalog Home/Discover/Search still show fake local fixtures/static copy. If continuing, replace only with verified public store/service catalog endpoints and handle offline/empty/error states; never pass numeric fixture IDs into slug routes.
-4. Search, Notifications, Orders, checkout, payment/address, favorites, password recovery, Google callback, and phone verification remain incomplete or unsupported as detailed above.
-5. Expo Doctor warnings listed above remain. Native Android/iOS/Expo Go were not tested.
+### Local mobile development
 
+The mobile `.env.example` uses:
 
-## Catalog/search checkpoint (2026-10-29)
+```dotenv
+EXPO_PUBLIC_API_URL=http://localhost:9001
+```
 
-Frontend-only work now in progress after `bf2f242`:
+For Android:
+- Emulator: `http://10.0.2.2:9001`
+- Physical Android device: `http://<development-computer-LAN-IP>:9001` while both devices share the same Wi-Fi/hotspot.
 
-- Added `vendorAPI.listStores` and `vendorAPI.getStore` for the documented public endpoints `/api/v1/vendors/stores` and `/api/v1/vendors/stores/:slug`.
-- Replaced static fake Home/Discover vendors, ratings, distance and delivery-time claims with public store API data. Both screens have explicit loading, error+retry, and empty states. Category/name/location filtering is local over the loaded public records; category aliases cover technology/electronics and singular/plural labels.
-- Replaced the static Search placeholder with text search over public store names, category, location and description. This does not search products because the backend contract has no public product search endpoint.
-- Added a public StoreDetail screen keyed only by the backend slug route. It renders actual store fields/verification and does not claim ordering/contact support is implemented.
-- Registered StoreDetail in the root navigator and fixed Discover's web category-chip layout by replacing the tall horizontal scroller with a wrapping row.
+The backend defaults to port 9001. A physical phone's `localhost` is the phone itself, not the laptop.
 
-Validation for this checkpoint: Babel parser checks and `git diff --check` passed; `npx expo export --platform web --output-dir /tmp/kamba-catalog-export-final` passed. Browser preview showed Home/Discover/Search working and handling the unresolved API host with visible retry messages (no fixture fallback). The category chips now occupy a compact row; browser console contained no JavaScript errors. Live catalog success and StoreDetail populated data were not testable because `api.kamba.ng` still fails DNS resolution. Expo preview cannot validate the success path without reachable API records.
+### Deployment sequence
 
-Next: push this checkpoint, then coordinate the correct reachable API hostname/CORS/cookie settings with backend/deployment owner. Re-test real catalog success and the slug detail route once available. Service profiles, product search/details, ordering, contact, checkout, and payment remain outside the endpoints/screens implemented here.
+1. Host the backend and configure its database, Redis (if required), Supabase storage and server-only secrets.
+2. Apply database migrations.
+3. Verify `GET /health` on the deployed backend.
+4. Set the deployed origin in the Expo/EAS `EXPO_PUBLIC_API_URL` environment and the website `NEXT_PUBLIC_API_URL` environment.
+5. Configure backend `FRONTEND_URL`/`CORS_ORIGINS` for the exact website origin.
+6. Rebuild/redeploy clients and run authenticated Android/browser smoke tests.
+
+A successful Expo export or CI run proves the client bundle builds; it does not prove the backend is hosted or reachable.
+
+## Current mobile implementation checkpoint
+
+The mobile app is connected to these backend workflows:
+
+| Workflow | Current status |
+|---|---|
+| Email registration/login, session refresh/logout, dashboard profile | Connected to documented auth endpoints; native cookie/session behavior still needs real-device verification |
+| Saved buyer location | Foreground GPS, manual text fallback, GET/POST/DELETE saved-location endpoints |
+| Nearby store discovery | Uses saved coordinates when available; public browsing remains available without a saved location |
+| Product discovery | Uses `GET /commerce/products`; category/search/nearby query parameters are supported |
+| Store search | Searches loaded public stores and applies saved-location filtering when available |
+| Product detail and cart | Connected to public product detail and buyer cart endpoints |
+| Checkout/order history/order detail | Connected to server-authoritative checkout and order endpoints; cart remains single-store |
+| Delivery locations/quotes | Connected to university, zone and quote endpoints |
+| Delivery provider | Application, availability, offers, accept/decline, pickup/transit/handover evidence and earnings are connected; physical-device testing remains |
+| Service bookings | Discovery, booking/quotation requests, vendor quotes, buyer quote response, payment initialization, vendor scheduling/work progression and buyer completion confirmation are connected |
+| Service payment complaints | Buyer complaint creation is connected; backend admin resolution endpoint exists, but an admin mobile UI is not connected |
+| Saved products | Favorites list, save/remove product actions use buyer-authenticated wishlist endpoints |
+| Store follows | Store detail follow/unfollow uses buyer-authenticated endpoints |
+
+### Important payment truth
+
+The backend payment-provider adapter is not configured for production. Checkout/payment flows must fail safely when the provider is unavailable. Do not report a payment as paid, held in a regulated escrow arrangement, released, refunded or transferred unless the backend has verified the provider's final status.
+
+The service-payment UI must display the backend's actual status. A provider response of `pending` means settlement is still pending; it is not `released`.
+
+## Confirmed recent work
+
+Merged and validated:
+- Mobile PR #27: Search uses saved location for nearby shop results.
+- Mobile PR #28: removed the unverified production API-host fallback; Expo export uses a local placeholder.
+- Mobile PR #29: service-payment screen no longer invents a released state when provider settlement is pending.
+- Mobile PR #30: mobile wishlist and store-follow integration.
+- Backend PR #51: documented environment-driven API origin and contract ownership.
+
+Backend CI on main passed the PostgreSQL 16 + Redis test job, migrations and Vitest suite. Mobile PR CI passed backend-response contract tests, Expo Doctor and Android bundle export for the merged changes.
+
+Website PR #9 contains the small API-origin environment configuration change; it is secondary and should not distract from backend/mobile integration.
+
+## Remaining work recorded by the backend contract
+
+High-priority implementation gaps:
+1. **Multi-vendor checkout:** current cart/checkout is restricted to one store. Parent checkout, vendor order groups and compatible delivery/payment allocation are not implemented.
+2. **Production payments and settlement:** configure and verify an approved provider adapter, webhook signatures, final payment/refund/transfer states, recipient management and reconciliation. Keep settlement disabled until the actual provider arrangement is approved and verified.
+3. **Delivery operations:** provider capacity, university/zone operating hours, cutoff enforcement and route compatibility need stronger configuration-backed enforcement.
+4. **Live tracking and notifications:** live GPS/route tracking and proactive buyer delay notifications are not implemented. Photo evidence is not live tracking.
+5. **Service-payment admin interface:** buyer complaint creation and backend resolution exist, but an admin resolution UI and physical-device/provider-sandbox verification remain.
+6. **Reviews:** backend public review listing and verified-purchase review creation exist; mobile review display and submission remain to be connected.
+7. **Notifications:** current mobile Notifications screen explicitly says it is not connected; do not show fake alerts.
+8. **Delivery evidence dependencies:** create the private Supabase `delivery-evidence` bucket, configure the dedicated `DELIVERY_HANDOVER_CODE_SECRET`, and test upload permissions/signed URL expiry.
+9. **Physical-device verification:** test GPS permission denial/manual location, authentication cookie persistence, camera/photo evidence, upload retry, buyer/provider handover and checkout against a configured provider sandbox.
+10. **Multi-role/security testing:** broaden buyer/vendor/provider/admin ownership tests, state-transition concurrency tests and privacy checks.
+
+## Working rules for the next continuation
+
+1. Inspect current main and open PRs before editing; do not revive stale feature branches without comparing them to main.
+2. Backend first: confirm route, controller, service, migration and tests; then update `docs/WORKFLOWS_AND_SECURITY.md`.
+3. Align the mobile API wrapper and screens to the exact backend contract. Do not create mock success or local authoritative prices/statuses.
+4. Use feature branches and PRs. Run the repository CI and fix failures before merging.
+5. Do not claim deployment, provider settlement, physical-device verification or feature completion without evidence.
+6. Keep the website secondary until the mobile/backend workflows are stable.
