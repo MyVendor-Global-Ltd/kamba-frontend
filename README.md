@@ -271,4 +271,4 @@ The API client appends `/api/v1` automatically. Restart Expo with cache cleared 
 
 ## CI validation
 
-GitHub Actions runs `npm ci`, `npm audit`, `expo-doctor` and an Android JavaScript bundle export on pushes and pull requests.
+GitHub Actions runs `npm ci`, `npm audit --audit-level=high`, `expo-doctor` and an Android JavaScript bundle export on pushes and pull requests. The current Expo SDK 58 dependency tree has three moderate advisories for which npm only offers a major downgrade to Expo SDK 52; high and critical advisories are cleared, and the SDK is not force-downgraded.
