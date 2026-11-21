@@ -1,57 +1,71 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { Package } from '../utils/phosphorIcons';
 import { orderAPI } from '../utils/api';
 
+const formatMoney = (amountKobo, currency = 'NGN') => {
+  const amount = (Number(amountKobo) || 0) / 100;
+  return currency === 'NGN'
+    ? `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : `${currency} ${amount.toFixed(2)}`;
+};
+
 export const OrdersScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const orders = await orderAPI.listOrders();
-        setOrders(orders || []);
-      } catch (err) {
-        setOrders([]);
-        const message = err.response?.data?.error;
-        setError(typeof message === 'string'
-          ? message
-          : 'Could not load orders. Check your connection and try again.');
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const loadOrders = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    else setRefreshing(true);
+    setError('');
+    try {
+      setOrders(await orderAPI.listOrders());
+    } catch (err) {
+      setOrders([]);
+      setError(err.response?.data?.message || err.response?.data?.error || 'Could not load orders. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
-  if (loading) {
-    return (
-      <ScreenShell scrollable={false} padded bg={colors.light.background}>
-        <ActivityIndicator size="large" color={colors.light.accent} />
-      </ScreenShell>
-    );
-  }
+  useEffect(() => { loadOrders(); }, [loadOrders]);
 
   return (
-    <ScreenShell scrollable={false} padded bg={colors.light.background}>
+    <ScreenShell
+      scrollable
+      padded
+      bg={colors.light.background}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => loadOrders(false)}
+          tintColor={colors.light.accent}
+          colors={[colors.light.accent]}
+        />
+      }
+    >
       <View style={styles.container}>
         <Text style={styles.eyebrow}>ORDER HISTORY</Text>
         <Text style={styles.heading}>Your orders</Text>
 
-        {orders.length === 0 ? (
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.light.accent} />
+        ) : error ? (
+          <ScreenState type="error" title="Could not load orders" description={error} actionLabel="Try again" onAction={() => loadOrders()} />
+        ) : orders.length === 0 ? (
           <ScreenState
             type="empty"
             icon={Package}
@@ -70,13 +84,15 @@ export const OrdersScreen = ({ navigation }) => {
                 accessibilityRole="button"
                 accessibilityLabel={`Order ${order.id}`}
               >
-                <Text style={styles.orderNumber}>Order #{order.id}</Text>
-                <Text style={styles.orderStatus}>
-                  {order.status || 'Pending'}
-                </Text>
-                <Text style={styles.orderAmount}>
-                  {order.total_amount || order.totalAmount || 0} {order.currency || 'NGN'}
-                </Text>
+                <View style={styles.orderHeader}>
+                  <Text style={styles.orderNumber}>Order #{String(order.id).slice(0, 8).toUpperCase()}</Text>
+                  <Text style={styles.orderStatus}>{String(order.status || 'pending').replaceAll('_', ' ')}</Text>
+                </View>
+                {order.store_name ? <Text style={styles.storeName}>{order.store_name}</Text> : null}
+                <View style={styles.orderFooter}>
+                  <Text style={styles.orderMeta}>{Number(order.item_count) || 0} item(s) · {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'Date unavailable'}</Text>
+                  <Text style={styles.orderAmount}>{formatMoney(order.total, order.currency)}</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -87,50 +103,18 @@ export const OrdersScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
-  },
-  eyebrow: {
-    color: colors.light.accent,
-    fontFamily: typography.fontFamilies.label,
-    fontSize: typography.scale.labelSmall.fontSize,
-    letterSpacing: 1,
-    paddingTop: spacing.md,
-  },
-  heading: {
-    color: colors.light.textPrimary,
-    fontFamily: typography.fontFamilies.display,
-    fontSize: typography.scale.displaySmall.fontSize,
-    lineHeight: typography.scale.displaySmall.lineHeight,
-    marginBottom: spacing.md,
-  },
-  ordersList: {
-    padding: spacing.md,
-  },
-  orderItem: {
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.light.border,
-    marginBottom: spacing.md,
-  },
-  orderNumber: {
-    color: colors.light.textPrimary,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    fontWeight: '500',
-  },
-  orderStatus: {
-    color: colors.light.textSecondary,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.labelSmall.fontSize,
-    marginLeft: spacing.sm,
-  },
-  orderAmount: {
-    color: colors.light.accent,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    marginLeft: spacing.sm,
-    fontWeight: '600',
-  },
+  container: { flex: 1, gap: spacing.md, backgroundColor: colors.light.background, paddingBottom: spacing.xxxl },
+  eyebrow: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, letterSpacing: 1, paddingTop: spacing.md },
+  heading: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.display, fontSize: typography.scale.displaySmall.fontSize, lineHeight: typography.scale.displaySmall.lineHeight, marginBottom: spacing.md },
+  ordersList: { gap: spacing.md },
+  orderItem: { gap: spacing.sm, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, backgroundColor: colors.light.surface },
+  orderHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  orderNumber: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  orderStatus: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, textTransform: 'capitalize' },
+  storeName: { color: colors.light.textSecondary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
+  orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
+  orderMeta: { flex: 1, color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
+  orderAmount: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
 });
+
+export default OrdersScreen;
