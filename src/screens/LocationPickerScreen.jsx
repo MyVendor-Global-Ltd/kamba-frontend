@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as Location from 'expo-location';
 import { ScreenShell } from '../components/ScreenShell';
 import { colors, radius, spacing, typography } from '../theme/tokens';
@@ -9,6 +9,8 @@ import { MapPin } from '../utils/phosphorIcons';
 export const LocationPickerScreen = ({ navigation }) => {
   const [locationText, setLocationText] = useState('');
   const [coordinates, setCoordinates] = useState(null);
+  const [coordinateLabel, setCoordinateLabel] = useState('');
+  const [hasSavedLocation, setHasSavedLocation] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -20,8 +22,10 @@ export const LocationPickerScreen = ({ navigation }) => {
       .then((location) => {
         if (!active || !location) return;
         setLocationText(location.location_text || '');
+        setHasSavedLocation(Boolean(location.location_text));
         if (Number.isFinite(location.lat) && Number.isFinite(location.lng)) {
           setCoordinates({ lat: location.lat, lng: location.lng });
+          setCoordinateLabel(location.location_text || '');
         }
       })
       .catch(() => {
@@ -59,10 +63,20 @@ export const LocationPickerScreen = ({ navigation }) => {
           place?.city,
           place?.region,
         ].filter((part, index, all) => typeof part === 'string' && part.trim() && all.indexOf(part) === index).join(', ');
-        if (label) setLocationText(label);
-        else setError('We found your coordinates. Add your campus, hostel or neighbourhood name before saving.');
+        if (label) {
+          setLocationText(label);
+          setCoordinateLabel(label);
+        } else {
+          setCoordinates(null);
+          setCoordinateLabel('');
+          setLocationText('');
+          setError('We found your location but could not name the area. Enter your campus or neighbourhood manually; coordinates will not be saved until a matching label is available.');
+        }
       } catch {
-        setError('We found your coordinates, but could not name the area. Enter your campus or neighbourhood below.');
+        setCoordinates(null);
+        setCoordinateLabel('');
+        setLocationText('');
+        setError('We found your location but could not name the area. Enter your campus or neighbourhood manually; coordinates will not be saved until a matching label is available.');
       }
     } catch {
       setError('We could not get your current location. Check that location services are on, or enter it manually.');
@@ -70,6 +84,45 @@ export const LocationPickerScreen = ({ navigation }) => {
       setLocating(false);
     }
   }, []);
+
+  const handleLocationTextChange = useCallback((value) => {
+    setLocationText(value);
+    if (coordinates && value.trim() !== coordinateLabel.trim()) {
+      setCoordinates(null);
+      setCoordinateLabel('');
+    }
+  }, [coordinates, coordinateLabel]);
+
+  const clearSavedLocation = useCallback(() => {
+    Alert.alert(
+      'Clear saved location?',
+      'Kamba will remove your saved campus/neighbourhood and precise coordinates from your account. Nearby shop results will no longer use this location.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear location',
+          style: 'destructive',
+          onPress: async () => {
+            setSaving(true);
+            setError('');
+            try {
+              await userAPI.clearLocation();
+              setLocationText('');
+              setCoordinates(null);
+              setCoordinateLabel('');
+              setHasSavedLocation(false);
+              navigation.goBack();
+            } catch (err) {
+              const message = err.response?.data?.error || err.response?.data?.message;
+              setError(typeof message === 'string' ? message : 'Your saved location could not be cleared.');
+            } finally {
+              setSaving(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [navigation]);
 
   const saveLocation = useCallback(async () => {
     const label = locationText.trim();
@@ -84,6 +137,7 @@ export const LocationPickerScreen = ({ navigation }) => {
         location_text: label,
         ...(coordinates ? { lat: coordinates.lat, lng: coordinates.lng } : {}),
       });
+      setHasSavedLocation(true);
       navigation.goBack();
     } catch (err) {
       const message = err.response?.data?.error || err.response?.data?.message;
@@ -113,7 +167,7 @@ export const LocationPickerScreen = ({ navigation }) => {
           <Text style={styles.label}>Campus or neighbourhood</Text>
           <TextInput
             value={locationText}
-            onChangeText={setLocationText}
+            onChangeText={handleLocationTextChange}
             placeholder="e.g. OAU, Ile-Ife or Akoka, Lagos"
             placeholderTextColor={colors.light.textMuted}
             style={styles.input}
@@ -138,6 +192,11 @@ export const LocationPickerScreen = ({ navigation }) => {
         </TouchableOpacity>
         {loadingSaved ? <Text style={styles.helper}>Loading your saved location…</Text> : null}
         <Text style={styles.privacy}>Your precise coordinates are used for nearby discovery and are not shown on public store pages.</Text>
+        {hasSavedLocation ? (
+          <TouchableOpacity style={styles.textOnlyButton} onPress={clearSavedLocation} disabled={saving}>
+            <Text style={[styles.textOnlyText, { color: colors.light.danger || '#B42318' }]}>Clear saved location</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </ScreenShell>
   );

@@ -119,6 +119,10 @@ export const userAPI = {
     const response = await api.post('/vendors/location', location);
     return responsePayload(response) || null;
   },
+  async clearLocation() {
+    const response = await api.delete('/vendors/location');
+    return responsePayload(response) || null;
+  },
   async checkUsername(username) {
     try {
       const response = await api.get('/auth/username-availability', {
