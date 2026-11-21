@@ -18,6 +18,7 @@ export const CartScreen = ({ navigation }) => {
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
   const [platformFee, setPlatformFee] = useState(0);
+  const [platformFeeBps, setPlatformFeeBps] = useState(500);
   const [total, setTotal] = useState(0);
   const [currency, setCurrency] = useState('NGN');
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,7 @@ export const CartScreen = ({ navigation }) => {
       setSelectedProductIds((current) => current.length ? current.filter((id) => (cart.items || []).some((item) => item.product_id === id)) : (cart.items || []).map((item) => item.product_id));
       setSubtotal(cart.subtotal || 0);
       setPlatformFee(cart.platform_fee || 0);
+      setPlatformFeeBps(Number.isSafeInteger(cart.platform_fee_bps) ? cart.platform_fee_bps : 500);
       setTotal(cart.total || 0);
       setCurrency(cart.currency || 'NGN');
     } catch (err) {
@@ -57,8 +59,7 @@ export const CartScreen = ({ navigation }) => {
     [cartItems, selectedProductIds],
   );
   const selectedSubtotal = selectedItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
-  const feeBps = Number(cartItems[0]?.platform_fee_bps ?? 500);
-  const selectedFee = Math.ceil((selectedSubtotal * feeBps) / 10000);
+  const selectedFee = Math.ceil((selectedSubtotal * platformFeeBps) / 10000);
   const selectedTotal = selectedSubtotal + selectedFee;
 
   const toggleSelected = useCallback((productId) => {
