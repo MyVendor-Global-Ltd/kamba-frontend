@@ -16,7 +16,9 @@ import { cartAPI } from '../utils/api';
 export const CartScreen = ({ navigation }) => {
   const [cartItems, setCartItems] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
+  const [platformFee, setPlatformFee] = useState(0);
   const [total, setTotal] = useState(0);
+  const [currency, setCurrency] = useState('NGN');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -27,10 +29,13 @@ export const CartScreen = ({ navigation }) => {
       const cart = await cartAPI.getCart();
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
+      setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
+      setCurrency(cart.currency || 'NGN');
     } catch (err) {
       setCartItems([]);
       setSubtotal(0);
+      setPlatformFee(0);
       setTotal(0);
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
@@ -50,7 +55,9 @@ export const CartScreen = ({ navigation }) => {
       const cart = await cartAPI.removeItem(productId);
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
+      setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
+      setCurrency(cart.currency || 'NGN');
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
@@ -64,7 +71,9 @@ export const CartScreen = ({ navigation }) => {
       const cart = await cartAPI.updateItem(productId, (currentQuantity || 1) + 1);
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
+      setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
+      setCurrency(cart.currency || 'NGN');
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
@@ -78,7 +87,9 @@ export const CartScreen = ({ navigation }) => {
       const cart = await cartAPI.updateItem(productId, Math.max((currentQuantity || 1) - 1, 1));
       setCartItems(cart.items || []);
       setSubtotal(cart.subtotal || 0);
+      setPlatformFee(cart.platform_fee || 0);
       setTotal(cart.total || 0);
+      setCurrency(cart.currency || 'NGN');
     } catch (err) {
       const message = err.response?.data?.error;
       setError(typeof message === 'string'
@@ -121,7 +132,7 @@ export const CartScreen = ({ navigation }) => {
                       {item.name || 'Product'}
                     </Text>
                     <Text style={styles.itemVendor}>
-                      {typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name || ''}
+                      {item.store_name || (typeof item.vendor === 'string' ? item.vendor : item.vendor?.store_name) || ''}
                     </Text>
                   </View>
                   <View style={styles.itemActions}>
@@ -146,7 +157,7 @@ export const CartScreen = ({ navigation }) => {
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.itemPrice}>
-                    {item.price || 0} {item.currency || 'NGN'}
+                    {formatMoney(item.price, currency)}
                   </Text>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -161,19 +172,19 @@ export const CartScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.cartSummary}>
-              <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.subtotalAmount}>{subtotal} {currency}</Text>
+              <Text style={styles.summaryLabel}>Items subtotal</Text>
+              <Text style={styles.subtotalAmount}>{formatMoney(subtotal, currency)}</Text>
 
-              <Text style={styles.summaryLabel}>Platform fee</Text>
-              <Text style={styles.subtotalAmount}>{(subtotal * 0.1).toFixed(0)} {currency}</Text>
+              <Text style={styles.summaryLabel}>Kamba platform charge</Text>
+              <Text style={styles.subtotalAmount}>{formatMoney(platformFee, currency)}</Text>
 
-              <Text style={styles.summaryLabel}>Delivery fee</Text>
-              <Text style={styles.subtotalAmount}>200 {currency}</Text>
+              <Text style={styles.summaryLabel}>Delivery</Text>
+              <Text style={styles.subtotalAmount}>Calculated at checkout</Text>
 
               <View style={styles.divider} />
 
-              <Text style={styles.summaryLabelTotal}>TOTAL</Text>
-              <Text style={styles.totalAmount}>{total} {currency}</Text>
+              <Text style={styles.summaryLabelTotal}>PICKUP TOTAL</Text>
+              <Text style={styles.totalAmount}>{formatMoney(total, currency)}</Text>
             </View>
 
             <TouchableOpacity
@@ -193,7 +204,13 @@ export const CartScreen = ({ navigation }) => {
   );
 };
 
-const currency = 'NGN';
+const formatMoney = (amountKobo, currencyCode = 'NGN') => {
+  const amount = (Number(amountKobo) || 0) / 100;
+  if (currencyCode === 'NGN') {
+    return `₦${amount.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return `${currencyCode} ${amount.toFixed(2)}`;
+};
 
 const styles = StyleSheet.create({
   container: {
