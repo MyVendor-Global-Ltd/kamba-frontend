@@ -16,6 +16,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Kamba uses your location to find nearby shops and estimate distance. You can also enter a location manually."
+        }
+      ]
+    ]
   }
 }

@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Bell, MagnifyingGlass, Storefront } from '../utils/phosphorIcons';
+import { Bell, MagnifyingGlass, Storefront, MapPin } from '../utils/phosphorIcons';
 import { colors, motion, radius, spacing, typography } from '../theme/tokens';
 import { KambaTextileMotif } from '../components/KambaTextileMotif';
 import { MarketplaceCategoryChip } from '../components/MarketplaceCategoryChip';
@@ -17,12 +17,13 @@ import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { StoreCard } from '../components/StoreCard';
 import { marketplaceCategories } from '../data/marketplaceCategories';
-import { vendorAPI } from '../utils/api';
+import { userAPI, vendorAPI } from '../utils/api';
 
 export const HomeScreen = ({ navigation }) => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [savedLocation, setSavedLocation] = useState(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
 
@@ -30,7 +31,20 @@ export const HomeScreen = ({ navigation }) => {
     setLoading(true);
     setError(null);
     try {
-      const results = await vendorAPI.listStores({ page: 1, limit: 20 });
+      let location = null;
+      try {
+        location = await userAPI.getLocation();
+        setSavedLocation(location);
+      } catch {
+        setSavedLocation(null);
+      }
+      const params = { page: 1, limit: 20 };
+      if (Number.isFinite(location?.lat) && Number.isFinite(location?.lng)) {
+        params.lat = location.lat;
+        params.lng = location.lng;
+        params.radius = 15;
+      }
+      const results = await vendorAPI.listStores(params);
       setStores(results);
     } catch (err) {
       setStores([]);
@@ -44,8 +58,10 @@ export const HomeScreen = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', loadStores);
     loadStores();
-  }, [loadStores]);
+    return unsubscribe;
+  }, [navigation, loadStores]);
 
   useEffect(() => {
     Animated.parallel([
@@ -93,6 +109,18 @@ export const HomeScreen = ({ navigation }) => {
                 <Text style={styles.brandCaption}>LOCAL MARKETPLACE</Text>
               </View>
             </View>
+            <TouchableOpacity
+              style={styles.locationButton}
+              onPress={() => navigation.navigate('LocationPicker')}
+              accessibilityRole="button"
+              accessibilityLabel="Set your location for nearby shops"
+            >
+              <MapPin size={18} color={colors.light.accent} />
+              <View style={styles.locationCopy}>
+                <Text style={styles.locationEyebrow}>YOUR LOCATION</Text>
+                <Text style={styles.locationLabel} numberOfLines={1}>{savedLocation?.location_text || 'Set location'}</Text>
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.notificationButton}
               onPress={() => navigation.navigate('Notifications')}
@@ -239,6 +267,31 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamilies.label,
     fontSize: typography.scale.labelSmall.fontSize,
     letterSpacing: 0.8,
+  },
+  locationButton: {
+    minWidth: 112,
+    maxWidth: 142,
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+    backgroundColor: colors.light.surface,
+  },
+  locationCopy: { flex: 1, minWidth: 0, gap: 2 },
+  locationEyebrow: {
+    color: colors.light.textMuted,
+    fontFamily: typography.fontFamilies.label,
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  locationLabel: {
+    color: colors.light.textPrimary,
+    fontFamily: typography.fontFamilies.label,
+    fontSize: typography.scale.labelSmall.fontSize,
   },
   notificationButton: {
     width: 42,

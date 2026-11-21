@@ -111,6 +111,14 @@ export const authAPI = {
 };
 
 export const userAPI = {
+  async getLocation() {
+    const response = await api.get('/vendors/location');
+    return responsePayload(response)?.location || null;
+  },
+  async updateLocation(location) {
+    const response = await api.post('/vendors/location', location);
+    return responsePayload(response) || null;
+  },
   async checkUsername(username) {
     try {
       const response = await api.get('/auth/username-availability', {

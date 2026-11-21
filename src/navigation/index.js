@@ -38,6 +38,7 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { VendorHubScreen } from '../screens/VendorHubScreen';
 import { VendorPaymentScreen } from '../screens/VendorPaymentScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
+import { LocationPickerScreen } from '../screens/LocationPickerScreen';
 import { VendorOnboardingScreen } from '../screens/VendorOnboardingScreen';
 import { UnavailableFeatureScreen } from '../screens/UnavailableFeatureScreen';
 
@@ -214,6 +215,11 @@ function RootNavigator() {
         name="Main"
         component={MainTabs}
         options={{ headerShown: false, animationType: 'fade' }}
+      />
+      <Stack.Screen
+        name="LocationPicker"
+        component={LocationPickerScreen}
+        options={{ headerShown: true, headerTitle: 'Your location', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="Search"
