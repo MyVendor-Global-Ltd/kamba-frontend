@@ -11,6 +11,12 @@ const API_BASE_URL = configuredBaseUrl.endsWith('/api/v1')
       ? `${configuredBaseUrl}/v1`
       : `${configuredBaseUrl}/api/v1`;
 
+function responsePayload(response) {
+  // The Express handler currently returns { success: true, ...serviceResult }.
+  // Accept the older { success: true, result: serviceResult } shape as well.
+  return response?.data?.result ?? response?.data ?? null;
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
@@ -136,7 +142,7 @@ export const userAPI = {
 export const productAPI = {
   async listProducts(params = {}) {
     const response = await api.get('/commerce/products', { params });
-    const products = response.data?.result?.products;
+    const products = responsePayload(response)?.products;
     if (!Array.isArray(products)) {
       throw new Error('Product list was not in the expected format.');
     }
@@ -144,7 +150,7 @@ export const productAPI = {
   },
   async getProduct(productId) {
     const response = await api.get(`/commerce/products/${productId}`);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
 };
 
@@ -170,11 +176,11 @@ export const cartAPI = {
 export const deliveryAPI = {
   async listUniversities() {
     const response = await api.get('/delivery/universities');
-    return response.data?.result?.universities || [];
+    return responsePayload(response)?.universities || [];
   },
   async listZones(universitySlug) {
     const response = await api.get(`/delivery/universities/${encodeURIComponent(universitySlug)}/zones`);
-    return response.data?.result?.zones || [];
+    return responsePayload(response)?.zones || [];
   },
   async getQuote({ store_id, university_id, destination_zone_id, delivery_mode = 'express' }) {
     const response = await api.post('/delivery/quote', {
@@ -183,7 +189,7 @@ export const deliveryAPI = {
       destination_zone_id,
       delivery_mode,
     });
-    return response.data?.result?.quote || null;
+    return responsePayload(response)?.quote || null;
   },
 };
 
@@ -201,19 +207,19 @@ export const orderAPI = {
       payload,
       { headers: { 'Idempotency-Key': idempotencyKey } }
     );
-    return response.data?.result?.order || null;
+    return responsePayload(response)?.order || null;
   },
   async listOrders() {
     const response = await api.get('/commerce/orders');
-    return response.data?.result?.orders || [];
+    return responsePayload(response)?.orders || [];
   },
   async getOrder(orderId) {
     const response = await api.get(`/commerce/orders/${orderId}`);
-    return response.data?.result || null;
+    return responsePayload(response) || null;
   },
   async cancelOrder(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/cancel`);
-    return response.data?.result || null;
+    return responsePayload(response)?.product ?? responsePayload(response) ?? null;
   },
   async confirmDelivery(orderId) {
     const response = await api.post(`/commerce/orders/${orderId}/delivery/confirm`);
@@ -244,7 +250,7 @@ export const vendorAPI = {
   },
   async listProducts() {
     const response = await api.get('/commerce/vendor/products');
-    return response.data?.result?.products || [];
+    return responsePayload(response)?.products || [];
   },
   async createProduct(productData) {
     const response = await api.post('/commerce/vendor/products', productData);
@@ -260,7 +266,7 @@ export const vendorAPI = {
   },
   async listOrders() {
     const response = await api.get('/commerce/vendor/orders');
-    return response.data?.result?.orders || [];
+    return responsePayload(response)?.orders || [];
   },
   async updateOrderStatus(orderId, status) {
     const response = await api.patch(`/commerce/vendor/orders/${orderId}`, { status });
@@ -268,7 +274,7 @@ export const vendorAPI = {
   },
   async getPayments() {
     const response = await api.get('/commerce/vendor/payments');
-    return response.data?.result?.payments || [];
+    return responsePayload(response)?.payments || [];
   },
 };
 
