@@ -199,6 +199,7 @@ export const DeliveryProviderScreen = () => {
   const [phone, setPhone] = useState('');
   const [stateName, setStateName] = useState('');
   const [cities, setCities] = useState('');
+  const [capacityDraft, setCapacityDraft] = useState('5');
 
   const loadData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -207,6 +208,7 @@ export const DeliveryProviderScreen = () => {
       const profile = await deliveryAPI.getProviderProfile();
       const currentProvider = profile || null;
       setProvider(currentProvider);
+      setCapacityDraft(String(currentProvider?.max_active_deliveries ?? 5));
       if (currentProvider?.verification_status === 'approved') {
         const [jobs, providerEarnings] = await Promise.all([
           deliveryAPI.listAssignments(),
@@ -231,11 +233,9 @@ export const DeliveryProviderScreen = () => {
     && !['delivered', 'failed', 'cancelled'].includes(assignment.delivery_status)
   );
   const pendingOffers = assignments.filter((assignment) => assignment.assignment_status === 'offered');
-  const workloadLabel = acceptedAssignments.length
-    ? `Busy · ${acceptedAssignments.length} active job${acceptedAssignments.length === 1 ? '' : 's'}`
-    : pendingOffers.length
-      ? `Offer pending · ${pendingOffers.length}`
-      : 'No active assignments';
+  const capacityLimit = Number(provider?.max_active_deliveries) || 5;
+  const workloadCount = acceptedAssignments.length + pendingOffers.length;
+  const workloadLabel = `${workloadCount} of ${capacityLimit} slots used`;
 
   useEffect(() => {
     loadData();
@@ -274,6 +274,26 @@ export const DeliveryProviderScreen = () => {
       setNotice(nextValue ? 'You are now accepting new delivery offers.' : 'You will not receive new offers. Your accepted jobs remain active.');
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Could not update availability.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCapacitySave = async () => {
+    const value = Number(capacityDraft);
+    if (!Number.isInteger(value) || value < 1 || value > 10) {
+      setError('Choose a whole number between 1 and 10.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const result = await deliveryAPI.setCapacity(value);
+      setProvider((current) => ({ ...current, max_active_deliveries: result.max_active_deliveries ?? value }));
+      setCapacityDraft(String(result.max_active_deliveries ?? value));
+      setNotice(`Your active delivery capacity is now ${result.max_active_deliveries ?? value} job(s).`);
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Could not update delivery capacity.');
     } finally {
       setSaving(false);
     }
@@ -375,6 +395,23 @@ export const DeliveryProviderScreen = () => {
                 <Text style={styles.label}>Current workload</Text>
                 <Text style={styles.workloadValue}>{workloadLabel}</Text>
               </View>
+              <View style={styles.capacityPanel}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.body}>Maximum active deliveries</Text>
+                  <Text style={styles.muted}>Choose how many jobs you can safely handle at once. You can change this at any time.</Text>
+                </View>
+                <TextInput
+                  value={capacityDraft}
+                  onChangeText={(value) => setCapacityDraft(value.replace(/[^0-9]/g, '').slice(0, 2))}
+                  style={styles.capacityInput}
+                  keyboardType="number-pad"
+                  maxLength={2}
+                  accessibilityLabel="Maximum active deliveries"
+                />
+              </View>
+              <TouchableOpacity style={styles.secondaryButton} onPress={handleCapacitySave} disabled={saving}>
+                {saving ? <ActivityIndicator color={colors.light.accent} /> : <Text style={styles.secondaryText}>Save capacity</Text>}
+              </TouchableOpacity>
             </View>
 
             <View style={styles.sectionHeading}>
@@ -440,6 +477,8 @@ const styles = StyleSheet.create({
   approved: { color: colors.light.success, fontFamily: typography.fontFamilies.label, fontWeight: '700' },
   workloadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   workloadValue: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize },
+  capacityPanel: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderTopWidth: 1, borderTopColor: colors.light.border, paddingTop: spacing.md },
+  capacityInput: { width: 64, height: 48, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.md, textAlign: 'center', color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.titleMedium.fontSize, backgroundColor: colors.light.background },
   successText: { color: colors.light.success, fontFamily: typography.fontFamilies.body, fontWeight: '600' },
   notice: { color: colors.light.success, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
   errorText: { color: colors.light.error, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
