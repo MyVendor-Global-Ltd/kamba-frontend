@@ -36,6 +36,9 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   const loadStore = useCallback(async () => {
     if (!slug) {
       setStore(null);
+      setProducts([]);
+      setProductsLoading(false);
+      setProductsError('');
       setError('This shop link is missing its identifier.');
       setLoading(false);
       return;
