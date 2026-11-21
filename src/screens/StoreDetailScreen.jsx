@@ -38,6 +38,7 @@ export const StoreDetailScreen = ({ navigation, route }) => {
   const [followAuthRequired, setFollowAuthRequired] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewSummary, setReviewSummary] = useState({ count: 0, average_rating: '0.00' });
+  const [reviewsError, setReviewsError] = useState('');
 
   const loadStore = useCallback(async () => {
     if (!slug) {
@@ -79,11 +80,13 @@ export const StoreDetailScreen = ({ navigation, route }) => {
           : 'Sign in as a buyer to follow this shop.');
       }
       try {
+        setReviewsError('');
         const reviewResult = await marketplaceAPI.listStoreReviews(slug, { limit: 5, offset: 0 });
         setReviews(Array.isArray(reviewResult?.reviews) ? reviewResult.reviews : []);
         setReviewSummary({ count: Number(reviewResult?.count) || 0, average_rating: reviewResult?.average_rating || '0.00' });
       } catch {
         setReviews([]);
+        setReviewsError('Reviews could not be loaded right now.');
         setReviewSummary({ count: 0, average_rating: '0.00' });
       }
       setProductsLoading(true);
@@ -248,7 +251,7 @@ export const StoreDetailScreen = ({ navigation, route }) => {
               <Text style={styles.cardTitle}>Customer reviews</Text>
               <Text style={styles.productsCount}>{reviewSummary.average_rating}/5 · {reviewSummary.count}</Text>
             </View>
-            {reviews.length ? reviews.map((review) => (
+            {reviewsError ? <Text style={styles.description}>{reviewsError}</Text> : reviews.length ? reviews.map((review) => (
               <View key={review.id} style={styles.reviewCard}>
                 <Text style={styles.reviewRating}>{review.rating}/5 · {review.username || 'Buyer'}</Text>
                 {review.product_name ? <Text style={styles.reviewProduct}>{review.product_name}</Text> : null}
