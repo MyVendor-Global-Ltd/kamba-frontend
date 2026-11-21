@@ -16,7 +16,7 @@ function nairaToKobo(value) {
   return amount > 0n && amount <= 2147483647n ? Number(amount) : null;
 }
 
-const RequestCard = ({ item, isVendor, onRefresh, setError }) => {
+const RequestCard = ({ item, isVendor, onRefresh, setError, refreshVersion }) => {
   const [amount, setAmount] = useState('');
   const [scope, setScope] = useState('');
   const [scheduleAt, setScheduleAt] = useState('');
@@ -27,7 +27,7 @@ const RequestCard = ({ item, isVendor, onRefresh, setError }) => {
   useEffect(() => {
     if (isVendor) return;
     serviceAPI.getPayment(item.id).then(setPayment).catch(() => setPayment(null));
-  }, [isVendor, item.id]);
+  }, [isVendor, item.id, item.status, refreshVersion]);
 
   const run = async (action) => {
     setBusy(true);
@@ -133,7 +133,10 @@ const RequestCard = ({ item, isVendor, onRefresh, setError }) => {
         </TouchableOpacity>
       ) : null}
       {!isVendor && item.status === 'completed' && payment?.status === 'held' ? (
-        <TouchableOpacity style={styles.primaryButton} disabled={busy} onPress={() => run(() => serviceAPI.confirmCompletion(item.id))}>
+        <TouchableOpacity style={styles.primaryButton} disabled={busy} onPress={() => run(async () => {
+          const result = await serviceAPI.confirmCompletion(item.id);
+          setPayment((current) => ({ ...(current || {}), status: result?.status || 'released' }));
+        })}>
           <Text style={styles.primaryText}>Confirm service completion</Text>
         </TouchableOpacity>
       ) : null}
@@ -173,6 +176,7 @@ export const ServiceRequestsScreen = ({ route }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   const load = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -188,6 +192,7 @@ export const ServiceRequestsScreen = ({ route }) => {
       }
       setIsVendor(user?.role === 'vendor');
       setRequests(await serviceAPI.listRequests({ limit: 100 }));
+      setRefreshVersion((version) => version + 1);
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || err.message || 'Could not load service requests.');
     } finally {
@@ -209,7 +214,7 @@ export const ServiceRequestsScreen = ({ route }) => {
         {requests.length === 0 && !error ? (
           <ScreenState type="empty" title="No service requests yet" description={isVendor ? 'Customer requests will appear here.' : 'Your booking and quotation requests will appear here.'} />
         ) : requests.map((item) => (
-          <RequestCard key={item.id} item={item} isVendor={isVendor} onRefresh={() => load(false)} setError={setError} />
+          <RequestCard key={item.id} item={item} isVendor={isVendor} onRefresh={() => load(false)} setError={setError} refreshVersion={refreshVersion} />
         ))}
         <TouchableOpacity style={styles.secondaryButton} onPress={() => load()} disabled={refreshing}>
           <Text style={styles.secondaryText}>Refresh requests</Text>
