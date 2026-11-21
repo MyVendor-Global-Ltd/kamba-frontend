@@ -9,6 +9,7 @@ export const VendorPayoutAccountScreen = () => {
   const [selectedBank, setSelectedBank] = useState(null);
   const [bankSearch, setBankSearch] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
+  const [declaredAccountName, setDeclaredAccountName] = useState('');
   const [preview, setPreview] = useState(null);
   const [savedAccount, setSavedAccount] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +64,10 @@ export const VendorPayoutAccountScreen = () => {
   }, [selectedBank, accountNumber]);
 
   const confirmAccount = useCallback(async () => {
-    if (!preview) return;
+    if (!preview || !declaredAccountName.trim()) {
+      setError('Enter the account holder name as it appears on the bank account.');
+      return;
+    }
     setWorking(true);
     setError('');
     setNotice('');
@@ -71,18 +75,19 @@ export const VendorPayoutAccountScreen = () => {
       const result = await vendorPayoutAPI.confirmAccount({
         bank_code: preview.bank_code,
         account_number: accountNumber,
-        account_name: preview.resolved_account_name,
+        account_name: declaredAccountName.trim(),
       });
       setSavedAccount(result);
       setPreview(null);
       setAccountNumber('');
+      setDeclaredAccountName('');
       setNotice('Your payout bank account has been verified and saved.');
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Could not save the verified bank account.');
     } finally {
       setWorking(false);
     }
-  }, [preview, accountNumber]);
+  }, [preview, accountNumber, declaredAccountName]);
 
   if (loading) return <ScreenShell><ActivityIndicator size="large" color={colors.light.accent} /></ScreenShell>;
 
@@ -140,7 +145,15 @@ export const VendorPayoutAccountScreen = () => {
             <Text style={styles.savedTitle}>Bank returned this account name</Text>
             <Text style={styles.accountName}>{preview.resolved_account_name}</Text>
             <Text style={styles.copy}>{preview.bank_name} · account ending {preview.account_number_last4}</Text>
-            <Text style={styles.copy}>Check that this is the correct account before confirming. Kamba will create a Paystack transfer recipient for this verified account.</Text>
+            <Text style={styles.copy}>Enter the account holder name you provided to Kamba. It must match the name returned by the bank exactly (case and extra spaces are ignored).</Text>
+            <TextInput
+              value={declaredAccountName}
+              onChangeText={setDeclaredAccountName}
+              placeholder="Account holder name"
+              placeholderTextColor={colors.light.textMuted}
+              autoCapitalize="words"
+              style={styles.input}
+            />
             <TouchableOpacity style={styles.primaryButton} onPress={confirmAccount} disabled={working}>
               {working ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>Confirm and save this account</Text>}
             </TouchableOpacity>
