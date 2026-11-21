@@ -1,67 +1,133 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
-  View,
+  TextInput,
   TouchableOpacity,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import { colors, spacing, typography } from '../theme/tokens';
+import { colors, spacing, typography, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { orderAPI } from '../utils/api';
-import { X } from '../utils/phosphorIcons';
+import { formatCurrency } from '../utils/format';
 
-export const OrderDetailScreen = ({ navigation }) => {
+const money = (amount, currency = 'NGN') => {
+  if (currency === 'NGN') return formatCurrency((Number(amount) || 0) / 100);
+  return `${currency} ${((Number(amount) || 0) / 100).toFixed(2)}`;
+};
+
+export const OrderDetailScreen = ({ navigation, route }) => {
+  const orderId = route?.params?.orderId || '';
   const [order, setOrder] = useState(null);
+  const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const orderId = navigation.getParam('orderId', '');
+  const [action, setAction] = useState('');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [disputeReason, setDisputeReason] = useState('');
 
-  const handleConfirmDelivery = useCallback(async () => {
-    try {
-      const updated = await orderAPI.confirmDelivery(orderId);
-      if (updated?.id) {
-        setOrder(updated);
-      }
-    } catch (err) {
-      const message = err.response?.data?.error;
-      setError(typeof message === 'string'
-        ? message
-        : 'Could not confirm delivery. Please try again.');
+  const loadOrder = useCallback(async (showLoading = true) => {
+    if (!orderId) {
+      setError('This order link is missing its order ID.');
+      setLoading(false);
+      return;
     }
-  }, [orderId]);
-
-  const handleCancelOrder = useCallback(async () => {
+    if (showLoading) setLoading(true);
+    setError('');
     try {
-      const updated = await orderAPI.cancelOrder(orderId);
-      if (updated?.id) {
-        setOrder(updated);
+      const freshOrder = await orderAPI.getOrder(orderId);
+      setOrder(freshOrder);
+      try {
+        const freshPayment = await orderAPI.getPaymentStatus(orderId);
+        setPayment(freshPayment);
+      } catch {
+        setPayment(freshOrder?.payment_status ? { status: freshOrder.payment_status } : null);
       }
     } catch (err) {
       const message = err.response?.data?.error;
-      setError(typeof message === 'string'
-        ? message
-        : 'Could not cancel order. Please try again.');
+      setError(typeof message === 'string' ? message : 'Could not load order details. Check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   }, [orderId]);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const order = await orderAPI.getOrder(orderId);
-        setOrder(order);
-      } catch (err) {
-        const message = err.response?.data?.error;
-        setError(typeof message === 'string'
-          ? message
-          : 'Could not load order details. Check your connection and try again.');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [orderId]);
+    loadOrder();
+  }, [loadOrder]);
+
+  const paymentStatus = payment?.status || order?.payment_status || 'unknown';
+  const items = useMemo(() => order?.order_items || order?.items || [], [order]);
+  const canConfirm = Boolean(
+    order && paymentStatus === 'held' && (
+      (order.delivery_type === 'delivery' && order.status === 'delivered') ||
+      (order.delivery_type === 'pickup' && ['shipped', 'delivered'].includes(order.status))
+    )
+  );
+  const canCancel = Boolean(
+    order && order.status === 'pending_payment' &&
+    paymentStatus === 'pending' && order.payment_checkout_not_started === true
+  );
+  const canOpenDispute = Boolean(
+    order && paymentStatus === 'held' &&
+    ['paid_held', 'confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
+  );
+
+  const handleConfirm = useCallback(async () => {
+    setAction('confirm');
+    setError('');
+    setNotice('');
+    try {
+      const result = await orderAPI.confirmDelivery(orderId);
+      await loadOrder(false);
+      setNotice(result?.payment_status === 'released'
+        ? 'Receipt confirmed. The payment provider confirmed the release.'
+        : 'Receipt confirmed. Payment release is being processed.');
+    } catch (err) {
+      const message = err.response?.data?.error;
+      setError(typeof message === 'string' ? message : 'Could not confirm receipt. Please try again.');
+    } finally {
+      setAction('');
+    }
+  }, [orderId, loadOrder]);
+
+  const handleCancel = useCallback(async () => {
+    setAction('cancel');
+    setError('');
+    setNotice('');
+    try {
+      await orderAPI.cancelOrder(orderId);
+      await loadOrder(false);
+      setNotice('The unpaid order was cancelled and its stock reservation was released.');
+    } catch (err) {
+      const message = err.response?.data?.error;
+      setError(typeof message === 'string' ? message : 'Could not cancel this order. Please try again.');
+    } finally {
+      setAction('');
+    }
+  }, [orderId, loadOrder]);
+
+  const handleDispute = useCallback(async () => {
+    const reason = disputeReason.trim();
+    if (reason.length < 10 || reason.length > 2000) {
+      setError('Explain the issue in 10 to 2,000 characters.');
+      return;
+    }
+    setAction('dispute');
+    setError('');
+    setNotice('');
+    try {
+      await orderAPI.createDispute(orderId, reason);
+      setDisputeReason('');
+      await loadOrder(false);
+      setNotice('Your complaint has been submitted. The payment is paused while it is reviewed.');
+    } catch (err) {
+      const message = err.response?.data?.error;
+      setError(typeof message === 'string' ? message : 'Could not submit your complaint. Please try again.');
+    } finally {
+      setAction('');
+    }
+  }, [disputeReason, orderId, loadOrder]);
 
   if (loading) {
     return (
@@ -71,101 +137,113 @@ export const OrderDetailScreen = ({ navigation }) => {
     );
   }
 
-  if (error) {
+  if (error && !order) {
     return (
       <ScreenShell>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.retryText}>Retry</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => loadOrder()}>
+          <Text style={styles.secondaryText}>Try again</Text>
         </TouchableOpacity>
       </ScreenShell>
     );
   }
 
   if (!order) {
-    return (
-      <ScreenShell>
-        <Text style={styles.emptyText}>Order not found</Text>
-      </ScreenShell>
-    );
+    return <ScreenShell><Text style={styles.emptyText}>Order not found</Text></ScreenShell>;
   }
 
-  // Determine if user can confirm delivery or cancel
-  const canConfirmDelivery = order.status !== 'delivered' && order.status !== 'cancelled';
-  const canCancelOrder = order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'refunded';
-
   return (
-    <ScreenShell>
+    <ScreenShell scrollable>
       <View style={styles.container}>
-        <Text style={styles.header}>Order #{order.id}</Text>
-
-        <View style={styles.orderDetails}>
-          <Text style={styles.label}>Status</Text>
-          <Text style={styles.value}>
-            {order.status || 'Pending'}
-          </Text>
+        <View style={styles.heading}>
+          <Text style={styles.eyebrow}>ORDER DETAILS</Text>
+          <Text style={styles.header}>Order #{String(order.id).slice(0, 8).toUpperCase()}</Text>
+          <Text style={styles.status}>{String(order.status || 'pending').replaceAll('_', ' ')}</Text>
         </View>
 
-        <View style={styles.orderDetails}>
-          <Text style={styles.label}>Total</Text>
-          <Text style={styles.value}>
-            {order.total_amount || order.totalAmount || 0} {order.currency || 'NGN'}
-          </Text>
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.label}>Order total</Text>
+            <Text style={styles.total}>{money(order.total, order.currency)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.label}>Items subtotal</Text>
+            <Text style={styles.value}>{money(order.subtotal, order.currency)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.label}>Kamba platform charge</Text>
+            <Text style={styles.value}>{money(order.platform_fee, order.currency)}</Text>
+          </View>
+          {Number(order.shipping_amount) > 0 ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.label}>Delivery</Text>
+              <Text style={styles.value}>{money(order.shipping_amount, order.currency)}</Text>
+            </View>
+          ) : null}
+          <View style={styles.summaryRow}>
+            <Text style={styles.label}>Payment state</Text>
+            <Text style={styles.value}>{String(paymentStatus).replaceAll('_', ' ')}</Text>
+          </View>
         </View>
 
-        {order.items && order.items.length > 0 && (
-          <View style={styles.itemsSection}>
-            <Text style={styles.sectionLabel}>Items</Text>
-            {order.items.map((item) => (
-              <View key={item.product_id || item.productId} style={styles.item}>
+        <View style={styles.itemsSection}>
+          <Text style={styles.sectionTitle}>Items ({items.length})</Text>
+          {items.map((item, index) => (
+            <View key={item.product_id || item.productId || index} style={styles.item}>
+              <View style={styles.itemCopy}>
                 <Text style={styles.itemName}>{item.name || 'Product'}</Text>
-                <Text style={styles.itemDetails}>
-                  Qty: {item.quantity || 1} - {item.price || 0} {order.currency || 'NGN'} each
-                </Text>
+                <Text style={styles.itemDetails}>Quantity: {item.quantity || 1}</Text>
               </View>
-            ))}
-          </View>
-        )}
+              <Text style={styles.itemAmount}>{money(item.line_amount ?? ((item.unit_amount ?? item.price ?? 0) * (item.quantity || 1)), order.currency)}</Text>
+            </View>
+          ))}
+          {items.length === 0 ? <Text style={styles.label}>No item details were returned for this order.</Text> : null}
+        </View>
 
-        {canConfirmDelivery && (
-          <TouchableOpacity
-            style={styles.confirmDeliveryButton}
-            onPress={handleConfirmDelivery}
-            accessibilityRole="button"
-            accessibilityLabel="Confirm delivery"
-          >
-            <Text style={styles.confirmDeliveryText}>
-              Confirm delivery
-            </Text>
+        {order.status === 'delivered' && paymentStatus === 'held' ? (
+          <Text style={styles.helper}>The delivery provider has marked this order delivered. Confirm only after you have received it.</Text>
+        ) : null}
+
+        {!!notice && <Text accessibilityRole="alert" style={styles.notice}>{notice}</Text>}
+        {!!error && <Text accessibilityRole="alert" style={styles.errorText}>{error}</Text>}
+
+        {canConfirm ? (
+          <TouchableOpacity style={styles.primaryButton} onPress={handleConfirm} disabled={Boolean(action)}>
+            {action === 'confirm' ? <ActivityIndicator color={colors.light.onAccent} /> : (
+              <Text style={styles.primaryText}>{order.delivery_type === 'pickup' ? 'Confirm pickup' : 'Confirm receipt'}</Text>
+            )}
           </TouchableOpacity>
-        )}
+        ) : null}
 
-        {canCancelOrder && (
-          <TouchableOpacity
-            style={styles.cancelOrderButton}
-            onPress={handleCancelOrder}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel order"
-          >
-            <Text style={styles.cancelOrderText}>Cancel order</Text>
+        {canCancel ? (
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} disabled={Boolean(action)}>
+            {action === 'cancel' ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>Cancel unpaid order</Text>}
           </TouchableOpacity>
-        )}
+        ) : null}
 
-        {order.status === 'delivered' && (
-          <View style={styles.deliveryConfirmed}>
-            <Text style={styles.deliveryText}>
-              Delivery confirmed - funds will be released to vendor after 24-hour auto-release timer
-            </Text>
+        {canOpenDispute ? (
+          <View style={styles.disputePanel}>
+            <Text style={styles.sectionTitle}>Report an issue</Text>
+            <Text style={styles.helper}>Describe what went wrong. A complaint pauses the normal payment-release process while it is reviewed.</Text>
+            <TextInput
+              value={disputeReason}
+              onChangeText={setDisputeReason}
+              style={styles.disputeInput}
+              placeholder="Explain the issue (at least 10 characters)"
+              placeholderTextColor={colors.light.textMuted}
+              multiline
+              maxLength={2000}
+              textAlignVertical="top"
+              accessibilityLabel="Complaint reason"
+            />
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleDispute} disabled={Boolean(action)}>
+              {action === 'dispute' ? <ActivityIndicator color={colors.light.accent} /> : <Text style={styles.secondaryText}>Submit complaint</Text>}
+            </TouchableOpacity>
           </View>
-        )}
+        ) : null}
 
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          accessibilityRole="button"
-          accessibilityLabel="Back to orders"
-        >
-          <Text style={styles.backText}>← Back to Orders</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.secondaryText}>Back to orders</Text>
         </TouchableOpacity>
       </View>
     </ScreenShell>
@@ -173,138 +251,35 @@ export const OrderDetailScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
-    padding: spacing.xl,
-  },
-  header: {
-    color: colors.light.textPrimary,
-    fontFamily: typography.fontFamilies.headline,
-    fontSize: typography.scale.headlineLarge.fontSize,
-    fontWeight: '600',
-    marginBottom: spacing.xl,
-  },
-  orderDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-  },
-  label: {
-    color: colors.light.textSecondary,
-    fontFamily: typography.fontFamilies.label,
-    fontSize: typography.scale.labelSmall.fontSize,
-  },
-  value: {
-    color: colors.light.textPrimary,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    fontWeight: '500',
-  },
-  itemsSection: {
-    marginBottom: spacing.md,
-  },
-  sectionLabel: {
-    color: colors.light.textSecondary,
-    fontFamily: typography.fontFamilies.label,
-    fontSize: typography.scale.labelMedium.fontSize,
-    marginBottom: spacing.sm,
-  },
-  item: {
-    padding: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.light.border,
-    marginBottom: spacing.sm,
-  },
-  itemName: {
-    color: colors.light.textPrimary,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    fontWeight: '500',
-  },
-  itemDetails: {
-    color: colors.light.textMuted,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.labelSmall.fontSize,
-    marginLeft: spacing.sm,
-  },
-  confirmDeliveryButton: {
-    backgroundColor: colors.light.accent,
-    padding: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  confirmDeliveryText: {
-    color: colors.light.background,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    fontWeight: '600',
-  },
-  cancelOrderButton: {
-    backgroundColor: colors.error,
-    padding: spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: spacing.md,
-    marginLeft: spacing.sm,
-  },
-  cancelOrderText: {
-    color: colors.light.background,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    fontWeight: '600',
-  },
-  deliveryConfirmed: {
-    padding: spacing.md,
-    backgroundColor: colors.success,
-    borderRadius: 8,
-    marginTop: spacing.md,
-  },
-  deliveryText: {
-    color: colors.light.background,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-  },
-  backButton: {
-    marginTop: spacing.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    borderRadius: 8,
-  },
-  backText: {
-    color: colors.light.textPrimary,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-  },
-  errorText: {
-    color: colors.error,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    margin: spacing.md,
-  },
-  retryButton: {
-    padding: spacing.md,
-    backgroundColor: colors.light.surface,
-    borderRadius: 8,
-    marginTop: spacing.md,
-  },
-  retryText: {
-    color: colors.light.accent,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-  },
-  emptyText: {
-    color: colors.light.textMuted,
-    fontFamily: typography.fontFamilies.body,
-    fontSize: typography.scale.bodyMedium.fontSize,
-    textAlign: 'center',
-    marginTop: spacing.xl,
-  },
+  container: { gap: spacing.lg, paddingBottom: spacing.xxxl },
+  heading: { gap: spacing.xs },
+  eyebrow: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, letterSpacing: 1 },
+  header: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.display, fontSize: typography.scale.displaySmall.fontSize },
+  status: { alignSelf: 'flex-start', paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: colors.light.accentSoft, color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, textTransform: 'capitalize' },
+  summaryCard: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
+  label: { color: colors.light.textSecondary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
+  value: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  total: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.display, fontSize: typography.scale.headlineLarge.fontSize },
+  itemsSection: { gap: spacing.sm },
+  sectionTitle: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.headlineSmall.fontSize },
+  item: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.light.border },
+  itemCopy: { flex: 1, gap: spacing.xs },
+  itemName: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  itemDetails: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
+  itemAmount: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  helper: { color: colors.light.textSecondary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize, lineHeight: typography.scale.bodySmall.lineHeight },
+  notice: { color: colors.light.success, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.bodySmall.fontSize },
+  errorText: { color: colors.light.error, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, marginVertical: spacing.sm },
+  primaryButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.accent, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
+  cancelButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.danger, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
+  primaryText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize },
+  disputePanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  disputeInput: { minHeight: 120, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, padding: spacing.md, color: colors.light.textPrimary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize },
+  secondaryButton: { minHeight: 48, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
+  secondaryText: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
+  backButton: { alignItems: 'center', padding: spacing.md },
+  emptyText: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize, textAlign: 'center', marginTop: spacing.xl },
 });
+
+export default OrderDetailScreen;
