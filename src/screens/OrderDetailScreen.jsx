@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { colors, spacing, typography, radius } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { orderAPI } from '../utils/api';
+import { orderAPI, deliveryAPI } from '../utils/api';
 import { formatCurrency } from '../utils/format';
 
 const money = (amount, currency = 'NGN') => {
@@ -27,6 +27,8 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [disputeReason, setDisputeReason] = useState('');
+  const [handoverCode, setHandoverCode] = useState('');
+  const [handoverExpiresAt, setHandoverExpiresAt] = useState(null);
 
   const loadOrder = useCallback(async (showLoading = true) => {
     if (!orderId) {
@@ -60,6 +62,8 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const paymentStatus = payment?.status || order?.payment_status || 'unknown';
   const items = useMemo(() => order?.order_items || order?.items || [], [order]);
   const canStartPayment = Boolean(order && order.status === 'pending_payment' && paymentStatus === 'pending');
+  const canGenerateHandoverCode = Boolean(order?.delivery_id && ['picked_up', 'in_transit'].includes(order.delivery_status));
+  const canRefreshDelivery = Boolean(order?.delivery_id && !['delivered', 'failed'].includes(order.delivery_status));
   const canConfirm = Boolean(
     order && paymentStatus === 'held' && (
       (order.delivery_type === 'delivery' && order.status === 'delivered') ||
@@ -74,6 +78,30 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     order && paymentStatus === 'held' &&
     ['paid_held', 'confirmed', 'processing', 'shipped', 'delivered'].includes(order.status)
   );
+
+  const handleGenerateHandoverCode = useCallback(async () => {
+    if (!order?.delivery_id) return;
+    setAction('handover-code');
+    setError('');
+    setNotice('');
+    try {
+      const result = await deliveryAPI.generateHandoverCode(order.delivery_id);
+      if (!result?.code) throw new Error('Kamba did not return a handover code.');
+      setHandoverCode(result.code);
+      setHandoverExpiresAt(result.expires_at || null);
+      setNotice('Show this one-time code to your delivery provider at handover. Do not share it with anyone else.');
+    } catch (err) {
+      const message = err.response?.data?.error || err.message;
+      setError(typeof message === 'string' ? message : 'Could not generate a handover code.');
+    } finally {
+      setAction('');
+    }
+  }, [order?.delivery_id]);
+
+  const handleRefreshDelivery = useCallback(async () => {
+    await loadOrder(false);
+    setNotice('Delivery progress refreshed from Kamba.');
+  }, [loadOrder]);
 
   const handleStartPayment = useCallback(async () => {
     setAction('payment');
@@ -253,6 +281,28 @@ export const OrderDetailScreen = ({ navigation, route }) => {
           </View>
         ) : null}
 
+        {canRefreshDelivery ? (
+          <TouchableOpacity style={styles.secondaryButton} onPress={handleRefreshDelivery} disabled={Boolean(action)}>
+            <Text style={styles.secondaryText}>Refresh delivery progress</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {canGenerateHandoverCode ? (
+          <View style={styles.handoverPanel}>
+            <Text style={styles.sectionTitle}>Confirm handover securely</Text>
+            <Text style={styles.helper}>Generate a one-time code and show it to the delivery provider only when you are ready to receive your package. It expires after 10 minutes.</Text>
+            {handoverCode ? (
+              <View style={styles.handoverCodeBox}>
+                <Text style={styles.handoverCode}>{handoverCode}</Text>
+                {handoverExpiresAt ? <Text style={styles.helper}>Expires {new Date(handoverExpiresAt).toLocaleTimeString()}</Text> : null}
+              </View>
+            ) : null}
+            <TouchableOpacity style={styles.primaryButton} onPress={handleGenerateHandoverCode} disabled={Boolean(action)}>
+              {action === 'handover-code' ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>{handoverCode ? 'Generate a new code' : 'Generate handover code'}</Text>}
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {canConfirm ? (
           <TouchableOpacity style={styles.primaryButton} onPress={handleConfirm} disabled={Boolean(action)}>
             {action === 'confirm' ? <ActivityIndicator color={colors.light.onAccent} /> : (
@@ -321,6 +371,9 @@ const styles = StyleSheet.create({
   cancelButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.danger, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   primaryText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize },
   paymentPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  handoverPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  handoverCodeBox: { alignItems: 'center', justifyContent: 'center', padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.light.accentSoft },
+  handoverCode: { color: colors.light.accent, fontFamily: typography.fontFamilies.display, fontSize: 34, letterSpacing: 6, fontWeight: '700' },
   disputePanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
   disputeInput: { minHeight: 120, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.lg, padding: spacing.md, color: colors.light.textPrimary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodyMedium.fontSize },
   secondaryButton: { minHeight: 48, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.light.border, alignItems: 'center', justifyContent: 'center', padding: spacing.md },

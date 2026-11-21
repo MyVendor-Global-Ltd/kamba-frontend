@@ -36,6 +36,7 @@ import { EditProfileScreen } from '../screens/EditProfileScreen';
 import { SecurityScreen } from '../screens/SecurityScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { VendorHubScreen } from '../screens/VendorHubScreen';
+import { DeliveryProviderScreen } from '../screens/DeliveryProviderScreen';
 import { VendorPaymentScreen } from '../screens/VendorPaymentScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { LocationPickerScreen } from '../screens/LocationPickerScreen';
@@ -240,6 +241,11 @@ function RootNavigator() {
         name="VendorPayments"
         component={VendorPaymentScreen}
         options={{ headerShown: true, headerTitle: 'Vendor Payments', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="DeliveryProvider"
+        component={DeliveryProviderScreen}
+        options={{ headerShown: true, headerTitle: 'Delivery Provider', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="Notifications"

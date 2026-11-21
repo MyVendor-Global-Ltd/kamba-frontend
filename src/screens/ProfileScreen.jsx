@@ -162,6 +162,17 @@ export const ProfileScreen = ({ navigation }) => {
             <Text style={styles.actionLabel}>Settings</Text>
             <ArrowRight size={16} color={colors.light.textMuted} />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionRow}
+            onPress={() => navigation.navigate('DeliveryProvider')}
+            accessibilityRole="button"
+            accessibilityLabel="Delivery provider"
+          >
+            <User size={18} color={colors.light.accent} />
+            <Text style={styles.actionLabel}>Delivery Provider</Text>
+            <ArrowRight size={16} color={colors.light.textMuted} />
+          </TouchableOpacity>
         </View>
       </View>
     </ScreenShell>
