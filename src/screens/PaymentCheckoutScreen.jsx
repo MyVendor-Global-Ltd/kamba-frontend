@@ -28,13 +28,23 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
     setError('');
     try {
       if (initialize) {
-        const result = isParentCheckout
-          ? await marketplaceCheckoutAPI.initiatePayment(checkoutId)
-          : await orderAPI.initiatePayment(orderId);
-        if (result?.payment_instructions?.method !== 'bank_transfer') {
-          throw new Error('Kamba did not receive temporary bank-transfer instructions.');
+        if (isParentCheckout) {
+          const current = await marketplaceCheckoutAPI.getStatus(checkoutId);
+          setPayment(current);
+          if (current.status === 'pending') {
+            const result = await marketplaceCheckoutAPI.initiatePayment(checkoutId);
+            if (result?.payment_instructions?.method !== 'bank_transfer') {
+              throw new Error('Kamba did not receive temporary bank-transfer instructions.');
+            }
+            setInstructions(result.payment_instructions);
+          }
+        } else {
+          const result = await orderAPI.initiatePayment(orderId);
+          if (result?.payment_instructions?.method !== 'bank_transfer') {
+            throw new Error('Kamba did not receive temporary bank-transfer instructions.');
+          }
+          setInstructions(result.payment_instructions);
         }
-        setInstructions(result.payment_instructions);
       }
       const status = isParentCheckout
         ? await marketplaceCheckoutAPI.getStatus(checkoutId)
