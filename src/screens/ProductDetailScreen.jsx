@@ -4,13 +4,11 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   Image,
 } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { Storefront, ShoppingBag } from '../utils/phosphorIcons';
 import { productAPI, cartAPI } from '../utils/api';
 
 export const ProductDetailScreen = ({ navigation, route }) => {
