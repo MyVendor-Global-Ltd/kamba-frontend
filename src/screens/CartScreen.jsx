@@ -58,7 +58,7 @@ export const CartScreen = ({ navigation }) => {
     () => cartItems.filter((item) => selectedProductIds.includes(item.product_id)),
     [cartItems, selectedProductIds],
   );
-  const selectedSubtotal = selectedItems.reduce((sum, item) => sum + Number(item.line_total || 0), 0);
+  const selectedSubtotal = selectedItems.reduce((sum, item) => sum + Number(item.line_total ?? ((Number(item.price) || 0) * (Number(item.quantity) || 1))), 0);
   const selectedFee = Math.ceil((selectedSubtotal * platformFeeBps) / 10000);
   const selectedTotal = selectedSubtotal + selectedFee;
 
