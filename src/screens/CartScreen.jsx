@@ -107,7 +107,7 @@ export const CartScreen = ({ navigation }) => {
             type="empty"
             icon={ShoppingBag}
             title="Your cart is empty"
-            description="Product listings and cart support are not connected in this preview. No sample items or charges are shown."
+            description="Browse local stores and add products to your cart. Your order total is calculated securely at checkout."
             actionLabel="Explore shops"
             onAction={() => navigation.navigate('Discover')}
           />
