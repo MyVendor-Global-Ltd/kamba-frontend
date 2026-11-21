@@ -155,6 +155,7 @@ const RequestCard = ({ item, isVendor, onRefresh, setError }) => {
             disabled={busy || disputeReason.trim().length < 10}
             onPress={() => run(async () => {
               await serviceAPI.createPaymentDispute(item.id, disputeReason.trim());
+              setPayment((current) => ({ ...(current || {}), status: 'disputed' }));
               setDisputeReason('');
             })}
           >
