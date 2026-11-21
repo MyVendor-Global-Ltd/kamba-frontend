@@ -194,6 +194,43 @@ export const deliveryAPI = {
     });
     return responsePayload(response)?.quote || null;
   },
+  async getProviderProfile() {
+    const response = await api.get('/delivery/providers/profile');
+    return responsePayload(response)?.provider || null;
+  },
+  async registerProvider(profile) {
+    const response = await api.post('/delivery/providers/profile', profile);
+    return responsePayload(response)?.provider || null;
+  },
+  async setAvailability(is_available) {
+    const response = await api.patch('/delivery/providers/availability', { is_available });
+    return responsePayload(response) || null;
+  },
+  async listAssignments() {
+    const response = await api.get('/delivery/providers/assignments');
+    return responsePayload(response)?.assignments || [];
+  },
+  async respondToAssignment(assignmentId, decision) {
+    const response = await api.post(`/delivery/providers/assignments/${assignmentId}/respond`, { decision });
+    return responsePayload(response) || null;
+  },
+  async updateDeliveryStatus(deliveryId, status, note = null, evidence = {}) {
+    const response = await api.patch(`/delivery/deliveries/${deliveryId}/status`, { status, note, evidence });
+    return responsePayload(response) || null;
+  },
+  async listEarnings() {
+    const response = await api.get('/delivery/providers/earnings');
+    return responsePayload(response)?.earnings || [];
+  },
+  async getDeliveryEvidence(deliveryId) {
+    const response = await api.get(`/delivery/deliveries/${deliveryId}/evidence`);
+    return responsePayload(response)?.evidence || [];
+  },
+  async generateHandoverCode(deliveryId) {
+    const response = await api.post(`/delivery/deliveries/${deliveryId}/handover-code`);
+    return responsePayload(response) || null;
+  },
+
 };
 
 export const orderAPI = {
@@ -290,43 +327,3 @@ export const vendorAPI = {
 };
 
 export default api;
-
-
-export const deliveryAPI = {
-  async getProviderProfile() {
-    const response = await api.get('/delivery/providers/profile');
-    return responsePayload(response)?.provider || null;
-  },
-  async registerProvider(profile) {
-    const response = await api.post('/delivery/providers/profile', profile);
-    return responsePayload(response)?.provider || null;
-  },
-  async setAvailability(is_available) {
-    const response = await api.patch('/delivery/providers/availability', { is_available });
-    return responsePayload(response) || null;
-  },
-  async listAssignments() {
-    const response = await api.get('/delivery/providers/assignments');
-    return responsePayload(response)?.assignments || [];
-  },
-  async respondToAssignment(assignmentId, decision) {
-    const response = await api.post(`/delivery/providers/assignments/${assignmentId}/respond`, { decision });
-    return responsePayload(response) || null;
-  },
-  async updateDeliveryStatus(deliveryId, status, note = null, evidence = {}) {
-    const response = await api.patch(`/delivery/deliveries/${deliveryId}/status`, { status, note, evidence });
-    return responsePayload(response) || null;
-  },
-  async listEarnings() {
-    const response = await api.get('/delivery/providers/earnings');
-    return responsePayload(response)?.earnings || [];
-  },
-  async getDeliveryEvidence(deliveryId) {
-    const response = await api.get(`/delivery/deliveries/${deliveryId}/evidence`);
-    return responsePayload(response)?.evidence || [];
-  },
-  async generateHandoverCode(deliveryId) {
-    const response = await api.post(`/delivery/deliveries/${deliveryId}/handover-code`);
-    return responsePayload(response) || null;
-  },
-};
