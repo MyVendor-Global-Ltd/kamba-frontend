@@ -12,7 +12,7 @@ import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { StoreCard } from '../components/StoreCard';
-import { vendorAPI } from '../utils/api';
+import { userAPI, vendorAPI } from '../utils/api';
 
 const getStoreName = (store) => store.store_name || store.name || 'Local shop';
 
@@ -26,7 +26,21 @@ export const SearchScreen = ({ navigation }) => {
     setLoading(true);
     setError(null);
     try {
-      setStores(await vendorAPI.listStores({ page: 1, limit: 50 }));
+      const params = { page: 1, limit: 50 };
+      // Use the account's saved location when available. Location is optional:
+      // public shop discovery must still work when signed out or without GPS.
+      try {
+        const location = await userAPI.getLocation();
+        if (Number.isFinite(location?.lat) && Number.isFinite(location?.lng)) {
+          params.lat = location.lat;
+          params.lng = location.lng;
+          params.radius = 15;
+        }
+      } catch {
+        // The public directory remains available if the user has no session
+        // or the saved-location endpoint is temporarily unavailable.
+      }
+      setStores(await vendorAPI.listStores(params));
     } catch (err) {
       setStores([]);
       const message = err.response?.data?.error;
