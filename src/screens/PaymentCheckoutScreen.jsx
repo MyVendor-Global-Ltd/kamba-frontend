@@ -2,13 +2,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { ScreenShell } from '../components/ScreenShell';
-import { orderAPI } from '../utils/api';
+import { orderAPI, marketplaceCheckoutAPI } from '../utils/api';
 import { formatCurrency } from '../utils/format';
 
 const money = (kobo) => formatCurrency((Number(kobo) || 0) / 100);
 
 export const PaymentCheckoutScreen = ({ navigation, route }) => {
   const orderId = route?.params?.orderId || '';
+  const checkoutId = route?.params?.checkoutId || '';
+  const isParentCheckout = Boolean(checkoutId);
   const [instructions, setInstructions] = useState(null);
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +18,7 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
   const [error, setError] = useState('');
 
   const loadPayment = useCallback(async (initialize = false) => {
-    if (!orderId) {
+    if (!orderId && !checkoutId) {
       setError('This payment session is missing its order ID.');
       setLoading(false);
       return;
@@ -26,13 +28,17 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
     setError('');
     try {
       if (initialize) {
-        const result = await orderAPI.initiatePayment(orderId);
+        const result = isParentCheckout
+          ? await marketplaceCheckoutAPI.initiatePayment(checkoutId)
+          : await orderAPI.initiatePayment(orderId);
         if (result?.payment_instructions?.method !== 'bank_transfer') {
           throw new Error('Kamba did not receive temporary bank-transfer instructions.');
         }
         setInstructions(result.payment_instructions);
       }
-      const status = await orderAPI.getPaymentStatus(orderId);
+      const status = isParentCheckout
+        ? await marketplaceCheckoutAPI.getStatus(checkoutId)
+        : await orderAPI.getPaymentStatus(orderId);
       setPayment(status);
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || err.message || 'Could not load payment instructions.');
@@ -40,7 +46,7 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [orderId]);
+  }, [orderId, checkoutId, isParentCheckout]);
 
   useEffect(() => { loadPayment(true); }, [loadPayment]);
 
@@ -51,8 +57,8 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
   }, [payment?.status, loadPayment]);
 
   const status = payment?.status || 'pending';
-  const paid = ['held', 'released'].includes(status);
-  const failed = ['failed', 'refunded'].includes(status);
+  const paid = isParentCheckout ? status === 'held' : ['held', 'released'].includes(status);
+  const failed = isParentCheckout ? ['failed', 'expired'].includes(status) : ['failed', 'refunded'].includes(status);
 
   if (loading) {
     return <ScreenShell><ActivityIndicator size="large" color={colors.light.accent} /></ScreenShell>;
@@ -63,6 +69,7 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
       <View style={styles.container}>
         <Text style={styles.eyebrow}>KAMBA SECURE CHECKOUT</Text>
         <Text style={styles.title}>Complete your transfer</Text>
+        {isParentCheckout ? <Text style={styles.copy}>One payment covers {route?.params?.childOrders?.length || 'all'} store orders in this checkout.</Text> : null}
         <Text style={styles.copy}>This temporary account belongs to this checkout only. Transfer the exact amount shown below. Paystack will notify Kamba when the transfer is confirmed.</Text>
 
         {instructions ? (
@@ -90,7 +97,7 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
           </Text>
           <Text style={styles.copy}>
             {paid
-              ? 'Paystack has confirmed the payment. Your order is now being prepared.'
+              ? 'Paystack has confirmed the payment. ' + (isParentCheckout ? 'All store orders in this checkout are now being prepared.' : 'Your order is now being prepared.')
               : failed
                 ? 'This payment did not complete. Check your order for the latest status before trying again.'
                 : 'Keep this screen open or return later. Kamba checks the payment automatically; tapping refresh does not mark a transfer as paid.'}
@@ -103,8 +110,10 @@ export const PaymentCheckoutScreen = ({ navigation, route }) => {
             {refreshing ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>Refresh payment status</Text>}
           </TouchableOpacity>
         ) : null}
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.replace('OrderDetail', { orderId })}>
-          <Text style={styles.secondaryText}>{paid ? 'View order' : 'Return to order'}</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => isParentCheckout
+          ? navigation.navigate('Orders')
+          : navigation.replace('OrderDetail', { orderId })}>
+          <Text style={styles.secondaryText}>{isParentCheckout ? 'View my orders' : paid ? 'View order' : 'Return to order'}</Text>
         </TouchableOpacity>
       </View>
     </ScreenShell>
