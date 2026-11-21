@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Linking,
   StyleSheet,
   Text,
@@ -29,6 +30,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const [disputeReason, setDisputeReason] = useState('');
   const [handoverCode, setHandoverCode] = useState('');
   const [handoverExpiresAt, setHandoverExpiresAt] = useState(null);
+  const [deliveryEvidence, setDeliveryEvidence] = useState([]);
 
   const loadOrder = useCallback(async (showLoading = true) => {
     if (!orderId) {
@@ -41,6 +43,16 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     try {
       const freshOrder = await orderAPI.getOrder(orderId);
       setOrder(freshOrder);
+      if (freshOrder?.delivery_id) {
+        try {
+          const evidence = await deliveryAPI.getDeliveryEvidence(freshOrder.delivery_id);
+          setDeliveryEvidence(Array.isArray(evidence) ? evidence : []);
+        } catch {
+          setDeliveryEvidence([]);
+        }
+      } else {
+        setDeliveryEvidence([]);
+      }
       try {
         const freshPayment = await orderAPI.getPaymentStatus(orderId);
         setPayment(freshPayment);
@@ -246,7 +258,31 @@ export const OrderDetailScreen = ({ navigation, route }) => {
             <Text style={styles.label}>Payment state</Text>
             <Text style={styles.value}>{String(paymentStatus).replaceAll('_', ' ')}</Text>
           </View>
+          {order.delivery_type === 'delivery' && order.delivery_status ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.label}>Delivery progress</Text>
+              <Text style={styles.value}>{String(order.delivery_status).replaceAll('_', ' ')}</Text>
+            </View>
+          ) : null}
         </View>
+
+        {deliveryEvidence.length > 0 ? (
+          <View style={styles.evidencePanel}>
+            <Text style={styles.sectionTitle}>Delivery evidence</Text>
+            <Text style={styles.helper}>These photos record package pickup and handover. They do not establish the product's internal quality.</Text>
+            {deliveryEvidence.map((evidence) => (
+              <View key={evidence.id} style={styles.evidenceItem}>
+                <Image source={{ uri: evidence.url }} style={styles.evidenceImage} resizeMode="cover" />
+                <View style={styles.evidenceCopy}>
+                  <Text style={styles.evidenceTitle}>
+                    {evidence.evidence_type === 'pickup' ? 'Package picked up' : 'Buyer handover'}
+                  </Text>
+                  <Text style={styles.helper}>{evidence.captured_at ? new Date(evidence.captured_at).toLocaleString() : 'Timestamp unavailable'}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         <View style={styles.itemsSection}>
           <Text style={styles.sectionTitle}>Items ({items.length})</Text>
@@ -371,6 +407,11 @@ const styles = StyleSheet.create({
   cancelButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.danger, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   primaryText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize },
   paymentPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  evidencePanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  evidenceItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xs },
+  evidenceImage: { width: 88, height: 88, borderRadius: radius.md, backgroundColor: colors.light.accentSoft },
+  evidenceCopy: { flex: 1, gap: spacing.xs },
+  evidenceTitle: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.headline, fontSize: typography.scale.bodyMedium.fontSize },
   handoverPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
   handoverCodeBox: { alignItems: 'center', justifyContent: 'center', padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.light.accentSoft },
   handoverCode: { color: colors.light.accent, fontFamily: typography.fontFamilies.display, fontSize: 34, letterSpacing: 6, fontWeight: '700' },
