@@ -101,12 +101,14 @@ const AssignmentCard = ({ assignment, onRespond, onStatus, busy }) => {
       Alert.alert('Handover photo required', 'Capture a handover photo before completing this delivery.');
       return;
     }
-    await onStatus(assignment, 'delivered', {
+    const completed = await onStatus(assignment, 'delivered', {
       handover_code: handoverCode,
       handover_photo: handoverPhoto.dataUrl,
     });
-    setHandoverCode('');
-    setHandoverPhoto(null);
+    if (completed) {
+      setHandoverCode('');
+      setHandoverPhoto(null);
+    }
   };
 
   return (
@@ -287,8 +289,10 @@ export const DeliveryProviderScreen = () => {
       await deliveryAPI.updateDeliveryStatus(assignment.delivery_id, status, null, evidence);
       setNotice(status === 'delivered' ? 'Delivery completed. Buyer handover evidence was recorded.' : `Delivery status updated to ${status.replace('_', ' ')}.`);
       await loadData(false);
+      return true;
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Could not update this delivery.');
+      return false;
     } finally {
       setBusyId('');
     }
