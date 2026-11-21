@@ -23,6 +23,7 @@ import { StoreDetailScreen } from '../screens/StoreDetailScreen';
 import { ProductListScreen } from '../screens/ProductListScreen';
 import { ProductDetailScreen } from '../screens/ProductDetailScreen';
 import { OrderDetailScreen } from '../screens/OrderDetailScreen';
+import { PaymentCheckoutScreen } from '../screens/PaymentCheckoutScreen';
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
@@ -38,6 +39,7 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { VendorHubScreen } from '../screens/VendorHubScreen';
 import { DeliveryProviderScreen } from '../screens/DeliveryProviderScreen';
 import { VendorPaymentScreen } from '../screens/VendorPaymentScreen';
+import { VendorPayoutAccountScreen } from '../screens/VendorPayoutAccountScreen';
 import { CheckoutScreen } from '../screens/CheckoutScreen';
 import { LocationPickerScreen } from '../screens/LocationPickerScreen';
 import { ServicesScreen } from '../screens/ServicesScreen';
@@ -261,6 +263,11 @@ function RootNavigator() {
         options={{ headerShown: true, headerTitle: 'Vendor Payments', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
+        name="VendorPayoutAccount"
+        component={VendorPayoutAccountScreen}
+        options={{ headerShown: true, headerTitle: 'Payout Bank Account', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
         name="DeliveryProvider"
         component={DeliveryProviderScreen}
         options={{ headerShown: true, headerTitle: 'Delivery Provider', headerBackTitle: 'Back' }}
@@ -286,6 +293,11 @@ function RootNavigator() {
         name="OrderDetail"
         component={OrderDetailScreen}
         options={{ headerShown: true, headerTitle: 'Order Details', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="PaymentCheckout"
+        component={PaymentCheckoutScreen}
+        options={{ headerShown: true, headerTitle: 'Secure Checkout', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="ProductDetail"

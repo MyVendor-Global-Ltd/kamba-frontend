@@ -14,8 +14,8 @@ const formatNaira = (kobo, currency = 'NGN') => {
 
 const statusLabel = (status) => ({
   pending: 'Awaiting payment',
-  held: 'Pending settlement',
-  releasing: 'Settlement processing',
+  held: 'Payment received · payout pending',
+  releasing: 'Payout awaiting confirmation',
   released: 'Payout confirmed',
   disputed: 'Disputed',
   refunding: 'Refund processing',
@@ -34,7 +34,7 @@ const statusColor = (status) => ({
   failed: colors.light.error,
 }[status] || colors.light.textPrimary);
 
-export const VendorPaymentScreen = () => {
+export const VendorPaymentScreen = ({ navigation }) => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -75,6 +75,9 @@ export const VendorPaymentScreen = () => {
           <Text style={styles.eyebrow}>VENDOR FINANCE</Text>
           <Text style={styles.title}>Payment records</Text>
           <Text style={styles.description}>Your product earnings are shown separately from the buyer's gross payment, Kamba's platform charge and delivery.</Text>
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate('VendorPayoutAccount')}>
+            <Text style={styles.secondaryText}>Manage payout bank account</Text>
+          </TouchableOpacity>
         </View>
 
         {loading ? (

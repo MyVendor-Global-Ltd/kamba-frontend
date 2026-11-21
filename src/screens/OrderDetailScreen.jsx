@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Linking,
   StyleSheet,
   Text,
   TextInput,
@@ -23,6 +22,7 @@ export const OrderDetailScreen = ({ navigation, route }) => {
   const orderId = route?.params?.orderId || '';
   const [order, setOrder] = useState(null);
   const [payment, setPayment] = useState(null);
+  const [paymentInstructions, setPaymentInstructions] = useState(null);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState('');
   const [error, setError] = useState('');
@@ -145,25 +145,9 @@ export const OrderDetailScreen = ({ navigation, route }) => {
     setNotice('Delivery progress refreshed from Kamba.');
   }, [loadOrder]);
 
-  const handleStartPayment = useCallback(async () => {
-    setAction('payment');
-    setError('');
-    setNotice('');
-    try {
-      const result = await orderAPI.initiatePayment(orderId);
-      if (!result?.checkout_url || !result.checkout_url.startsWith('https://')) {
-        throw new Error('The payment provider did not return a valid checkout link.');
-      }
-      await loadOrder(false);
-      await Linking.openURL(result.checkout_url);
-      setNotice('Payment page opened. Complete payment there, return to Kamba, then refresh the payment status.');
-    } catch (err) {
-      const message = err.response?.data?.error || err.message;
-      setError(typeof message === 'string' ? message : 'Could not open the payment page. You can retry from this order.');
-    } finally {
-      setAction('');
-    }
-  }, [orderId, loadOrder]);
+  const handleStartPayment = useCallback(() => {
+    navigation.navigate('PaymentCheckout', { orderId });
+  }, [orderId, navigation]);
 
   const handleRefreshPayment = useCallback(async () => {
     setAction('refresh');
@@ -437,12 +421,26 @@ export const OrderDetailScreen = ({ navigation, route }) => {
 
         {canStartPayment ? (
           <View style={styles.paymentPanel}>
-            <Text style={styles.helper}>This order is awaiting payment. Kamba will verify payment with the provider; returning from the payment page does not by itself mark the order as paid.</Text>
+            <Text style={styles.helper}>This order is awaiting payment. Kamba creates a temporary bank account for this transaction. Payment is confirmed automatically by Paystack; do not mark a transfer as paid yourself.</Text>
             <TouchableOpacity style={styles.primaryButton} onPress={handleStartPayment} disabled={Boolean(action)}>
-              {action === 'payment' ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>Continue to secure payment</Text>}
+              {action === 'payment' ? <ActivityIndicator color={colors.light.onAccent} /> : <Text style={styles.primaryText}>{paymentInstructions ? 'Refresh transfer instructions' : 'Continue to payment'}</Text>}
             </TouchableOpacity>
+            {paymentInstructions ? (
+              <View style={styles.transferInstructions}>
+                <Text style={styles.sectionTitle}>Transfer to this temporary account</Text>
+                <Text style={styles.helper}>Bank</Text>
+                <Text style={styles.transferValue}>{paymentInstructions.bank_name}</Text>
+                <Text style={styles.helper}>Account name</Text>
+                <Text style={styles.transferValue}>{paymentInstructions.account_name}</Text>
+                <Text style={styles.helper}>Account number</Text>
+                <Text selectable style={styles.transferAccount}>{paymentInstructions.account_number}</Text>
+                <Text style={styles.helper}>Exact amount to transfer</Text>
+                <Text style={styles.transferAmount}>{money(paymentInstructions.amount_minor, paymentInstructions.currency)}</Text>
+                <Text style={styles.transferWarning}>Transfer the exact amount shown. Do not round up or send a different amount. This account is temporary and expires {paymentInstructions.expires_at ? new Date(paymentInstructions.expires_at).toLocaleString() : 'at the displayed expiry'}.</Text>
+              </View>
+            ) : null}
             <TouchableOpacity style={styles.secondaryButton} onPress={handleRefreshPayment} disabled={Boolean(action)}>
-              {action === 'refresh' ? <ActivityIndicator color={colors.light.accent} /> : <Text style={styles.secondaryText}>Refresh payment status</Text>}
+              {action === 'refresh' ? <ActivityIndicator color={colors.light.accent} /> : <Text style={styles.secondaryText}>I have transferred — check payment</Text>}
             </TouchableOpacity>
           </View>
         ) : null}
@@ -553,6 +551,11 @@ const styles = StyleSheet.create({
   cancelButton: { minHeight: 52, borderRadius: radius.xl, backgroundColor: colors.light.danger, alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   primaryText: { color: colors.light.onAccent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize },
   paymentPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
+  transferInstructions: { gap: spacing.xs, padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.light.background, borderWidth: 1, borderColor: colors.light.border },
+  transferValue: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelLarge.fontSize, marginBottom: spacing.sm },
+  transferAccount: { color: colors.light.accent, fontFamily: typography.fontFamilies.display, fontSize: typography.scale.headlineLarge.fontSize, letterSpacing: 1, marginBottom: spacing.sm },
+  transferAmount: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.display, fontSize: typography.scale.displaySmall.fontSize, marginBottom: spacing.sm },
+  transferWarning: { color: colors.light.error, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.bodySmall.fontSize, lineHeight: typography.scale.bodySmall.lineHeight, marginTop: spacing.sm },
   handoverPanel: { gap: spacing.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.light.border, borderRadius: radius.xl, backgroundColor: colors.light.surface },
   handoverCodeBox: { alignItems: 'center', justifyContent: 'center', padding: spacing.lg, borderRadius: radius.lg, backgroundColor: colors.light.accentSoft },
   handoverCode: { color: colors.light.accent, fontFamily: typography.fontFamilies.display, fontSize: 34, letterSpacing: 6, fontWeight: '700' },
