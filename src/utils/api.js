@@ -102,6 +102,8 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   refresh: () => api.post('/auth/refresh'),
   getDashboard: () => api.get('/auth/dashboard'),
+  requestAccountPhoneVerification: ({ phone, method = 'sms' }) => api.post('/auth/phone/request', { phone, method }),
+  verifyAccountPhone: ({ otp_code }) => api.post('/auth/phone/verify', { otp_code }),
   getNotificationPreferences: () => api.get('/auth/notification-preferences'),
   updateNotificationPreferences: (preferences) => api.patch('/auth/notification-preferences', preferences),
   async deleteAccount({ password, confirmation }) {
@@ -142,10 +144,6 @@ export const userAPI = {
       }
       throw error;
     }
-  },
-  async upgradeToVendor() {
-    const response = await api.post('/auth/upgrade-to-vendor');
-    return response.data;
   },
   async updateProfile(data) {
     const response = await api.patch('/auth/profile', data);
@@ -399,6 +397,30 @@ export const serviceAPI = {
 };
  
 export const vendorAPI = {
+  async getOnboardingEligibility() {
+    const response = await api.get('/vendors/onboard/eligibility');
+    return response.data;
+  },
+  async getOnboardingStatus() {
+    const response = await api.get('/vendors/onboard/status');
+    return response.data;
+  },
+  async submitLiveness(payload) {
+    const response = await api.post('/vendors/onboard/liveness', payload);
+    return response.data;
+  },
+  async createStore(payload) {
+    const response = await api.post('/vendors/onboard/store', payload);
+    return response.data;
+  },
+  async createServiceProfile(payload) {
+    const response = await api.post('/vendors/onboard/service', payload);
+    return response.data;
+  },
+  async uploadLocationPhotos(photos) {
+    const response = await api.post('/vendors/onboard/location-photos', { photos, target: 'store' });
+    return response.data;
+  },
   async listStores(params = {}) {
     const response = await api.get('/vendors/stores', { params });
     const stores = response.data?.stores;
