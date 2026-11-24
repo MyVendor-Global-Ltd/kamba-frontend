@@ -405,6 +405,10 @@ export const vendorAPI = {
     const response = await api.get('/vendors/onboard/status');
     return response.data;
   },
+  async getVendorProfile() {
+    const response = await api.get('/vendors/profile');
+    return response.data;
+  },
   async submitLiveness(payload) {
     const response = await api.post('/vendors/onboard/liveness', payload);
     return response.data;

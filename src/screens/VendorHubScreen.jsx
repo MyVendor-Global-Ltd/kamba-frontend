@@ -17,22 +17,31 @@ export const VendorHubScreen = ({ navigation }) => {
   const [isVendor, setIsVendor] = useState(false);
   const [vendorType, setVendorType] = useState(null);
   const [onboardingStage, setOnboardingStage] = useState(null);
+  const [loadError, setLoadError] = useState('');
 
   const loadVendorState = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const [profileResponse, status] = await Promise.all([
         authAPI.getDashboard(),
         vendorAPI.getOnboardingStatus(),
       ]);
       const user = profileResponse.data?.result;
-      setIsVendor(user?.role === 'vendor');
-      setVendorType(status.vendor_type || null);
+      if (!user?.id) throw new Error('Your account session could not be verified.');
+      let resolvedVendorType = status.vendor_type || null;
+      if (user.role === 'vendor' && status.stage === 'complete' && !resolvedVendorType) {
+        const profile = await vendorAPI.getVendorProfile();
+        resolvedVendorType = profile.vendor_type || profile.vendor_profile?.vendor_type || null;
+      }
+      if (user.role === 'vendor' && status.stage === 'complete' && !resolvedVendorType) {
+        throw new Error('Your vendor type could not be loaded. Retry before managing listings.');
+      }
+      setIsVendor(user.role === 'vendor');
+      setVendorType(resolvedVendorType);
       setOnboardingStage(status.stage || null);
-    } catch {
-      setIsVendor(false);
-      setVendorType(null);
-      setOnboardingStage(null);
+    } catch (error) {
+      setLoadError(error.response?.data?.message || error.response?.data?.error || error.message || 'Could not verify your vendor account.');
     } finally {
       setLoading(false);
     }
@@ -64,6 +73,14 @@ export const VendorHubScreen = ({ navigation }) => {
 
         {loading ? (
           <View style={styles.loading}><ActivityIndicator color={colors.light.accent} /><Text style={styles.cardDesc}>Checking your vendor account…</Text></View>
+        ) : loadError ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Vendor status unavailable</Text>
+            <Text style={styles.cardDesc}>{loadError}</Text>
+            <TouchableOpacity style={styles.upgradeButton} onPress={loadVendorState}>
+              <Text style={styles.upgradeButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         ) : !isVendor ? (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
