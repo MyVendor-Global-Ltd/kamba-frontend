@@ -358,7 +358,7 @@ export const VendorOnboardingScreen = ({ navigation }) => {
         {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         {success ? <Text accessibilityRole="alert" style={styles.success}>{success}</Text> : null}
 
-        {stage === 'not_eligible' ? (
+        {(stage === 'not_eligible' || (stage === 'liveness_required' && !eligibility.eligible)) ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Complete these account requirements first</Text>
             {(eligibility.issues || []).map((issue) => (
@@ -384,7 +384,7 @@ export const VendorOnboardingScreen = ({ navigation }) => {
           </View>
         ) : null}
 
-        {stage === 'liveness_required' ? (
+        {(stage === 'liveness_required' && eligibility.eligible) ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Selfie and vendor type</Text>
             <Text style={styles.muted}>Choose what you want to offer. Capture your own selfie; it is used for the vendor onboarding check.</Text>
