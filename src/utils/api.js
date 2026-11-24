@@ -441,6 +441,10 @@ export const vendorAPI = {
     const response = await api.post('/commerce/vendor/products', productData);
     return responsePayload(response) || null;
   },
+  async createProductMediaUploadUrl({ kind, mime_type }) {
+    const response = await api.post('/commerce/vendor/products/media-upload-url', { kind, mime_type });
+    return responsePayload(response) || null;
+  },
   async updateProduct(productId, updates) {
     const response = await api.patch(`/commerce/vendor/products/${productId}`, updates);
     return responsePayload(response) || null;

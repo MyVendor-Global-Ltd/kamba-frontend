@@ -46,6 +46,7 @@ import { ServicesScreen } from '../screens/ServicesScreen';
 import { ServiceDetailScreen } from '../screens/ServiceDetailScreen';
 import { ServiceRequestsScreen } from '../screens/ServiceRequestsScreen';
 import { VendorOnboardingScreen } from '../screens/VendorOnboardingScreen';
+import { VendorProductsScreen } from '../screens/VendorProductsScreen';
 import { UnavailableFeatureScreen } from '../screens/UnavailableFeatureScreen';
 
 const Tab = createBottomTabNavigator();
@@ -313,7 +314,12 @@ function RootNavigator() {
       <Stack.Screen
         name="VendorOnboarding"
         component={VendorOnboardingScreen}
-        options={{ headerShown: true, headerTitle: 'Become a Vendor', headerBackTitle: 'Back' }}
+        options={{ headerShown: true, headerTitle: 'Vendor onboarding', headerBackTitle: 'Back' }}
+      />
+      <Stack.Screen
+        name="VendorProducts"
+        component={VendorProductsScreen}
+        options={{ headerShown: true, headerTitle: 'Vendor products', headerBackTitle: 'Back' }}
       />
       <Stack.Screen
         name="EditProfile"
