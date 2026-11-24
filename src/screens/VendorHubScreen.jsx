@@ -132,15 +132,18 @@ export const VendorHubScreen = ({ navigation }) => {
           </View>
         )}
 
-        <TouchableOpacity
-          style={styles.payoutButton}
-          onPress={() => navigation.navigate('VendorPayoutAccount')}
-          accessibilityRole="button"
-          accessibilityLabel="Set up payout bank account"
-        >
-          <Text style={styles.payoutButtonText}>Set up payout bank account</Text>
-          <ArrowRight size={16} color={colors.light.accent} />
-        </TouchableOpacity>
+        {isVendor && onboardingStage === 'complete' ? (
+          <TouchableOpacity
+            style={styles.payoutButton}
+            onPress={() => navigation.navigate('VendorPayoutAccount')}
+            accessibilityRole="button"
+            accessibilityLabel="Set up payout bank account"
+          >
+            <Text style={styles.payoutButtonText}>Set up payout bank account</Text>
+            <ArrowRight size={16} color={colors.light.accent} />
+          </TouchableOpacity>
+  
+          ) : null}
 
         <TouchableOpacity
           style={styles.browseButton}
