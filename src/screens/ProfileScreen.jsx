@@ -23,13 +23,6 @@ export const ProfileScreen = ({ navigation }) => {
     setLoading(true);
     setError(null);
     try {
-      const savedUser = await storage.getUserData();
-      if (savedUser) {
-        setUser(savedUser);
-        setLoading(false);
-        return;
-      }
-
       const response = await authAPI.getDashboard();
       const profile = response.data?.result;
       if (!response.data?.success || !profile) {

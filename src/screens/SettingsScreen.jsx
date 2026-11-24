@@ -8,19 +8,19 @@ const settingItems = [
   {
     icon: Bell,
     label: 'Notifications',
-    description: 'Notification preferences are not saved in this preview.',
+    description: 'Manage preferences shared with your Kamba website account.',
     route: 'Notifications',
   },
   {
     icon: ShieldCheck,
     label: 'Security & privacy',
-    description: 'Security controls are not connected.',
+    description: 'Review account deletion and security options.',
     route: 'Security',
   },
   {
     icon: User,
     label: 'Edit profile',
-    description: 'Profile editing is not connected.',
+    description: 'Update your account details and contact information.',
     route: 'EditProfile',
   },
   {

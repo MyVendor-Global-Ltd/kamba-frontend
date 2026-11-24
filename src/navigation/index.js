@@ -195,8 +195,9 @@ function RootNavigator() {
           if (active) setInitialRoute('Auth');
           return;
         }
-        const savedUser = await storage.getUserData();
-        if (active) setInitialRoute(savedUser?.id ? 'Main' : 'Auth');
+        // Cached profile data is never proof of an active server session.
+        // Keep private screens behind a successful authenticated API check.
+        if (active) setInitialRoute('Auth');
       }
     };
     checkAuth();

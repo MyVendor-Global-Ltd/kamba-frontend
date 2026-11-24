@@ -25,16 +25,6 @@ export const EditProfileScreen = ({ navigation }) => {
     setLoading(true);
     setError(null);
     try {
-      const savedUser = await storage.getUserData();
-      if (savedUser) {
-        setUser(savedUser);
-        setDisplayName(savedUser.display_name || savedUser.name || '');
-        setUsername(savedUser.username ? savedUser.username.replace(/^@/, '') : '');
-        setPhone(savedUser.phone || '');
-        setEmail(savedUser.email || '');
-        return;
-      }
-
       const response = await authAPI.getDashboard();
       const profile = response.data?.result;
       if (!response.data?.success || !profile) {
@@ -73,16 +63,16 @@ export const EditProfileScreen = ({ navigation }) => {
     setSaving(true);
     try {
       const response = await userAPI.updateProfile({
-        display_name: displayName.trim() || null,
+        displayName: displayName.trim() || null,
         username: `@${validation.cleaned}`,
         phone: phone.trim() || null,
-        email: email.trim() || null,
       });
 
-      const updated = response.data?.result;
-      if (!response.data?.success || !updated) {
+      const result = response.data?.result;
+      if (!response.data?.success || !result) {
         throw new Error(response.data?.message || 'Could not save your changes.');
       }
+      const updated = { ...result, display_name: result.display_name || result.displayName || null };
 
       setUser(updated);
       await storage.setUserData(updated);
@@ -183,10 +173,11 @@ export const EditProfileScreen = ({ navigation }) => {
             label="Email address"
             placeholder="you@example.com"
             value={email}
-            onChangeText={setEmail}
+            editable={false}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            hint="Email changes require a separate verification flow."
           />
         </View>
 

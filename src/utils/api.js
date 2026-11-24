@@ -102,6 +102,13 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   refresh: () => api.post('/auth/refresh'),
   getDashboard: () => api.get('/auth/dashboard'),
+  getNotificationPreferences: () => api.get('/auth/notification-preferences'),
+  updateNotificationPreferences: (preferences) => api.patch('/auth/notification-preferences', preferences),
+  async deleteAccount({ password, confirmation }) {
+    const response = await api.delete('/auth/account', { data: { password, confirmation } });
+    await storage.clearAll();
+    return response;
+  },
   getGoogleAuthUrl: () => `${API_BASE_URL}/auth/google`,
   requestOTP: (data) => api.post('/auth/otp/request', data),
   verifyOTP: (data) => api.post('/auth/otp/verify', data),
