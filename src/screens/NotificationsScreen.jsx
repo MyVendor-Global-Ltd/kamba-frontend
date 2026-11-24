@@ -20,7 +20,7 @@ const preferenceRows = [
 ];
 
 export const NotificationsScreen = () => {
-  const [preferences, setPreferences] = useState(DEFAULTS);
+  const [preferences, setPreferences] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState(null);
   const [error, setError] = useState(null);
