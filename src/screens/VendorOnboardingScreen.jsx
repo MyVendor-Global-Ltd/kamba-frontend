@@ -26,6 +26,7 @@ const DEFAULT_STORE = {
   service_area_text: '',
   online_url: '',
   contact_whatsapp: '',
+  same_as_business_address: false,
 };
 
 const DEFAULT_SERVICE = {
@@ -40,6 +41,8 @@ const DEFAULT_SERVICE = {
   online_url: '',
   contact_preference: 'whatsapp',
   contact_whatsapp: '',
+  same_as_business_address: false,
+  fulfilment_options: ['customer_visit'],
 };
 
 const issueMessage = (error, fallback) =>
@@ -59,6 +62,8 @@ export const VendorOnboardingScreen = ({ navigation }) => {
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [vendorType, setVendorType] = useState('products');
+  const [privateAddress, setPrivateAddress] = useState('');
+  const [privateAddressSameAsBusiness, setPrivateAddressSameAsBusiness] = useState(false);
   const [selfie, setSelfie] = useState(null);
   const [locationPhotos, setLocationPhotos] = useState([]);
   const [storeForm, setStoreForm] = useState(DEFAULT_STORE);
@@ -179,12 +184,53 @@ export const VendorOnboardingScreen = ({ navigation }) => {
         image_base64: selfie.base64,
         mime_type: selfie.mimeType || 'image/jpeg',
         vendor_type: vendorType,
+        home_address: privateAddress.trim(),
       });
       await loadStatus();
       setSelfie(null);
       setSuccess('Selfie submitted. Continue with your store or service profile.');
     } catch (submitError) {
       setError(issueMessage(submitError, 'Could not submit your selfie.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const createBasicVendorProfile = async () => {
+    if (privateAddress.trim().length < 5) {
+      setError('Enter your private residential address before continuing.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    setSuccess('');
+    try {
+      await vendorAPI.createBasicVendorProfile({ vendor_type: vendorType, home_address: privateAddress.trim() });
+      await loadStatus();
+      setSuccess('Vendor profile created. Continue with your store or service profile.');
+    } catch (createError) {
+      setError(issueMessage(createError, 'Could not create your vendor profile.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const savePrivateAddress = async () => {
+    if (!privateAddressSameAsBusiness && privateAddress.trim().length < 5) {
+      setError('Enter a valid private residential address.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    setSuccess('');
+    try {
+      await vendorAPI.updatePrivateAddress({
+        home_address: privateAddress.trim(),
+        same_as_business_address: privateAddressSameAsBusiness,
+      });
+      setSuccess('Private residential address updated.');
+    } catch (saveError) {
+      setError(issueMessage(saveError, 'Could not update your private address.'));
     } finally {
       setSubmitting(false);
     }
@@ -204,6 +250,7 @@ export const VendorOnboardingScreen = ({ navigation }) => {
     try {
       await vendorAPI.createStore({
         ...storeForm,
+        home_address: privateAddress.trim(),
         business_name: storeForm.business_name.trim() || storeForm.store_name.trim(),
         store_name: storeForm.store_name.trim(),
         category: storeForm.category.trim(),
@@ -229,6 +276,7 @@ export const VendorOnboardingScreen = ({ navigation }) => {
     try {
       await vendorAPI.createServiceProfile({
         ...serviceForm,
+        home_address: privateAddress.trim(),
         business_name: serviceForm.business_name.trim() || serviceForm.service_title.trim(),
         service_title: serviceForm.service_title.trim(),
         category: serviceForm.category.trim(),
@@ -384,6 +432,27 @@ export const VendorOnboardingScreen = ({ navigation }) => {
           </View>
         ) : null}
 
+        {stage === 'vendor_profile_required' ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Create your vendor profile</Text>
+            <Text style={styles.fieldLabel}>What will you offer on Kamba?</Text>
+            <View style={styles.modeWrap}>
+              {[
+                { value: 'products', label: 'Products' },
+                { value: 'services', label: 'Services' },
+                { value: 'both', label: 'Both' },
+              ].map((item) => (
+                <TouchableOpacity key={item.value} onPress={() => setVendorType(item.value)} style={[styles.modeChip, vendorType === item.value && styles.modeChipActive]}>
+                  <Text style={[styles.modeText, vendorType === item.value && styles.modeTextActive]}>{item.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <KambaInput label="Private residential address" value={privateAddress} onChangeText={setPrivateAddress} placeholder="Your home address. Customers will not see this." />
+            <Text style={styles.muted}>Stored separately from your public business location. It is not displayed to customers.</Text>
+            <KambaButton label="Create vendor profile" fullWidth loading={submitting} disabled={privateAddress.trim().length < 5} onPress={createBasicVendorProfile} />
+          </View>
+        ) : null}
+
         {(stage === 'liveness_required' && eligibility.eligible) ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Selfie and vendor type</Text>
@@ -422,6 +491,7 @@ export const VendorOnboardingScreen = ({ navigation }) => {
             <Text style={styles.fieldLabel}>Business location type</Text>
             {renderModeOptions(storeForm, updateStore)}
             {renderLocationFields(storeForm, updateStore)}
+            <TouchableOpacity onPress={() => updateStore('same_as_business_address', !storeForm.same_as_business_address)} style={styles.modeChip}><Text style={styles.modeText}>{storeForm.same_as_business_address ? '✓ ' : ''}My home address is the same as this business address</Text></TouchableOpacity>
             <KambaInput label="Business WhatsApp number (optional)" value={storeForm.contact_whatsapp} onChangeText={(value) => updateStore('contact_whatsapp', value)} placeholder="+234…" keyboardType="phone-pad" />
             <KambaButton label="Create storefront" fullWidth loading={submitting} onPress={createStore} />
           </View>
@@ -450,8 +520,33 @@ export const VendorOnboardingScreen = ({ navigation }) => {
                 </TouchableOpacity>
               ))}
             </View>
+            <Text style={styles.fieldLabel}>Service fulfilment</Text>
+            <View style={styles.modeWrap}>
+              {[
+                { value: 'on_site', label: 'At my location' },
+                { value: 'customer_visit', label: 'I visit customers' },
+                { value: 'online', label: 'Online' },
+                { value: 'automated', label: 'Automated' },
+              ].map((item) => {
+                const selected = serviceForm.fulfilment_options.includes(item.value);
+                return <TouchableOpacity key={item.value} onPress={() => updateService('fulfilment_options', selected ? serviceForm.fulfilment_options.filter((value) => value !== item.value) : [...serviceForm.fulfilment_options, item.value])} style={[styles.modeChip, selected && styles.modeChipActive]}><Text style={[styles.modeText, selected && styles.modeTextActive]}>{item.label}</Text></TouchableOpacity>;
+              })}
+            </View>
+            <TouchableOpacity onPress={() => updateService('same_as_business_address', !serviceForm.same_as_business_address)} style={styles.modeChip}><Text style={styles.modeText}>{serviceForm.same_as_business_address ? '✓ ' : ''}My home address is the same as this business address</Text></TouchableOpacity>
             <KambaInput label="Business WhatsApp number (optional)" value={serviceForm.contact_whatsapp} onChangeText={(value) => updateService('contact_whatsapp', value)} placeholder="+234…" keyboardType="phone-pad" />
             <KambaButton label="Create service profile" fullWidth loading={submitting} onPress={createService} />
+          </View>
+        ) : null}
+
+        {(stage === 'profile_setup' || stage === 'complete') ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Private residential address</Text>
+            <KambaInput label="Home address" value={privateAddress} onChangeText={setPrivateAddress} placeholder="Your private residential address" />
+            <TouchableOpacity onPress={() => setPrivateAddressSameAsBusiness((value) => !value)} style={styles.modeChip}>
+              <Text style={styles.modeText}>{privateAddressSameAsBusiness ? '✓ ' : ''}My home address is the same as my business address</Text>
+            </TouchableOpacity>
+            <Text style={styles.muted}>This address is private and is never shown on your public store or service profile.</Text>
+            <KambaButton label="Save private address" fullWidth loading={submitting} disabled={!privateAddressSameAsBusiness && privateAddress.trim().length < 5} onPress={savePrivateAddress} />
           </View>
         ) : null}
 
