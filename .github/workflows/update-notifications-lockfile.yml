@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feat/firebase-native-push-notifications
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
