@@ -12,7 +12,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFDFC"
-      }
+      },
+      "package": "com.kamba.ng"
     },
     "web": {
       "favicon": "./assets/favicon.png"
