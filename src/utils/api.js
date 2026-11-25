@@ -409,6 +409,14 @@ export const vendorAPI = {
     const response = await api.get('/vendors/profile');
     return response.data;
   },
+  async createBasicVendorProfile(payload) {
+    const response = await api.post('/vendors/onboard/basic', payload);
+    return response.data;
+  },
+  async updatePrivateAddress(payload) {
+    const response = await api.patch('/vendors/profile/private-address', payload);
+    return response.data;
+  },
   async submitLiveness(payload) {
     const response = await api.post('/vendors/onboard/liveness', payload);
     return response.data;
