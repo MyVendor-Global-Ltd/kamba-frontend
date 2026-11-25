@@ -40,6 +40,9 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Firebase project credentials (never commit secrets)
+google-services.json
+
 # Local environment files (never commit secrets)
 .env
 .env.local
