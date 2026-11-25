@@ -506,7 +506,7 @@ export const VendorOnboardingScreen = ({ navigation }) => {
             <KambaInput label="Description" value={serviceForm.description} onChangeText={(value) => updateService('description', value)} placeholder="Describe your service" multiline />
             <KambaInput label="Price range (optional)" value={serviceForm.price_range} onChangeText={(value) => updateService('price_range', value)} placeholder="From ₦15,000" />
             <Text style={styles.fieldLabel}>Business location type</Text>
-            {renderModeOptions(serviceForm, updateService)}
+            {renderModeOptions(serviceForm, (key, value) => { updateService(key, value); if (key === 'location_mode') updateService('fulfilment_options', value === 'physical' ? ['on_site'] : value === 'online' ? ['online'] : value === 'hybrid' ? ['on_site', 'customer_visit', 'online'] : ['customer_visit']); })}
             {renderLocationFields(serviceForm, updateService)}
             <Text style={styles.fieldLabel}>Preferred contact method</Text>
             <View style={styles.modeWrap}>
