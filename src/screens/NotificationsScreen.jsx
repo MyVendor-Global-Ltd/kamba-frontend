@@ -3,20 +3,23 @@ import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native'
 import { ScreenShell } from '../components/ScreenShell';
 import { ScreenState } from '../components/ScreenState';
 import { authAPI } from '../utils/api';
+import { registerNativePushDevice, unregisterNativePushDevice } from '../utils/notificationPush';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 const DEFAULTS = {
   push_enabled: false,
   email_enabled: true,
   sms_enabled: false,
+  whatsapp_enabled: false,
   marketing_enabled: false,
 };
 
 const preferenceRows = [
   { key: 'email_enabled', title: 'Email notifications', description: 'Account and order updates by email.' },
   { key: 'sms_enabled', title: 'SMS notifications', description: 'Delivery and account updates by SMS.' },
+  { key: 'whatsapp_enabled', title: 'WhatsApp notifications', description: 'Updates sent to your opted-in WhatsApp number.' },
   { key: 'marketing_enabled', title: 'Marketing messages', description: 'Optional product news and promotions.' },
-  { key: 'push_enabled', title: 'Push notifications', description: 'Push delivery is not yet available because device registration/provider setup is pending.', unavailable: true },
+  { key: 'push_enabled', title: 'Push notifications', description: 'Order, payment, service and delivery alerts on this Android device.' },
 ];
 
 export const NotificationsScreen = () => {
@@ -56,6 +59,8 @@ export const NotificationsScreen = () => {
     setSavingKey(key);
     setError(null);
     try {
+      if (key === 'push_enabled' && value) await registerNativePushDevice();
+      if (key === 'push_enabled' && !value) await unregisterNativePushDevice();
       const response = await authAPI.updateNotificationPreferences({ [key]: value });
       const saved = response.data?.result;
       if (!response.data?.success || !saved) {
@@ -63,6 +68,11 @@ export const NotificationsScreen = () => {
       }
       setPreferences({ ...DEFAULTS, ...saved });
     } catch (saveError) {
+      if (key === 'push_enabled' && value) {
+        await unregisterNativePushDevice().catch(() => {});
+      } else if (key === 'push_enabled' && !value && previous.push_enabled) {
+        await registerNativePushDevice().catch(() => {});
+      }
       setPreferences(previous);
       setError(
         saveError.response?.data?.message ||
@@ -97,7 +107,7 @@ export const NotificationsScreen = () => {
     <ScreenShell scrollable padded bg={colors.light.background}>
       <View style={styles.container}>
         <Text style={styles.intro}>
-          These preferences are saved to your Kamba account and shared with the website. Push delivery is not available until device registration and provider setup are completed.
+          These preferences are saved to your Kamba account and shared with the website. Android push requires a Firebase-configured development build; Expo Go does not support remote push notifications.
         </Text>
         {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         <View style={styles.card}>
@@ -113,7 +123,7 @@ export const NotificationsScreen = () => {
                 <Switch
                   value={Boolean(preferences[item.key])}
                   onValueChange={(value) => updatePreference(item.key, value)}
-                  disabled={Boolean(savingKey) || Boolean(item.unavailable)}
+                  disabled={Boolean(savingKey)}
                   trackColor={{ false: colors.light.border, true: colors.light.accentSoft }}
                   thumbColor={preferences[item.key] ? colors.light.accent : colors.light.textMuted}
                   accessibilityLabel={item.title}

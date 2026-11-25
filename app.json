@@ -31,7 +31,8 @@
           "photosPermission": "Kamba uses photos to attach delivery evidence when camera capture is unavailable.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-notifications"
     ]
   }
 }

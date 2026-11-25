@@ -99,7 +99,18 @@ export const authAPI = {
   verifyPhone: (data) => api.post('/auth/verify/phone', data),
   verifyPhoneLogin: (data) => api.post('/auth/login/phone/verify', data),
   setUsername: (data) => api.post('/auth/username/set', data),
-  logout: () => api.post('/auth/logout'),
+  async logout() {
+    const pushToken = await storage.getPushToken();
+    if (pushToken) {
+      try {
+        await api.delete('/notifications/devices', { data: { token: pushToken } });
+      } catch (error) {
+        console.warn('Could not revoke the push token before logout:', error?.message || 'Unknown error');
+      }
+      await storage.clearPushToken();
+    }
+    return api.post('/auth/logout');
+  },
   refresh: () => api.post('/auth/refresh'),
   getDashboard: () => api.get('/auth/dashboard'),
   requestAccountPhoneVerification: ({ phone, method = 'sms' }) => api.post('/auth/phone/request', { phone, method }),

@@ -272,3 +272,27 @@ The API client appends `/api/v1` automatically. Restart Expo with cache cleared 
 ## CI validation
 
 GitHub Actions runs `npm ci`, `npm audit --audit-level=high`, `expo-doctor` and an Android JavaScript bundle export on pushes and pull requests. The current Expo SDK 58 dependency tree has three moderate advisories for which npm only offers a major downgrade to Expo SDK 52; high and critical advisories are cleared, and the SDK is not force-downgraded.
+
+
+## Firebase push notifications (Android)
+
+The mobile app uses the Kamba backend's Firebase Cloud Messaging (FCM) sender. FCM delivery itself is no-cost on Firebase Spark/Blaze; Kamba does not use the Expo Push Service.
+
+### One-time Firebase setup
+
+1. Create an Android app in the same Firebase project used by the Kamba backend and website.
+2. Choose a stable Android application ID and set it as `ANDROID_PACKAGE_NAME` in the Expo build environment.
+3. Download that app's `google-services.json`. Keep it out of Git. For a local build, place it at the project root; for EAS, upload it as a file-type environment variable named `GOOGLE_SERVICES_JSON`.
+4. Store the backend service-account JSON separately in Render as `FIREBASE_SERVICE_ACCOUNT_JSON`. Never put that service account in this mobile repository.
+5. Build a development or production APK/AAB after adding the Firebase file. Remote push is not available in Expo Go on Android; the app must be installed as a development/release build.
+
+### Runtime behavior
+
+- The Notifications screen requests Android notification permission when Push is enabled.
+- It obtains the native FCM device token and registers it with the authenticated backend.
+- Turning Push off and logging out revoke the current device token.
+- Tapping a push notification opens the Kamba Notifications screen.
+- The account-level push preference still controls whether Kamba sends push messages.
+- This implementation currently registers Android FCM tokens. iOS needs the matching Firebase iOS app and an FCM token integration before it is enabled there.
+
+The backend stores only device tokens and account ownership; it does not store Firebase service-account credentials on the client.
