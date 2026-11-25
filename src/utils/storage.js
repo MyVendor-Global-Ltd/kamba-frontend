@@ -6,6 +6,7 @@ const TOKEN_KEY = 'kamba_token';
 const AUTH_COOKIES_KEY = 'kamba_auth_cookies';
 const USERNAME_KEY = 'kamba_username';
 const USER_DATA_KEY = 'kamba_user_data';
+const PUSH_TOKEN_KEY = 'kamba_fcm_push_token';
 
 const tokenStore = Platform.OS === 'web'
   ? {
@@ -75,6 +76,35 @@ export const storage = {
     }
   },
 
+  async getPushToken() {
+    try {
+      return await tokenStore.getItemAsync(PUSH_TOKEN_KEY);
+    } catch (e) {
+      console.warn('Failed to get push token:', e);
+      return null;
+    }
+  },
+
+  async setPushToken(token) {
+    try {
+      await tokenStore.setItemAsync(PUSH_TOKEN_KEY, token);
+      return true;
+    } catch (e) {
+      console.warn('Failed to save push token:', e);
+      return false;
+    }
+  },
+
+  async clearPushToken() {
+    try {
+      await tokenStore.deleteItemAsync(PUSH_TOKEN_KEY);
+      return true;
+    } catch (e) {
+      console.warn('Failed to clear push token:', e);
+      return false;
+    }
+  },
+
   async getUsername() {
     try {
       return await AsyncStorage.getItem(USERNAME_KEY);
@@ -128,6 +158,7 @@ export const storage = {
     await Promise.all([
       this.clearToken(),
       this.clearAuthCookies(),
+      this.clearPushToken(),
       this.clearUsername(),
       AsyncStorage.removeItem(USER_DATA_KEY),
     ]);
