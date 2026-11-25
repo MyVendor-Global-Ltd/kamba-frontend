@@ -184,11 +184,6 @@ function RootNavigator() {
     const responseListener = Notifications.addNotificationResponseReceivedListener(() => {
       if (navigationRef.isReady()) navigationRef.navigate('Notifications');
     });
-    const lastResponse = Notifications.getLastNotificationResponse();
-    if (lastResponse && navigationRef.isReady()) {
-      navigationRef.navigate('Notifications');
-      Notifications.clearLastNotificationResponse();
-    }
     return () => responseListener.remove();
   }, []);
 
@@ -364,7 +359,15 @@ function RootNavigator() {
 }
 
 export const AppNavigator = () => (
-  <NavigationContainer ref={navigationRef}>
+  <NavigationContainer
+    ref={navigationRef}
+    onReady={() => {
+      if (Notifications.getLastNotificationResponse()) {
+        navigationRef.navigate('Notifications');
+        Notifications.clearLastNotificationResponse();
+      }
+    }}
+  >
     <RootNavigator />
   </NavigationContainer>
 );
