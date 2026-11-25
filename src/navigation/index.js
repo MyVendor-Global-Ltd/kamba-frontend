@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
@@ -51,6 +52,7 @@ import { UnavailableFeatureScreen } from '../screens/UnavailableFeatureScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef();
 
 const screenOptions = {
   headerStyle: { backgroundColor: colors.light.background },
@@ -177,6 +179,18 @@ function AuthStack() {
 
 function RootNavigator() {
   const [initialRoute, setInitialRoute] = useState(null);
+
+  useEffect(() => {
+    const responseListener = Notifications.addNotificationResponseReceivedListener(() => {
+      if (navigationRef.isReady()) navigationRef.navigate('Notifications');
+    });
+    const lastResponse = Notifications.getLastNotificationResponse();
+    if (lastResponse && navigationRef.isReady()) {
+      navigationRef.navigate('Notifications');
+      Notifications.clearLastNotificationResponse();
+    }
+    return () => responseListener.remove();
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -350,7 +364,7 @@ function RootNavigator() {
 }
 
 export const AppNavigator = () => (
-  <NavigationContainer>
+  <NavigationContainer ref={navigationRef}>
     <RootNavigator />
   </NavigationContainer>
 );
