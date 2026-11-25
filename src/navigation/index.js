@@ -182,7 +182,8 @@ function RootNavigator() {
 
   useEffect(() => {
     const responseListener = Notifications.addNotificationResponseReceivedListener(() => {
-      if (navigationRef.isReady()) navigationRef.navigate('Notifications');
+      const routeNames = navigationRef.isReady() ? navigationRef.getRootState()?.routeNames || [] : [];
+      if (routeNames.includes('Notifications')) navigationRef.navigate('Notifications');
     });
     return () => responseListener.remove();
   }, []);
@@ -362,7 +363,8 @@ export const AppNavigator = () => (
   <NavigationContainer
     ref={navigationRef}
     onReady={() => {
-      if (Notifications.getLastNotificationResponse()) {
+      const routeNames = navigationRef.getRootState()?.routeNames || [];
+      if (Notifications.getLastNotificationResponse() && routeNames.includes('Notifications')) {
         navigationRef.navigate('Notifications');
         Notifications.clearLastNotificationResponse();
       }
