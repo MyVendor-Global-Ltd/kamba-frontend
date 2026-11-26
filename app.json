@@ -13,7 +13,10 @@
       "adaptiveIcon": {
         "backgroundColor": "#FFFDFC"
       },
-      "package": "com.kamba.ng"
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,8 +35,13 @@
           "photosPermission": "Kamba uses photos to attach delivery evidence when camera capture is unavailable.",
           "microphonePermission": false
         }
-      ],
-      "expo-notifications"
-    ]
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9a07a76f-4cce-4c3a-b4c5-07e77b110c35"
+      }
+    },
+    "owner": "kamba-global"
   }
 }
