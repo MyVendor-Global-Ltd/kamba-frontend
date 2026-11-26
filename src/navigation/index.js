@@ -6,7 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { storage } from '../utils/storage';
-import { api, authAPI } from '../utils/api';
+import { authAPI } from '../utils/api';
 import { syncNativePushToken } from '../utils/notificationPush';
 import { Home as HomeIcon, ShoppingBag, User, GridFour as Grid } from '../utils/phosphorIcons';
 
