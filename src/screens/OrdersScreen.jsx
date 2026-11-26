@@ -89,6 +89,9 @@ export const OrdersScreen = ({ navigation }) => {
                   <Text style={styles.orderStatus}>{String(order.status || 'pending').replaceAll('_', ' ')}</Text>
                 </View>
                 {order.store_name ? <Text style={styles.storeName}>{order.store_name}</Text> : null}
+                <Text style={styles.orderStateMeta}>
+                  Payment: {String(order.payment_status || 'unknown').replaceAll('_', ' ')} · {order.delivery_type === 'pickup' ? 'Pickup' : `Delivery: ${String(order.delivery_status || 'not assigned').replaceAll('_', ' ')}`}
+                </Text>
                 <View style={styles.orderFooter}>
                   <Text style={styles.orderMeta}>{Number(order.item_count) || 0} item(s) · {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'Date unavailable'}</Text>
                   <Text style={styles.orderAmount}>{formatMoney(order.total, order.currency)}</Text>
@@ -112,6 +115,7 @@ const styles = StyleSheet.create({
   orderNumber: { color: colors.light.textPrimary, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
   orderStatus: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelSmall.fontSize, textTransform: 'capitalize' },
   storeName: { color: colors.light.textSecondary, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.bodySmall.fontSize },
+  orderStateMeta: { color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize, textTransform: 'capitalize' },
   orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
   orderMeta: { flex: 1, color: colors.light.textMuted, fontFamily: typography.fontFamilies.body, fontSize: typography.scale.labelSmall.fontSize },
   orderAmount: { color: colors.light.accent, fontFamily: typography.fontFamilies.label, fontSize: typography.scale.labelMedium.fontSize },
