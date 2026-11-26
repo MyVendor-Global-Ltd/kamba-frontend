@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.kamba.ng",
       "adaptiveIcon": {
         "backgroundColor": "#FFFDFC"
       },
