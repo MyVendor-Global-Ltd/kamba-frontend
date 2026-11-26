@@ -7,6 +7,7 @@ import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { colors, typography, spacing, radius } from '../theme/tokens';
 import { storage } from '../utils/storage';
 import { authAPI } from '../utils/api';
+import { syncNativePushToken } from '../utils/notificationPush';
 import { Home as HomeIcon, ShoppingBag, User, GridFour as Grid } from '../utils/phosphorIcons';
 
 import { SplashScreen } from '../screens/auth/SplashScreen';
@@ -181,11 +182,19 @@ function RootNavigator() {
   const [initialRoute, setInitialRoute] = useState(null);
 
   useEffect(() => {
+    const tokenListener = Notifications.addPushTokenListener((token) => {
+      void syncNativePushToken(token.data).catch((error) => {
+        console.warn('Could not refresh the Kamba push token:', error?.message || 'Unknown error');
+      });
+    });
     const responseListener = Notifications.addNotificationResponseReceivedListener(() => {
       const routeNames = navigationRef.isReady() ? navigationRef.getRootState()?.routeNames || [] : [];
       if (routeNames.includes('Notifications')) navigationRef.navigate('Notifications');
     });
-    return () => responseListener.remove();
+    return () => {
+      tokenListener.remove();
+      responseListener.remove();
+    };
   }, []);
 
   useEffect(() => {
@@ -200,6 +209,9 @@ function RootNavigator() {
         await storage.setUsername(user.username || '');
         await storage.setUserData(user);
         if (active) setInitialRoute('Main');
+        void syncNativePushToken().catch((error) => {
+          console.warn('Could not sync the Kamba push token on app start:', error?.message || 'Unknown error');
+        });
       } catch (error) {
         if (error.response?.status === 401 || error.response?.status === 403) {
           await storage.clearAll();

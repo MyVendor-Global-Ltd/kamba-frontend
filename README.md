@@ -281,8 +281,8 @@ The mobile app uses the Kamba backend's Firebase Cloud Messaging (FCM) sender. F
 ### One-time Firebase setup
 
 1. Create an Android app in the same Firebase project used by the Kamba backend and website.
-2. Choose a stable Android application ID and set it as `ANDROID_PACKAGE_NAME` in the Expo build environment.
-3. Download that app's `google-services.json`. Keep it out of Git. For a local build, place it at the project root; for EAS, upload it as a file-type environment variable named `GOOGLE_SERVICES_JSON`.
+2. Choose a stable Android application ID and set it as `ANDROID_PACKAGE_NAME` in the Expo build environment. The dynamic Expo config applies this value to the native package ID.
+3. Download that app's `google-services.json`. Keep it out of Git. For a local build, place it at the project root; for EAS, upload it as a file-type environment variable named `GOOGLE_SERVICES_JSON`. The dynamic Expo config passes that file to the Android Firebase plugin when present.
 4. Store the backend service-account JSON separately in Render as `FIREBASE_SERVICE_ACCOUNT_JSON`. Never put that service account in this mobile repository.
 5. Build a development or production APK/AAB after adding the Firebase file. Remote push is not available in Expo Go on Android; the app must be installed as a development/release build.
 
