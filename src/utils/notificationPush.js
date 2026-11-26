@@ -52,6 +52,28 @@ export async function registerNativePushDevice() {
   return token;
 }
 
+export async function syncNativePushToken(tokenOverride) {
+  if (Platform.OS !== 'android') return { registered: false, reason: 'unsupported_platform' };
+
+  const permission = await Notifications.getPermissionsAsync();
+  if (permission.status !== 'granted') return { registered: false, reason: 'permission_not_granted' };
+
+  const preferences = await api.get('/auth/notification-preferences');
+  if (preferences.data?.result?.push_enabled !== true) return { registered: false, reason: 'push_disabled' };
+
+  const token = String(tokenOverride || (await Notifications.getDevicePushTokenAsync()).data || '').trim();
+  if (!token) return { registered: false, reason: 'empty_token' };
+  if (await storage.getPushToken() === token) return { registered: true, unchanged: true };
+
+  await api.post('/notifications/devices', {
+    token,
+    platform: 'android',
+    device_label: 'Kamba Android',
+  });
+  await storage.setPushToken(token);
+  return { registered: true, refreshed: true };
+}
+
 export async function unregisterNativePushDevice() {
   const token = await storage.getPushToken();
   if (!token) return { revoked: false };
